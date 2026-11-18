@@ -125,7 +125,7 @@ JUNK_PREFIX = re.compile(r"^.*?(?:skip to (?:main )?content|continue to checkout
 
 
 def detect_promo(domain: str) -> tuple[str, int, bool, str]:
-    """Return (snippet, pct, is_up_to) for the strongest sitewide-looking promo on the homepage."""
+    """Return (snippet, pct, is_up_to, code) for the strongest sitewide-looking promo on the homepage."""
     try:
         with session.get(f"https://{domain}/", timeout=20, stream=True) as r:
             if r.status_code != 200:
@@ -137,7 +137,10 @@ def detect_promo(domain: str) -> tuple[str, int, bool, str]:
                     break
     except Exception:  # noqa: BLE001
         return "", 0, False, ""
-    html = buf.decode("utf-8", errors="replace")
+    return promo_from_html(buf.decode("utf-8", errors="replace"))
+
+
+def promo_from_html(html: str) -> tuple[str, int, bool, str]:
     html = re.sub(r"<(script|style|svg|noscript|template)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
     soup = BeautifulSoup(html, "lxml")
     best = ("", 0, False, 0, "")
@@ -178,7 +181,9 @@ def detect_promo(domain: str) -> tuple[str, int, bool, str]:
                     if found:
                         break
                     txt = re.sub(r"\s+", " ", anc.get_text(" ", strip=True))
-                    if len(txt) > 700:
+                    # stop once the block holds more than one promo: a code there may belong to the
+                    # other one (Steve Madden: "50% off Specials … 40% off select styles with code EARLY")
+                    if len(txt) > 700 or len(PROMO_RE.findall(txt)) > 1:
                         break
                     found = CODES.extract(txt)
                 best = (_tidy(JUNK_PREFIX.sub("", snippet)), pct, up_to, strength, found[0] if found else "")

@@ -164,6 +164,16 @@ def test_promo_codes():
     assert mk('Nike Jordan Session Shoes $45', 'use promo code "EARLYBF" to get them').codes == ["EARLYBF"]
 
 
+def test_banner_code_belongs_to_its_promo():
+    untuckit = ('<div class="bar"><div class="slide"><p>Black Friday Early Access | 35% Off Everything</p>'
+                '<span>Code: <b>EARLY</b> Copied!</span></div></div>')
+    assert shopify.promo_from_html(untuckit)[3] == "EARLY"
+    madden = ('<div class="bar"><div class="slide"><p>50% off Black Friday Specials: New drops every day.</p></div>'
+              '<div class="slide"><p>Black Friday Preview: 40% off select styles with code EARLY.</p></div></div>')
+    snippet, pct, _, code = shopify.promo_from_html(madden)
+    assert pct == 50 and code == ""  # the code belongs to the 40% slide, not the 50% one
+
+
 def test_fake_sale_detector():
     import datetime
     import history
