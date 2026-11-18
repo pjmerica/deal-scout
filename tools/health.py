@@ -50,9 +50,10 @@ def check() -> tuple[list[str], list[str]]:
     if ok < MIN_SOURCE_SHARE * len(srcs):
         down = [s["name"] for s in srcs if not s["ok"]][:15]
         problems.append(f"Only {ok}/{len(srcs)} sources online. Down: {', '.join(down)}")
+    total = len(d.get("brand_sales", []))
     scanned = sum(1 for s in d.get("brand_sales", []) if s.get("scanned"))
-    if scanned < MIN_BRAND_STORES:
-        problems.append(f"Only {scanned}/81 brand stores readable (Shopify throttling or a store change)")
+    if scanned < max(MIN_BRAND_STORES, int(0.6 * total)):
+        problems.append(f"Only {scanned}/{total} brand stores readable (Shopify throttling or a store change)")
     if c["deals"] < MIN_DEALS:
         problems.append(f"Only {c['deals']} deals ranked (normally ~2,400)")
     if c["clothing"] < MIN_CLOTHING:

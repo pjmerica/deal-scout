@@ -16,7 +16,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 🏷 Brand sales | 81 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
+| 🏷 Brand sales | 136 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |
 | 📰 Sale roundups | Editors' sale roundups (fashion and tech) |
@@ -30,8 +30,8 @@ Non-clothing deals are never hidden by it.
 
 | Layer | Sources |
 |---|---|
-| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 90 keyword searches: clothing items, ~50 apparel brands, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, shoes, women's, kids, electronics, computers, home), Hip2Save, Krazy Coupon Lady, Ben's Bargains, 9to5Toys, DealCatcher, camelcamelcamel top price drops |
-| Brand stores (direct) | **81 clothing brands' Shopify storefronts** (Todd Snyder, Taylor Stitch, Faherty, Everlane, Allbirds, Kith, Aimé Leon Dore, Alo, Cotopaxi, Rothy's, Thursday Boots and more). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
+| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 145 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, shoes, women's, kids, electronics, computers, home), Hip2Save, Krazy Coupon Lady, Ben's Bargains, 9to5Toys, DealCatcher, camelcamelcamel top price drops |
+| Brand stores (direct) | **136 clothing brands' Shopify storefronts**: menswear (Todd Snyder, Taylor Stitch, Faherty, Kith, Aimé Leon Dore…), women's (Sarah Flint, LoveShackFancy, Christy Dawn, STAUD, AGOLDE, MOTHER, Faithfull, Montce…), shoes (Allbirds, Thursday Boots, Rothy's, Thousand Fell, TOMS…), kids (Primary, Tea Collection, Little Sleepies) and outdoor (Cotopaxi, Outdoor Research, Stio, Ibex…). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
 | Editors | GQ, Esquire, Men's Health, Glamour, Harper's Bazaar, Who What Wear, Refinery29, PopSugar, Fashionista, Hypebeast, Highsnobiety, Good Housekeeping, CNET, ZDNet, The Verge, Tom's Guide, TechRadar, Lifehacker, RetailMeNot, Offers.com |
 | Optional | Reddit (r/frugalmalefashion, r/frugalfemalefashion, r/sneakerdeals, …). Needs free API keys, see below |
 
@@ -75,7 +75,7 @@ Tiers are percentiles (Exceptional is the top 3%, Great 12%, Good 35%).
 ## Breakage alerts
 
 `tools/health.py` runs as the last CI step, even when earlier steps fail. It checks the fresh data against floors:
-85%+ of sources online (Reddit excluded), 60+ of 81 brand stores readable, 1,000+ deals, 400+ clothing deals, and the
+85%+ of sources online (Reddit excluded), 60%+ of brand stores readable, 1,000+ deals, 400+ clothing deals, and the
 critical feeds. It keeps one GitHub issue, **"Site health: needs attention"**, which opens when something is wrong
 (GitHub emails the owner), updates when the problem list changes, and closes itself when the next build passes. No open
 issue means nothing to do.
@@ -107,6 +107,7 @@ lowest-price signals, and new-promo flags.
 | `codes.py` | Promo-code extraction |
 | `stacks.py` | Card Scout stack hints (Rakuten and card-linked offers per store) |
 | `tools/health.py` | Breakage alerts (the self-closing health issue) |
+| `tools/probe_stores.py` | Check candidate Shopify stores from CI before adding them (`gh workflow run probe.yml`) |
 | `tools/shots.js` | Real-browser check of both sites: headless Chrome screenshots, JS errors, overflow (see header) |
 | `config.py` | Feeds, keyword searches, clothing terms, categories, knobs, `CARD_SCOUT_URL` |
 | `template.html` | The site (data is embedded at build time) |

@@ -16,7 +16,7 @@ the owner's decisions, how things break, and how to check your work.
 | 2026-11-18 | **Clothing first.** Clothing deals get ×1.6 + 12 (`config.CLOTHING_MULTIPLIER`). Non-clothing still appears and is never hidden by the gender filter. |
 | 2026-11-18 | **Black Friday deals only on this site.** Credit cards, Rakuten cash back, card news and the playbook moved to Card Scout. Don't re-merge. The only bridge is the small stack-hint badges (§7). |
 | 2026-11-18 | **Men's / Women's / Kids switch.** Unisex items and storewide sales count as "Everyone" and **appear in both Men's and Women's views** (owner confirmed). |
-| 2026-11-18 | **Runs until January 2027, no keepalive.** GitHub disables scheduled workflows in public repos after 60 days without commits (~2027-01-17 counting from the last commit). That's the intended end. **Any new commit pushes the date out**: if you change something in December, tell the owner or disable the workflow by hand afterwards. |
+| 2026-11-18 | **Runs until January 17, 2027, no keepalive.** Enforced by the `guard` job in `scout.yml` (`END_DATE`): scheduled runs do nothing after that date, while manual runs and pushes still work. Separately, GitHub disables scheduled workflows in public repos 60 days after the last commit. To extend, change `END_DATE` (ask the owner first). |
 | 2026-11-18 | From the improvement list, the owner **declined for now**: size filter, watch-list alerts, hourly runs over Thanksgiving weekend, enabling Reddit. They're in the backlog (§12); ask before doing them. |
 
 ---
@@ -26,7 +26,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (26 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (30 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -41,7 +41,7 @@ Nothing generated is committed (`site/` is gitignored). Pages source is "GitHub 
 
 ```
 feeds.py (RSS: Slickdeals ×~90 searches, DealNews, Hip2Save, editors…) ─┐
-shopify.py (81 brand stores: sale collections, homepage promo)        ─┼─> scoring.process (dedupe, classify, gender,
+shopify.py (136 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
                                                                         │     pricing, codes)
 history.load (previous history.json from the live site)               ─┘          │
                                                     history.apply (NEW, price drop, fake-sale) 
@@ -70,7 +70,7 @@ history.load (previous history.json from the live site)               ─┘    
 ## 5. Brand stores (`shopify.py`): the fragile part
 
 - **Shopify rate-limits by IP across all its stores** (429, `Retry-After: 60`). After a few dozen requests from your PC,
-  *every* Shopify store returns 429 for a while, including stores you never touched. **So local runs scan only ~20 of 81
+  *every* Shopify store returns 429 for a while, including stores you never touched. **So local runs scan only ~20 of 136
   stores. Judge brand-store health from the cloud run, never from a local run.** A 429 when probing a new store means
   "Shopify store, throttled" (probably fine from CI); a 404 means it doesn't expose `/products.json`.
 - Per store, about 3–4 requests: `/collections.json` → pick up to 2 sale handles by score (`_handle_score`: exact
@@ -85,8 +85,15 @@ history.load (previous history.json from the live site)               ─┘    
   Friday / sitewide / everything…), excluding sign-up, next-order, filter-menu and product-grid text. A promo code is taken
   from the surrounding block **only if that block holds a single promo** (Steve Madden's bar paired a 50% promo with
   another slide's code).
-- Stores that stopped exposing data: Buck Mason, Rhone, Vuori, Bombas, SKIMS, Spanx (404). To add a store, put
-  `"Name": "domain"` in `brands.SHOPIFY_STORES` and optionally its baseline, premium and audience entries.
+- Stores that stopped exposing data: Buck Mason, Rhone, Vuori, Bombas, SKIMS, Spanx (404). **To add stores:** list them in
+  `tools/store_candidates.txt`, run `gh workflow run probe.yml` (it checks from CI, where nothing is throttled; results are
+  on the run summary), then add the open ones to `brands.SHOPIFY_STORES` with their `BASELINE`, `PREMIUM` and
+  `BRAND_AUDIENCE` entries. 55 stores (women's, shoes, kids, outdoor) were added this way on 2026-11-18, for 136 total.
+- **Store names that are ordinary words** (Cuts, FRAME, MOTHER, Primary, Stance, Represent…) go in
+  `brands.AMBIGUOUS_NAMES`. They are never matched in deal-site headlines ("price cuts" once tagged a TV deal as the brand
+  Cuts). Their brand-store items still know their brand.
+- Apparel brands that also sell home goods (Hill House, Cozy Earth, Barefoot Dreams): `config.CLOTHING_FALSE_POSITIVE`
+  keeps duvets, pillows, throws and similar out of clothing.
 
 ---
 
@@ -126,7 +133,7 @@ in Card Scout, update `stacks.py` in the same change (Card Scout's HANDOFF §4b 
 ## 9. Health issue (`tools/health.py`)
 
 Runs last, `if: always()`, with each step's outcome. Problems: a failed CI step, under 85% of sources online (Reddit
-excluded), under 60 of 81 brand stores readable, under 1,000 deals or 400 clothing deals, or a critical feed empty.
+excluded), fewer than max(60, 60%) of brand stores readable, under 1,000 deals or 400 clothing deals, or a critical feed empty.
 It keeps **one** issue titled "Site health: needs attention": creates it, edits it and comments when the problem list
 changes (signature in an HTML comment), and closes it when clear. Needs `permissions: issues: write`. Verified end to end
 on 2026-11-18 (issue #1 opened by the test switch and closed by the next run).
@@ -162,14 +169,6 @@ page uses, make sure it survives `slim()` or gets a default on load.
 - Declined for now (§1): **size filter** (Shopify variants carry sizes and stock), **watch-list alerts** (could reuse the
   health-issue mechanism), **hourly runs Thanksgiving–Cyber Monday**, **Reddit keys** (r/frugalmalefashion and
   r/frugalfemalefashion are the best clothing sources missing).
-- **More brand stores**, especially women's, shoes and kids. Candidates that answered 429 (Shopify, throttled locally) on
-  2026-11-18 and should be checked from CI: Hill House Home, Christy Dawn, Faithfull the Brand, Meshki, Oh Polly, Wildfang,
-  Kirrin Finch, Andie, Montce, Lake Pajamas, Cozy Earth, Barefoot Dreams, Splits59, Year of Ours, Naked Cashmere,
-  White + Warren, Jenni Kayne, Motel Rocks, LoveShackFancy, AGOLDE, MOTHER, STAUD, Thousand Fell, Sarah Flint,
-  Margaux, Greats, Feetures, Stance, Taos, Primary, Kyte Baby, Little Sleepies, Tea Collection, Pangaia, tentree,
-  Peter Manning, Stio, Duckworth, Bearbottom, Linksoul. Confirmed open: Solid & Striped, Edikted, FRAME, Ibex.
-- More Slickdeals keyword searches for big retailers that block direct scraping: American Eagle/Aerie, Hollister, Zara,
-  H&M, Express, Kohl's, JCPenney, Nordstrom Rack, Saks Off 5th, Bloomingdale's, DSW, Zappos, Foot Locker, Dick's,
-  Backcountry, Birkenstock, Crocs, Vans, Converse, Salomon, Brooks, ASICS, On, Free People, Anthropologie, Urban
-  Outfitters, Athleta, Fabletics, Alo, Gymshark.
+- More brand stores: done 2026-11-18 (55 added). Paige still returned 429 from CI; retry it with the probe.
+- Slickdeals searches for big retailers that block scraping: done 2026-11-18 (about 40 added to `SLICKDEALS_CLOTHING_QUERIES`).
 - Page packaging: load data as a separate gzip-friendly file to shrink transfer further.

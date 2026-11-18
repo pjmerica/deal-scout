@@ -37,8 +37,9 @@ def _wordre(terms):
 
 CLOTHING_CAT_RES = {cat: _wordre(terms) for cat, terms in C.CLOTHING_TERMS.items()}
 CLOTHING_GENERIC_RE = _wordre(C.CLOTHING_GENERIC)
-BRAND_RE = _wordre(C.CLOTHING_BRANDS + list(BR.SHOPIFY_STORES))
-OTHER_BRAND_RE = _wordre([b for b in BR.BASELINE if len(b) > 3])
+# Store names that are ordinary words are not matched in headlines ("price cuts" is not the brand Cuts)
+BRAND_RE = _wordre([b for b in C.CLOTHING_BRANDS + list(BR.SHOPIFY_STORES) if b.lower() not in BR.AMBIGUOUS_NAMES])
+OTHER_BRAND_RE = _wordre([b for b in BR.BASELINE if len(b) > 3 and b not in BR.AMBIGUOUS_NAMES])
 BRAND_CS = [(b, re.compile(r"(?<![\w'])" + re.escape(b) + r"(?![\w'])")) for b in C.CLOTHING_BRANDS_CASE_SENSITIVE]
 WEAK = set(C.WEAK_RETAILERS)
 FALSE_POS_RE = re.compile("|".join(C.CLOTHING_FALSE_POSITIVE), re.I)

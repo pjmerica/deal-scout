@@ -31,9 +31,9 @@ SKIP_TITLE = re.compile(r"gift ?card|e-?gift|shipping protection|\broute\b|warra
 
 EXACT_SALE = re.compile(r"^(?:sale|sales|shop-sale|all-sale|sale-all|on-sale|the-sale|sale-items|black-?friday|"
                         r"black-friday-sale|bfcm|bfcm-sale|cyber-?monday|cyber-week|holiday-sale|archive-sale|final-sale)$")
-BAD_HANDLE = re.compile(r"wholesale|pre-?sale|non-sale|exclu|full-price|feed|google|gift|klaviyo|hidden|test|"
+BAD_HANDLE = re.compile(r"wholesale|pre-?sale|non-sale|not-on-sale|not-sale|no-sale|exclu|full-price|-fp$|feed|google|gift|klaviyo|hidden|test|"
                         r"upsell|bundle-builder|quiz")
-DEPT_WORDS = re.compile(r"accessor|bottom|top|shoe|bag|sock|hat|kid|boy|girl|baby|home|bra|underwear|swim|jewel|"
+DEPT_WORDS = re.compile(r"accessor|bottom|top|shoe|bag|sock|hat|kid|boy|girl|baby|home|decor|bedding|bath|bra|underwear|swim|jewel|"
                         r"best-?seller|under-\d|\d+-off")
 
 

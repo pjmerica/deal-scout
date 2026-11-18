@@ -226,6 +226,37 @@ def test_strip_tracking():
     assert deal_scout.strip_tracking("https://shop.com/p?color=red&utm_x=1") == "https://shop.com/p?color=red"
 
 
+def test_ambiguous_store_names_not_matched_in_headlines():
+    # "price cuts" is not the brand Cuts, a bed frame isn't FRAME denim, Mother's Day isn't MOTHER
+    for t in ['Price cuts on 65" TVs $299', "Wooden bed frame queen $150", "Mother's Day jewelry gift $20",
+              "Soul at Scale: Noah on automation"]:
+        it = mk(t)
+        assert not it.is_clothing and not it.brands, t
+    assert mk("TOMS Alpargata Shoes $25").is_clothing  # case-sensitive TOMS still counts
+
+
+def test_home_goods_from_apparel_brands_are_not_clothing():
+    def store_item(title, store):
+        it = Item(title=f"{store}: {title}", link="x/" + title, source=f"Brand store: {store}", kind="deal")
+        it.brands = [store]
+        scoring.classify(it)
+        return it
+    assert store_item("The Ellie Nap Dress", "Hill House Home").is_clothing
+    assert not store_item("Linen Duvet Cover", "Hill House Home").is_clothing
+    assert not store_item("CozyChic Throw", "Barefoot Dreams").is_clothing
+
+
+def test_kids_brand_audience():
+    import gender as G
+    assert G.detect("Baby Zip Footie", brands=["Primary"]) == ["Kids"]
+    assert G.detect("The Emma Flat", brands=["Sarah Flint"]) == ["Women's"]
+
+
+def test_not_on_sale_collection_rejected():
+    assert shopify._handle_score("not-on-sale", 2026) < 0
+    assert shopify._handle_score("black-friday-2026", 2026) > shopify._handle_score("bfcm-decor", 2026)
+
+
 def test_baseline_lookup():
     assert BR.baseline_for(["Patagonia"]) == 10
     assert BR.baseline_for([], "Old Navy") == 50

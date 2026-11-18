@@ -48,6 +48,17 @@ BASELINE = {
     "kith": 10, "fear of god": 0, "stussy": 0, "noah": 5, "filson": 10, "barbour": 10, "alo yoga": 10,
     "alo": 10, "reigning champ": 15, "quince": 0, "skims": 5, "fjallraven": 15, "outdoor voices": 20,
     "apple": 10, "dyson": 15, "yeti": 10, "stanley": 15, "sony": 20, "bose": 20, "samsung": 25, "lego": 15,
+    # added 2026-11-18 with the new brand stores
+    "hill house home": 15, "christy dawn": 20, "faithfull the brand": 25, "meshki": 30, "oh polly": 30, "wildfang": 30,
+    "kirrin finch": 20, "andie": 25, "montce": 25, "lake pajamas": 10, "cozy earth": 15, "barefoot dreams": 20,
+    "splits59": 20, "year of ours": 20, "naked cashmere": 20, "white + warren": 25, "jenni kayne": 10,
+    "motel rocks": 35, "loveshackfancy": 20, "agolde": 10, "mother": 15, "staud": 20, "solid & striped": 30,
+    "edikted": 40, "frame": 15, "dl1961": 30, "citizens of humanity": 10, "re/done": 15, "cuyana": 5,
+    "m.m.lafleur": 20, "rebecca minkoff": 30, "freda salvador": 20, "loeffler randall": 20, "thousand fell": 25,
+    "sarah flint": 20, "margaux": 10, "greats": 30, "feetures": 15, "stance": 20, "taos footwear": 25, "toms": 35,
+    "native shoes": 30, "primary": 30, "kyte baby": 10, "little sleepies": 15, "tea collection": 40, "pangaia": 25,
+    "tentree": 30, "peter manning": 20, "stio": 15, "duckworth": 15, "bearbottom": 30, "linksoul": 20, "ibex": 15,
+    "outdoor research": 20,
 }
 
 PREMIUM = {
@@ -58,6 +69,9 @@ PREMIUM = {
     "rothy's", "naadam", "ugg", "dr. martens", "dr martens", "ralph lauren", "polo ralph lauren", "levi's",
     "reigning champ", "fjallraven", "outerknown", "marine layer", "darn tough", "smartwool", "skims",
     "new balance", "nike", "adidas", "apple", "dyson", "yeti", "sony", "bose", "lego", "quince", "uniqlo",
+    "agolde", "mother", "frame", "citizens of humanity", "staud", "loveshackfancy", "jenni kayne", "cuyana",
+    "christy dawn", "hill house home", "sarah flint", "margaux", "stio", "ibex", "naked cashmere", "barefoot dreams",
+    "cozy earth", "outdoor research",
     "madewell", "j.crew", "carhartt", "columbia", "ll bean", "l.l.bean", "rei",
 }
 
@@ -90,6 +104,34 @@ SHOPIFY_STORES = {
     "Fear of God": "fearofgod.com", "Fashion Nova": "fashionnova.com", "Princess Polly": "us.princesspolly.com",
     "Petal & Pup": "petalandpup.com", "Showpo": "showpo.com", "Cupshe": "cupshe.com", "Robert Graham": "robertgraham.us",
     "Darn Tough": "darntough.com", "Gymshark": "gymshark.com", "Ten Thousand": "tenthousand.cc",
+    # added 2026-11-18 after a CI probe (tools/probe_stores.py): women's, shoes, kids, outdoor
+    "Hill House Home": "hillhousehome.com", "Christy Dawn": "christydawn.com", "Faithfull the Brand": "faithfullthebrand.com",
+    "Meshki": "meshki.us", "Oh Polly": "us.ohpolly.com", "Wildfang": "wildfang.com", "Kirrin Finch": "kirrinfinch.com",
+    "Andie": "andieswim.com", "Montce": "montce.com", "Lake Pajamas": "lakepajamas.com", "Cozy Earth": "cozyearth.com",
+    "Barefoot Dreams": "barefootdreams.com", "Splits59": "splits59.com", "Year of Ours": "yearofours.com",
+    "Naked Cashmere": "nakedcashmere.com", "White + Warren": "whiteandwarren.com", "Jenni Kayne": "jennikayne.com",
+    "Motel Rocks": "motelrocks.com", "LoveShackFancy": "loveshackfancy.com", "AGOLDE": "agolde.com",
+    "MOTHER": "motherdenim.com", "STAUD": "staud.clothing", "Solid & Striped": "solidandstriped.com",
+    "Edikted": "edikted.com", "FRAME": "frame-store.com", "DL1961": "dl1961.com",
+    "Citizens of Humanity": "citizensofhumanity.com", "RE/DONE": "shopredone.com", "Cuyana": "cuyana.com",
+    "M.M.LaFleur": "mmlafleur.com", "Rebecca Minkoff": "rebeccaminkoff.com", "Freda Salvador": "fredasalvador.com",
+    "Loeffler Randall": "loefflerrandall.com", "Thousand Fell": "thousandfell.com", "Sarah Flint": "sarahflint.com",
+    "Margaux": "margauxny.com", "Greats": "greats.com", "Feetures": "feetures.com", "Stance": "stance.com",
+    "Taos Footwear": "taosfootwear.com", "TOMS": "toms.com", "Native Shoes": "nativeshoes.com",
+    "Primary": "primary.com", "Kyte Baby": "kytebaby.com", "Little Sleepies": "littlesleepies.com",
+    "Tea Collection": "teacollection.com", "Pangaia": "pangaia.com", "tentree": "tentree.com",
+    "Peter Manning": "petermanningnyc.com", "Stio": "stio.com", "Duckworth": "duckworthco.com",
+    "Bearbottom": "bearbottomclothing.com", "Linksoul": "linksoul.com", "Ibex": "ibex.com",
+    "Outdoor Research": "outdoorresearch.com",
+}
+
+# Store names that are ordinary words ("price cuts", "bed frame", "Mother's Day", "primary care").
+# Their brand-store items know their brand already; these names are NOT matched in deal-site headlines.
+AMBIGUOUS_NAMES = {
+    "cuts", "represent", "satisfy", "rails", "noah", "taft", "duer", "set active", "comfrt", "knix", "roark", "janji",
+    "koio", "birdies", "frame", "mother", "primary", "greats", "stance", "toms", "andie", "montce", "native shoes",
+    "ibex", "stio", "duckworth", "margaux", "edikted", "meshki", "wildfang", "on", "alo", "boss", "lee", "keen", "vans",
+    "express", "coach", "guess", "champion", "loft", "theory", "vince", "cos", "boss",
 }
 
 
@@ -101,6 +143,10 @@ BRAND_AUDIENCE = {
         "free people", "anthropologie", "athleta", "lane bryant", "torrid", "loft", "ann taylor", "chico's", "j.jill",
         "aerie", "lulus", "reformation", "white house black market", "eloquii", "kate spade", "tory burch",
         "michael kors", "sam edelman", "victoria's secret", "intimissimi", "cuup", "parade", "andie",
+        "hill house home", "christy dawn", "faithfull the brand", "meshki", "oh polly", "wildfang", "kirrin finch",
+        "montce", "splits59", "year of ours", "naked cashmere", "white + warren", "jenni kayne", "motel rocks",
+        "loveshackfancy", "agolde", "mother", "staud", "solid & striped", "edikted", "re/done", "cuyana",
+        "m.m.lafleur", "rebecca minkoff", "freda salvador", "loeffler randall", "sarah flint", "margaux", "taos footwear",
     ],
     "Men's": [
         "todd snyder", "bonobos", "mack weldon", "untuckit", "saxx", "true classic", "cuts", "chubbies", "johnnie-o",
@@ -108,6 +154,7 @@ BRAND_AUDIENCE = {
         "oliver cabell", "taft", "ten thousand", "jos. a. bank", "jos a bank", "men's wearhouse", "taylor stitch",
         "buck mason", "peter millar", "rhone", "mizzen+main", "proper cloth", "suitsupply", "indochino",
         "billy reid", "roark", "wool&prince", "aimé leon dore", "aime leon dore", "huckberry", "duluth trading",
+        "peter manning", "bearbottom", "linksoul",
     ],
     "Everyone": [
         "comfrt", "noah", "alo yoga", "alo", "kith", "stussy", "fear of god", "represent", "gymshark", "allbirds",
@@ -120,8 +167,13 @@ BRAND_AUDIENCE = {
         "ll bean", "l.l.bean", "columbia", "the north face", "patagonia", "arc'teryx", "levi's", "nordstrom",
         "nordstrom rack", "macy's", "kohl's", "rei", "abercrombie", "american eagle", "h&m", "zara", "express",
         "carhartt", "under armour", "nike", "adidas", "new balance", "puma", "hoka", "on running", "lululemon", "vuori",
+        "lake pajamas", "cozy earth", "barefoot dreams", "frame", "dl1961", "citizens of humanity", "thousand fell",
+        "greats", "feetures", "stance", "toms", "native shoes", "pangaia", "tentree", "stio", "duckworth", "ibex",
+        "outdoor research",
     ],
 }
+BRAND_AUDIENCE["Kids"] = ["primary", "kyte baby", "little sleepies", "tea collection", "carter's",
+                          "the children's place", "hanna andersson", "janie and jack", "gymboree"]
 _AUDIENCE = {b: aud for aud, names in BRAND_AUDIENCE.items() for b in names}
 
 

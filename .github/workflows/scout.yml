@@ -23,7 +23,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Planned end (owner, 2026-11-18): scheduled runs stop after END_DATE. Manual runs and pushes still work.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          END_DATE: "2027-01-17"
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%F)" \> "$END_DATE" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Past the planned end date ($END_DATE): scheduled runs are off. Manual runs still work." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

@@ -32,6 +32,12 @@ SLICKDEALS_CLOTHING_QUERIES = [
     "quince", "huckberry", "smartwool", "darn tough", "spanx", "aritzia",
     # event terms
     "black friday clothing", "black friday apparel", "doorbuster",
+    # big retailers that block direct scraping: only seen when deal sites post them (added 2026-11-18)
+    "american eagle", "aerie", "hollister", "zara", "h&m", "express clothing", "kohl's", "jcpenney", "nordstrom rack",
+    "saks off 5th", "bloomingdale's", "dsw", "zappos", "foot locker", "dick's sporting goods", "backcountry",
+    "birkenstock", "crocs", "vans", "converse", "salomon", "brooks running", "asics", "on running", "free people",
+    "anthropologie", "urban outfitters", "athleta", "fabletics", "alo yoga", "gymshark", "rei outlet",
+    "steep and cheap", "sierra trading", "canada goose", "skims", "reformation", "sorel", "ugg boots",
 ]
 SLICKDEALS_GENERAL_QUERIES = [
     "black friday", "cyber monday", "early black friday", "price mistake", "all time low", "lowest price",
@@ -157,6 +163,8 @@ CLOTHING_BRANDS = [
     "smartwool", "darn tough", "spanx", "aritzia", "zara", "h&m", "mango", "free people", "anthropologie",
     "urban outfitters", "lucky brand", "wrangler", "lee jeans", "dockers", "hanes", "champion", "fruit of the loom",
     "jockey", "saxx", "tommy john", "bombas", "mack weldon", "outdoor voices", "fabletics", "athleta",
+    "zappos", "foot locker", "dick's sporting goods", "backcountry", "steep and cheap", "sierra trading post",
+    "reformation", "loveshackfancy", "christy dawn", "sarah flint", "thousand fell", "outdoor research",
     "alo yoga", "gymshark", "reebok", "puma", "converse", "vans", "skechers", "crocs", "birkenstock",
     "clarks", "cole haan", "sperry", "sorel", "merrell", "keen", "salomon", "the frye", "frye", "steve madden",
     "sam edelman", "kate spade", "michael kors", "coach outlet", "tory burch", "marc jacobs", "lands' end",
@@ -173,7 +181,8 @@ CLOTHING_BRANDS = [
     "torrid", "lane bryant", "eloquii", "universal standard", "hoka one one", "on cloud", "ugg australia",
 ]
 # Ambiguous brands: matched case-sensitively, with exclusions
-CLOTHING_BRANDS_CASE_SENSITIVE = ["Gap", "GAP", "Coach", "Express", "Lands' End", "Gymshark", "Loft", "LOFT"]
+CLOTHING_BRANDS_CASE_SENSITIVE = ["Gap", "GAP", "Coach", "Express", "Lands' End", "Gymshark", "Loft", "LOFT",
+                                  "TOMS", "AGOLDE", "STAUD", "FRAME Denim", "MOTHER Denim", "Stance socks"]
 CASE_SENSITIVE_EXCLUDE = {"Express": r"American Express|ExpressVPN|Express Scripts|Express Shipping|Prime Express",
                           "Coach": r"Coach (?:seat|class|flight|ticket)"}
 
@@ -223,9 +232,12 @@ CLOTHING_FALSE_POSITIVE = [
     r"eau de", r"blanket", r"comforter", r"duffel", r"luggage", r"suitcase", r"water bottle", r"tumbler",
     r"weighted vest", r"skincare", r"lotion", r"makeup", r"bedding", r"towel", r"sheet set", r"\btent\b",
     r"sleeping bag", r"cooler", r"lego", r"\btoys?\b", r"gift card", r"\begc\b", r"giveaway", r"sweepstakes",
+    # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
+    r"\bduvet", r"\bpillow", r"\bquilt", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
+    r"\bnapkin", r"\btablecloth", r"\bplacemat", r"\bmug\b", r"\bornament", r"bath mat", r"\bdinnerware",
 ]
 # Department stores / broad retailers: a mention alone is weak evidence of clothing
-WEAK_RETAILERS = ["nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",
+WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "sierra", "nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",
                   "saks", "saks off 5th", "neiman marcus", "bloomingdale's", "bloomingdales", "rei",
                   "target clothing", "eddie bauer", "ll bean", "l.l.bean", "l.l. bean", "tommy hilfiger",
                   "calvin klein", "under armour", "columbia", "carhartt", "patagonia", "the north face", "north face"]
