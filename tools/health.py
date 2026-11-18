@@ -32,6 +32,8 @@ CRITICAL_SOURCES = ["Slickdeals Frontpage", "Slickdeals Popular", "DealNews", "D
 
 def check() -> tuple[list[str], list[str]]:
     problems, notes = [], []
+    if os.environ.get("HEALTH_TEST") == "1":
+        problems.append("Test alert from a manual run (health_test), safe to ignore. The next normal build closes this issue.")
     for step in ("TESTS", "SCRAPE", "SMOKE"):
         outcome = os.environ.get(f"{step}_OUTCOME", "")
         if outcome and outcome != "success":
