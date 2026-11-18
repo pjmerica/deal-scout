@@ -85,12 +85,19 @@ def reddit_items() -> list[Item]:
     return out
 
 
+
+def sd_url(q: str) -> str:
+    """Slickdeals search URL; multi-word queries are quoted for a phrase match ("free people" otherwise
+    matched any post with both words)."""
+    return C.SLICKDEALS_SEARCH_URL.format(q=quote_plus(f'"{q}"' if " " in q else q))
+
+
 def gather_feeds(quick: bool) -> tuple[list[Item], list[dict]]:
     jobs = [(f["url"], f["name"], f["kind"], f.get("boost", 0)) for f in C.FEEDS]
     clothing_q = C.SLICKDEALS_CLOTHING_QUERIES[:15] if quick else C.SLICKDEALS_CLOTHING_QUERIES
     general_q = C.SLICKDEALS_GENERAL_QUERIES[:6] if quick else C.SLICKDEALS_GENERAL_QUERIES
     for q in clothing_q + general_q:
-        jobs.append((C.SLICKDEALS_SEARCH_URL.format(q=quote_plus(q)), f"Slickdeals: {q}", "deal", 0))
+        jobs.append((sd_url(q), f"Slickdeals: {q}", "deal", 0))
 
     items, status = [], []
 
