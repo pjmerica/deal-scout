@@ -4,6 +4,8 @@ Finds the **best Black Friday deals**, with a **clothing bias**. Each deal gets 
 GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 **https://pjmerica.github.io/deal-scout/**
 
+**Agents and maintainers: start with [HANDOFF.md](HANDOFF.md)** (owner decisions, how things break, how to verify).
+
 > **Credit cards, cash back and card news moved out on 2026-11-18** to the companion project **Card Scout**
 > (`Documents\card-scout`, https://github.com/pjmerica/card-scout, https://pjmerica.github.io/card-scout/). Its
 > `HANDOFF.md` documents the split. Deal Scout's footer and header link to it.
@@ -105,6 +107,7 @@ lowest-price signals, and new-promo flags.
 | `codes.py` | Promo-code extraction |
 | `stacks.py` | Card Scout stack hints (Rakuten and card-linked offers per store) |
 | `tools/health.py` | Breakage alerts (the self-closing health issue) |
+| `tools/shots.js` | Real-browser check of both sites: headless Chrome screenshots, JS errors, overflow (see header) |
 | `config.py` | Feeds, keyword searches, clothing terms, categories, knobs, `CARD_SCOUT_URL` |
 | `template.html` | The site (data is embedded at build time) |
 | `tests/` | `test_scoring.py` (logic regressions) and `smoke.js` (renders every tab and filter, then clicks every control, against fresh data). Both run in CI before deploy |
