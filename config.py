@@ -10,6 +10,7 @@ CLOTHING_MULTIPLIER = 1.6      # clothing deals get their score multiplied by th
 CLOTHING_FLAT_BONUS = 12       # ...plus this flat bonus
 DEAL_HALF_LIFE_DAYS = 5        # deal score halves every N days of age
 MAX_AGE_DAYS = 30              # ignore anything older than this
+MIN_NONCLOTHING_SCORE = 8      # non-clothing deals below this are left off the page (they never surface)
 CARD_SCOUT_URL = "https://pjmerica.github.io/card-scout/"   # companion site (cards, cash back), linked in the footer
 
 # ---------------------------------------------------------------------------

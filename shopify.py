@@ -18,6 +18,7 @@ import time
 from bs4 import BeautifulSoup
 
 import brands as BR
+import codes as CODES
 import gender as G
 from feeds import fetch, session
 from models import NOW, Item
@@ -123,23 +124,23 @@ JUNK_PREFIX = re.compile(r"^.*?(?:skip to (?:main )?content|continue to checkout
                          r"cart \(\s*\d+\s*\)|enable accessibility)\s*", re.I)
 
 
-def detect_promo(domain: str) -> tuple[str, int, bool]:
+def detect_promo(domain: str) -> tuple[str, int, bool, str]:
     """Return (snippet, pct, is_up_to) for the strongest sitewide-looking promo on the homepage."""
     try:
         with session.get(f"https://{domain}/", timeout=20, stream=True) as r:
             if r.status_code != 200:
-                return "", 0, False
+                return "", 0, False, ""
             buf = b""
             for chunk in r.iter_content(32768):
                 buf += chunk
                 if len(buf) > 900_000:
                     break
     except Exception:  # noqa: BLE001
-        return "", 0, False
+        return "", 0, False, ""
     html = buf.decode("utf-8", errors="replace")
     html = re.sub(r"<(script|style|svg|noscript|template)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
     soup = BeautifulSoup(html, "lxml")
-    best = ("", 0, False, 0)
+    best = ("", 0, False, 0, "")
     seen = set()
     # Announcement bars and hero banners are short elements; read the smallest element
     # around each "% off" instead of a fixed window of page text (which drags in nav junk).
@@ -171,11 +172,20 @@ def detect_promo(domain: str) -> tuple[str, int, bool]:
             event = bool(re.search(r"black friday|cyber|bfcm|early access", snippet, re.I))
             strength = pct * (0.75 if up_to else 1.0) + 15 * sitewide + 8 * event
             if strength > best[3]:
-                best = (_tidy(JUNK_PREFIX.sub("", snippet)), pct, up_to, strength)
-    return best[0], best[1], best[2]
+                # promo codes often sit just outside the snippet ("35% Off Everything | Code: EARLY")
+                found = CODES.extract(snippet)
+                for anc in list(node.parents)[:6]:  # nearest enclosing block that mentions a code
+                    if found:
+                        break
+                    txt = re.sub(r"\s+", " ", anc.get_text(" ", strip=True))
+                    if len(txt) > 700:
+                        break
+                    found = CODES.extract(txt)
+                best = (_tidy(JUNK_PREFIX.sub("", snippet)), pct, up_to, strength, found[0] if found else "")
+    return best[0], best[1], best[2], best[4]
 
 
-def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: bool) -> Item:
+def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: bool, code: str = "") -> Item:
     eff = round(pct * 0.75) if up_to else pct
     it = Item(
         title=f"{store} sitewide: {promo}", link=url or f"https://{domain}/", source=f"Brand store: {store}",
@@ -186,6 +196,8 @@ def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: b
     it.brands = [store]
     it.gender = [BR.audience_for([store]) or "Everyone"]
     it.flags.append("sitewide_promo")
+    if code:
+        it.codes = [code]
     it.reasons.append("Live sitewide promo on the brand's homepage")
     return it
 
@@ -286,9 +298,9 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
     raw_count = len(items)
     items = collapse_variants(items)
     if promo_cache is not None and domain in promo_cache:
-        promo, promo_pct, up_to = promo_cache[domain]
+        promo, promo_pct, up_to, promo_code = promo_cache[domain]
     else:
-        promo, promo_pct, up_to = detect_promo(domain)
+        promo, promo_pct, up_to, promo_code = detect_promo(domain)
     pcts = [i.pct_off for i in items]
     median = statistics.median(pcts) if pcts else 0
     on_sale_total = sum(i.variants for i in items) if items else raw_count
@@ -308,21 +320,21 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
     keep.sort(key=lambda i: (-(i.pct_off or 0), -(i.orig_price or 0)))
     top = []
     for k in ("Men's", "Women's", "Kids", "Everyone", None):
-        for i in [x for x in items if k is None or k in x.gender][:6]:
+        for i in [x for x in items if k is None or k in x.gender][:3]:
             if all(t["link"] != i.link for t in top):
                 top.append({"title": i.title.split(": ", 1)[-1], "price": i.price, "orig": i.orig_price,
                             "pct": i.pct_off, "link": i.link, "image": i.image, "gender": i.gender})
     top.sort(key=lambda t: -(t["pct"] or 0))
     if promo and promo_pct >= 20:
-        pi = promo_item(store, domain, url, promo, promo_pct, up_to)
+        pi = promo_item(store, domain, url, promo, promo_pct, up_to, promo_code)
         keep.insert(0, pi)
     summary = {
         "store": store, "domain": domain, "url": url,
         "scanned": scanned, "on_sale": on_sale_total, "products": len(pcts), "median_pct": round(median), "max_pct": max(pcts) if pcts else 0,
-        "promo": promo, "promo_pct": promo_pct, "promo_up_to": up_to,
+        "promo": promo, "promo_pct": promo_pct, "promo_up_to": up_to, "promo_code": promo_code,
         "premium": BR.is_premium([store]), "baseline": BR.baseline_for([store]),
         "audience": audience, "brand_audience": BR.audience_for([store]) or "Everyone",
-        "top": top[:24],
+        "top": top[:12],
     }
     return keep, summary
 
@@ -335,7 +347,7 @@ def scan_all(workers: int = 8) -> tuple[list[Item], list[dict], list[dict]]:
         store, domain = kv
         try:
             its, summ = scan_store(store, domain, cache)
-            promo_cache[domain] = (summ["promo"], summ["promo_pct"], summ["promo_up_to"])
+            promo_cache[domain] = (summ["promo"], summ["promo_pct"], summ["promo_up_to"], summ.get("promo_code", ""))
             return store, domain, its, summ
         except Exception as ex:  # noqa: BLE001
             print(f"  ! shopify {store}: {ex}")

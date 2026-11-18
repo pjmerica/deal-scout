@@ -11,6 +11,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write              # tools/health.py opens/closes the "Site health: needs attention" issue
 
 concurrency:
   group: pages
@@ -27,13 +28,16 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Logic tests
+        id: tests
         run: python tests/test_scoring.py
       - name: Scrape
+        id: scrape
         env:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         run: python deal_scout.py | tee scrape.log
-      - name: Page smoke test (every tab against the fresh data)
+      - name: Page smoke test (every tab and control against the fresh data)
+        id: smoke
         run: node tests/smoke.js site/index.html
       - name: Job summary
         if: always()
@@ -41,9 +45,17 @@ jobs:
           {
             echo "### Deal Scout run"
             echo '```'
-            sed -n '/^Kept /,$p' scrape.log | head -60
+            sed -n '/^Kept /,$p' scrape.log 2>/dev/null | head -60
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Site health (opens/updates/closes the health issue)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+          SCRAPE_OUTCOME: ${{ steps.scrape.outcome }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: python tools/health.py --issue
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

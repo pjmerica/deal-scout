@@ -36,7 +36,7 @@ function qsa(sel) {
   lastLists.push(out);
   return out;
 }
-const document = { getElementById: el, querySelectorAll: qsa,
+const document = { getElementById: el, querySelectorAll: qsa, addEventListener() {}, body: { appendChild() {} },
   documentElement: { setAttribute() {}, getAttribute() { return null; } } };
 const ctx = { document, console, Date, Math, JSON, Set, Map, Object, Array, String, Number, RegExp, Error,
   localStorage: { getItem: () => null, setItem() {} }, matchMedia: () => ({ matches: false }),

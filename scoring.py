@@ -24,6 +24,7 @@ from datetime import datetime
 
 import brands as BR
 import config as C
+import codes as CODES
 import gender as G
 from feeds import normalize_link, parse_date
 from models import NOW, Item
@@ -145,6 +146,8 @@ def classify(it: Item) -> None:
                 it.category = cat
                 break
     it.is_bf = bool(BF_RE.search(f"{it.title} {it.summary[:200]}"))
+    if not it.codes:
+        it.codes = CODES.extract(f"{it.title} {it.summary[:400]}")
 
 
 def _promo_discount(text: str) -> tuple[float, list[int]]:
@@ -228,7 +231,7 @@ def extract_pricing(it: Item) -> None:
         if m:
             it.store = m.group(1).strip(" .-")
         else:
-            m = re.search(r"\b([A-Z][\w&'\-]+(?:\s[A-Z][\w&'\-]+)?)\s*\[\w[\w.\-]+\.\w+\]", it.summary)
+            m = re.search(r"\b([A-Z][\w&'\-]+(?:\s[A-Z][\w&'\-]+){0,2})\s*\[\w[\w.\-]+\.\w+\]", it.summary)
             if m:
                 it.store = m.group(1)
 
@@ -349,6 +352,14 @@ def score_deal(it: Item) -> None:
                 R.append("Ends soon")
     if it.kind == "article":
         s -= 6
+    # fake-sale detector (history.py): inflated 'original' price, or it was cheaper recently
+    if "orig_raised" in it.flags:
+        s -= 15
+    if "was_cheaper" in it.flags:
+        s -= 10
+    if it.codes:
+        s += 1
+    s += it.stack_pts  # Card Scout: Rakuten cash back / card-linked offer at this store
 
     if "Lesser-known brand" in W:
         s *= 0.88  # part of a great deal is a product worth owning

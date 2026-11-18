@@ -57,6 +57,34 @@ Tiers are percentiles (Exceptional is the top 3%, Great 12%, Good 35%).
 (dress, skirt set, bra → Women's; boxer briefs, tuxedo → Men's), retailer product tags, the brand's audience
 (`brands.BRAND_AUDIENCE`), the description, then storewide sales → Everyone.
 
+## Fake-sale detector, promo codes, stack hints
+
+- **Fake-sale detector** (`history.py`): every brand-store item's price and original (compare-at) price are recorded
+  each run. If the original price was raised after we first saw it (inflate-then-discount), or the item was cheaper at
+  some point in the last 14 days, the deal gets an amber warning and loses score (−15 / −10). Each tracked item also
+  shows its price range ("Tracked since Nov 18: $59–$79"). Only retailer-verified prices are judged, because deal-site
+  headlines are too noisy.
+- **Promo codes** (`codes.py`): codes are pulled from deal text ("use promo code EARLYBF", "w/ code BFCM26") and from brand
+  homepage banners ("Code: EARLY"), and shown as copy buttons. Prose like "no code needed" or "zip code" is ignored.
+- **Stack hints** (`stacks.py`): each build reads Card Scout's published `cards.json`. Deals and brand sales at a store with
+  Rakuten cash back or a recent card-linked offer get 💸 and 💳 badges and a small score bonus. If Card Scout is down,
+  nothing breaks.
+
+## Breakage alerts
+
+`tools/health.py` runs as the last CI step, even when earlier steps fail. It checks the fresh data against floors:
+85%+ of sources online (Reddit excluded), 60+ of 81 brand stores readable, 1,000+ deals, 400+ clothing deals, and the
+critical feeds. It keeps one GitHub issue, **"Site health: needs attention"**, which opens when something is wrong
+(GitHub emails the owner), updates when the problem list changes, and closes itself when the next build passes. No open
+issue means nothing to do.
+
+## Page weight
+
+The page embeds only what it uses: empty or default fields are omitted (the page restores them on load), brand-store
+summaries are dropped, tracking parameters are stripped from links, non-clothing deals scoring below
+`MIN_NONCLOTHING_SCORE` are left off, and each brand carries at most 12 thumbnails. Off-screen cards use
+`content-visibility` so phones render faster. Roughly 3.2 MB → 1.6 MB raw (600 KB → 360 KB compressed).
+
 ## Memory between runs
 
 `history.py` downloads the previous `history.json` from the live site at the start of each run, so nothing extra is
@@ -73,7 +101,10 @@ lowest-price signals, and new-promo flags.
 | `scoring.py` | Classification, pricing math, Deal Quality Score, de-duplication, diversification |
 | `gender.py` | Who a clothing deal is for |
 | `brands.py` | Brand baselines, premium list, brand audience, Shopify store list |
-| `history.py` | Run-to-run memory |
+| `history.py` | Run-to-run memory and the fake-sale detector |
+| `codes.py` | Promo-code extraction |
+| `stacks.py` | Card Scout stack hints (Rakuten and card-linked offers per store) |
+| `tools/health.py` | Breakage alerts (the self-closing health issue) |
 | `config.py` | Feeds, keyword searches, clothing terms, categories, knobs, `CARD_SCOUT_URL` |
 | `template.html` | The site (data is embedded at build time) |
 | `tests/` | `test_scoring.py` (logic regressions) and `smoke.js` (renders every tab and filter, then clicks every control, against fresh data). Both run in CI before deploy |

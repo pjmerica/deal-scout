@@ -47,3 +47,7 @@ class Item:
     tier: str = ""
     boost: float = 0.0
     sources: list[str] = field(default_factory=list)
+    codes: list[str] = field(default_factory=list)       # promo codes found in the text / banner
+    price_note: str = ""                                 # 'Tracked since Nov 18: $59–$79'
+    stack: str = ""                                      # key into data['stacks'] (Card Scout hints)
+    stack_pts: float = 0.0

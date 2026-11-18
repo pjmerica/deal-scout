@@ -153,6 +153,69 @@ def test_gender_on_scored_items():
     assert "Men's" in mk("Adidas men's hyperboost shoes - $59.50 (reg $170)").gender
 
 
+def test_promo_codes():
+    import codes
+    assert codes.extract('At Nike, use promo code "EARLYBF" to get these') == ["EARLYBF"]
+    assert codes.extract('Apply coupon code "Fluxbigsale" at checkout') == ["Fluxbigsale"]
+    assert codes.extract("35% Off Everything Code: EARLY Copied!") == ["EARLY"]
+    assert codes.extract("w/ code BFCM26 + free shipping") == ["BFCM26"]
+    for prose in ["no code needed", "zip code 90210", "Promo code required at checkout", "CODE NEEDED"]:
+        assert codes.extract(prose) == [], prose
+    assert mk('Nike Jordan Session Shoes $45', 'use promo code "EARLYBF" to get them').codes == ["EARLYBF"]
+
+
+def test_fake_sale_detector():
+    import datetime
+    import history
+    from models import NOW
+    old = (NOW - datetime.timedelta(days=3)).isoformat()
+    h = {"items": {"shop.com:jacket": {"first": old, "last": old, "price": 60.0, "min": 60.0, "pct": 40,
+                                       "orig": 100.0, "series": [[old, 60.0]]}},
+         "promos": {}, "runs": [old]}
+    it = Item(title="Brand: Jacket", link="https://shop.com/products/jacket", source="Brand store: X", kind="deal",
+              price=72.0, orig_price=180.0, pct_off=60, history_key="shop.com:jacket")
+    it.flags.append("retailer_verified")
+    history.apply(h, [it])
+    assert "orig_raised" in it.flags and "was_cheaper" in it.flags
+    assert any("Original price raised $100 → $180" in w for w in it.warnings)
+    assert it.price_note.startswith("Tracked since")
+    # the same price movement on a deal-site headline (not retailer data) is not judged
+    h2 = {"items": {"sd:1": dict(h["items"]["shop.com:jacket"])}, "promos": {}, "runs": [old]}
+    feed = Item(title="Jacket $72", link="https://slickdeals.net/f/1-x", source="Slickdeals", kind="deal",
+                price=72.0, orig_price=180.0, thread_id="1")
+    history.apply(h2, [feed])
+    assert "orig_raised" not in feed.flags and "was_cheaper" not in feed.flags
+
+
+def test_fake_sale_lowers_score():
+    a = mk("Brand: Wool Coat $72 (reg $180)")
+    b = mk("Brand: Wool Coat $72 (reg $180)")
+    b.flags += ["orig_raised", "was_cheaper"]
+    b.reasons, b.warnings = [], []
+    scoring.score_deal(b)
+    assert b.score < a.score
+
+
+def test_stack_matching():
+    import stacks
+    st = {"macys": {"name": "Macy's", "rakuten": "10%", "rpct": 10.0}, "saksfifthavenue": {"name": "Saks"},
+          "saksoff5th": {"name": "Saks OFF 5TH"}, "nordstrom": {"name": "Nordstrom", "offers": [{"label": "Amex Offer"}]}}
+    assert stacks.match(st, ["Macy's"]) == "macys"
+    assert stacks.match(st, ["Nordstrom"]) == "nordstrom"
+    assert stacks.match(st, ["Saks"]) == ""          # ambiguous between two Saks stores: no badge
+    assert stacks.match(st, ["Amazon"]) == ""
+    it = Item(title="Macy's: Coat 50% off", link="x", source="T", kind="deal", store="Macy's")
+    stacks.apply(st, [it], [])
+    assert it.stack == "macys" and it.stack_pts > 0
+
+
+def test_strip_tracking():
+    import deal_scout
+    assert deal_scout.strip_tracking("https://slickdeals.net/f/1-x?utm_source=rss&utm_medium=RSS2") == "https://slickdeals.net/f/1-x"
+    assert deal_scout.strip_tracking("https://www.dealnews.com/x.html?iref=rss-c206") == "https://www.dealnews.com/x.html"
+    assert deal_scout.strip_tracking("https://shop.com/p?color=red&utm_x=1") == "https://shop.com/p?color=red"
+
+
 def test_baseline_lookup():
     assert BR.baseline_for(["Patagonia"]) == 10
     assert BR.baseline_for([], "Old Navy") == 50

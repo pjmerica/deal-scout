@@ -78,6 +78,14 @@ nav.tabs button[aria-selected="true"]{background:var(--text);color:var(--bg);bor
 .b.tier{background:var(--gold-soft);color:var(--gold)}
 .b.warn{background:var(--warn-soft);color:var(--warn)}
 .b.votes{color:var(--text)}
+a.b.stack{background:var(--card-soft);color:var(--card);text-decoration:none}
+a.b.stack:hover{text-decoration:underline}
+.codes{display:flex;flex-wrap:wrap;gap:6px}
+.code{font:600 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;padding:3px 8px;border-radius:6px;
+  border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.promo .code{margin-left:6px;vertical-align:middle}
+.pnote{margin:0;font-size:12px;color:var(--muted)}
+.grid>.item{content-visibility:auto;contain-intrinsic-size:auto 420px}
 .why{margin:0;padding:0;list-style:none;font-size:12.5px;color:var(--text)}
 .why li{padding-left:14px;position:relative;line-height:1.4}
 .why li:before{content:"✓";position:absolute;left:0;color:var(--good);font-weight:700}
@@ -167,6 +175,12 @@ const DATA = /*__DATA__*/null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const items=(DATA&&DATA.items)||[];
+const STACKS=(DATA&&DATA.stacks)||{};
+for(const i of items){ // payload omits empty/default fields; restore them once
+  for(const k of ['reasons','warnings','gender','brands','clothing_tags','flags','codes']) if(!i[k]) i[k]=[];
+  if(!i.sources) i.sources=[i.source];
+  if(i.summary==null) i.summary=''; if(i.store==null) i.store=''; if(i.age_days==null) i.age_days=0;
+}
 const fmtAge=d=>d<1/24?'just now':d<1?Math.round(d*24)+'h ago':Math.round(d)+'d ago';
 const money=v=>v==null?'':'$'+(v>=100?Math.round(v).toLocaleString():(+v).toFixed(2).replace(/\.00$/,''));
 
@@ -269,17 +283,33 @@ function itemHTML(i){
   if(i.is_clothing) (i.clothing_tags.length?i.clothing_tags:['Clothing']).slice(0,2).forEach(t=>badges.push(`<span class="b cl">${esc(t)}</span>`));
   else if(i.kind==='deal'&&i.category&&i.category!=='Other') badges.push(`<span class="b">${esc(i.category)}</span>`);
   i.gender.slice(0,2).forEach(g=>badges.push(`<span class="b">${g==='Everyone'?'Men &amp; Women':esc(g)}</span>`));
-  const why=i.reasons.filter(r=>!/^\d+% off$/.test(r)).slice(0,3).map(r=>`<li>${esc(r)}</li>`).join('')+i.warnings.slice(0,2).map(w=>`<li class="w">${esc(w)}</li>`).join('');
+  const st=i.stack&&STACKS[i.stack];
+  if(st&&st.rakuten) badges.push(`<a class="b stack" href="${esc(st.rurl)}" target="_blank" rel="noopener" title="Rakuten cash back at ${esc(st.name)} (from Card Scout)">💸 Rakuten ${esc(st.rakuten)}${st.elev?' ↑':''}</a>`);
+  if(st&&st.offers) st.offers.slice(0,1).forEach(o=>badges.push(`<a class="b stack" href="${esc(o.link)}" target="_blank" rel="noopener" title="${esc(o.title)}">💳 ${esc(o.label)}</a>`));
+  const codes=i.codes.length?`<div class="codes">${i.codes.map(codeBtn).join('')}</div>`:'';
+  const note=i.price_note?`<p class="pnote" title="From Deal Scout's own price history for this item">📈 ${esc(i.price_note)}</p>`:'';
+  const why=i.reasons.filter(r=>!/^\d+% off$/.test(r)&&!/^Stacks with Rakuten| (?:Offer|Deal|offer|deal) at /.test(r)).slice(0,3).map(r=>`<li>${esc(r)}</li>`).join('')+i.warnings.slice(0,2).map(w=>`<li class="w">${esc(w)}</li>`).join('');
   const price=i.price!=null?`<span class="price">${money(i.price)}${i.orig_price&&i.orig_price>i.price?`<s>${money(i.orig_price)}</s>`:''}</span>`:'';
-  const img=i.image?`<div class="imgbox"><img loading="lazy" src="${esc(i.image)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`:'';
+  const img=i.image?`<div class="imgbox"><img loading="lazy" decoding="async" src="${esc(i.image)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`:'';
   const src=i.sources.length>1?`${esc(i.source)} +${i.sources.length-1}`:esc(i.source);
   return `<article class="item t-${esc(i.tier||'none')}">${img}<div class="body">
     <h3><a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.title)}</a></h3>
     <div class="badges">${badges.join('')}</div>
     ${why?`<ul class="why">${why}</ul>`:(i.summary?`<p class="summary">${esc(i.summary)}</p>`:'')}
-    <div class="row">${price}<span class="meta">${esc(i.store&&!i.source.includes(i.store)?i.store+' · ':'')}${src}${i.published&&i.age_days>0.04?' · '+fmtAge(i.age_days):''}</span><span class="score" title="Deal Scout quality score">★ ${Math.round(i.score)}</span></div>
+    ${codes}${note}
+    <div class="row">${price}<span class="meta">${esc(i.store&&!i.source.includes(i.store)?i.store+' · ':'')}${src}${i.age_days>0.04?' · '+fmtAge(i.age_days):''}</span><span class="score" title="Deal Scout quality score">★ ${Math.round(i.score)}</span></div>
   </div></article>`;
 }
+
+function codeBtn(c){return `<button class="code" data-code="${esc(c)}" title="Copy promo code">${esc(c)} <span aria-hidden="true">⧉</span></button>`;}
+document.addEventListener('click',e=>{
+  const b=e.target&&e.target.closest?e.target.closest('[data-code]'):null; if(!b) return;
+  const code=b.dataset.code, done=()=>{const t=b.innerHTML; b.textContent='Copied ✓'; setTimeout(()=>{b.innerHTML=t},1400);};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done,()=>fallbackCopy(code,done));
+  else fallbackCopy(code,done);
+});
+function fallbackCopy(text,done){const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); done();}catch(e){} ta.remove();}
 
 function chipRow(list,set,key){
   return `<div class="chips">${list.map(x=>`<button class="chip ${set.has(x)?'on':''}" data-k="${key}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
@@ -384,7 +414,11 @@ function renderBrands(main){
     <p class="section-note">Read straight from each brand's own store: live sale prices against the original price, in-stock items only, and the promo shown in the homepage banner. Brands are ranked by how strong the sale is compared with how often that brand usually discounts.</p>
     <div class="brands">${list.map(s=>`<div class="brand">
       <h3>${esc(s.store)} ${s.baseline<=15?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
-      ${s.promo?`<div class="promo">${esc(s.promo)}</div>`:''}
+      ${s.promo?`<div class="promo">${esc(s.promo)}${s.promo_code?` ${codeBtn(s.promo_code)}`:''}</div>`:''}
+      ${(()=>{const st=s.stack&&STACKS[s.stack]; if(!st) return ''; const parts=[];
+        if(st.rakuten) parts.push(`<a class="b stack" href="${esc(st.rurl)}" target="_blank" rel="noopener">💸 Rakuten ${esc(st.rakuten)}${st.elev?' ↑':''}</a>`);
+        (st.offers||[]).slice(0,2).forEach(o=>parts.push(`<a class="b stack" href="${esc(o.link)}" target="_blank" rel="noopener" title="${esc(o.title)}">💳 ${esc(o.label)}</a>`));
+        return parts.length?`<div class="badges">${parts.join('')}</div>`:'';})()}
       <div class="bstats">${s.on_sale?`<span><b>${countFor(s)}</b> ${state.gender==='all'?'':esc(G_LABEL[state.gender].toLowerCase())+'\'s '}items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}</div>
       ${topFor(s).length?`<div class="thumbs">${topFor(s).slice(0,3).map(t=>`<a class="thumb" href="${esc(t.link)}" target="_blank" rel="noopener">${t.image?`<img loading="lazy" src="${esc(t.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:''}<span>${esc(t.title.slice(0,46))}</span><span><b>${money(t.price)}</b> <s>${money(t.orig)}</s> · ${t.pct}%</span></a>`).join('')}</div>`:''}
       <a class="shop" href="${esc(s.url)}" target="_blank" rel="noopener">Shop the sale →</a>
@@ -404,6 +438,9 @@ function renderHow(main){
     ['Quality & stock','Premium brands that rarely discount score higher. Brand-store prices are read from the retailer itself, and items with few sizes left score lower.'],
     ['Catches','Scores drop for in-store only or YMMV, membership required, refurbished, rebates, sponsored posts and "sold out" or "expired" signals. These are shown in amber on each deal.'],
     ['Freshness','Scores halve every 5 days. There\'s a small bump when a deal ends soon, and expired deals are removed.'],
+    ['Fake-sale detector','Deal Scout records every brand-store item\'s price and "original" price on each run. If the original price was raised after we first saw it (inflate-then-discount), or the item was cheaper at some point in the last 14 days, the deal gets an amber warning and a lower score. Each item also shows its tracked price range.'],
+    ['Promo codes','Codes are pulled from deal text ("use promo code EARLYBF", "w/ code BFCM26") and from brands\' homepage banners. Tap a code to copy it.'],
+    ['Stack hints','Rakuten cash back and recent card-linked offers (Amex, Chase, Capital One…) at the same store come from the companion site Card Scout. They show as 💸 and 💳 badges and add a small score bonus.'],
     ['Clothing bias',`Clothing scores are multiplied by ${DATA.clothing_multiplier} with a flat bonus added. Tiers are percentiles: Exceptional is the top 3%, Great the top 12%, Good the top 35%.`],
   ];
   const s=[...DATA.sources].sort((a,b)=>b.ok-a.ok||b.count-a.count);

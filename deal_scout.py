@@ -29,7 +29,8 @@ import webbrowser
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote_plus
+import re
+from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 
 import requests
 
@@ -37,6 +38,7 @@ import config as C
 import history
 import scoring
 import shopify
+import stacks as STACKS
 from feeds import clean_text, fetch, parse_feed
 from models import NOW, Item
 
@@ -122,27 +124,47 @@ def gather_feeds(quick: bool) -> tuple[list[Item], list[dict]]:
     return items, status
 
 
+TRACKING = re.compile(r"^(?:utm_|iref$|ref$|ref_$|cmpid$|cid$|clickid$|affid$|mc_)", re.I)
+
+
+def strip_tracking(url: str) -> str:
+    """Drop analytics query params (utm_*, iref...) but keep the host exactly as given."""
+    try:
+        p = urlsplit(url)
+    except ValueError:
+        return url
+    q = [(k, v) for k, v in parse_qsl(p.query, keep_blank_values=True) if not TRACKING.match(k)]
+    return urlunsplit((p.scheme, p.netloc, p.path, urlencode(q), p.fragment))
+
+
 # ---------------------------------------------------------------------------
-def write_outputs(items, status, brand_sales, hist) -> Path:
+def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
     SITE.mkdir(exist_ok=True)
     deals = [i for i in items if i.kind == "deal"]
     arts = [i for i in items if i.kind == "article"]
-    keep = deals[:2400] + arts[:200]
+    # Page weight: low-scoring non-clothing deals are dropped (they never surface), clothing is all kept.
+    deals = [i for i in deals if i.is_clothing or i.score >= C.MIN_NONCLOTHING_SCORE]
+    keep = deals[:2400] + arts[:120]
     keep.sort(key=lambda x: -x.score)
-    idx = {id(it): n for n, it in enumerate(keep)}
 
-    best = scoring.diversify([i for i in keep if i.kind == "deal"], 60, per_store=1, per_brand=1)
-    best_clothing = scoring.diversify([i for i in keep if i.kind == "deal" and i.is_clothing], 48, per_store=1, per_brand=1)
-    cats = sorted({i.category for i in keep if i.kind == "deal"})
-    best_by_cat = {c: [idx[id(i)] for i in scoring.diversify([x for x in keep if x.kind == "deal" and x.category == c], 12)]
-                   for c in cats}
+    DROP = {"boost", "feed_tags", "history_key", "thread_id", "comments", "store_median", "published",
+            "expires", "stack_pts"}
 
     def slim(it: Item) -> dict:
-        d = asdict(it)
-        for k in ("boost", "feed_tags", "history_key", "thread_id", "comments", "store_median"):
-            d.pop(k, None)
-        d["summary"] = d["summary"][:300]
-        d["age_days"] = round(d["age_days"], 2)
+        """Only what the page uses, without empty/default values (the page fills defaults back in)."""
+        d = {}
+        for k, v in asdict(it).items():
+            if k in DROP or v is None or v is False or v == "" or v == [] or (k == "variants" and v == 1):
+                continue
+            d[k] = v
+        if it.source.startswith("Brand store"):
+            d.pop("summary", None)  # boilerplate for brand-store items
+        elif d.get("summary"):
+            d["summary"] = d["summary"][:200]
+        if len(it.sources) <= 1:
+            d.pop("sources", None)
+        d["link"] = strip_tracking(it.link)
+        d["age_days"] = round(it.age_days, 2)
         return d
 
     for s in brand_sales:
@@ -164,11 +186,13 @@ def write_outputs(items, status, brand_sales, hist) -> Path:
             "new": sum(1 for i in keep if i.is_new),
             "sources_ok": sum(1 for s in status if s["ok"]), "sources_total": len(status),
             "runs_tracked": len(hist.get("runs", [])),
+            "stacked": sum(1 for i in keep if i.stack), "stack_stores": len(stack_data),
+            "fake_sale_flags": sum(1 for i in keep if {"orig_raised", "was_cheaper"} & set(i.flags)),
+            "with_codes": sum(1 for i in keep if i.codes),
         },
         "items": [slim(i) for i in keep],
-        "best": [idx[id(i)] for i in best],
-        "best_clothing": [idx[id(i)] for i in best_clothing],
-        "best_by_cat": best_by_cat,
+        "stacks": {k: v for k, v in stack_data.items() if any(i.stack == k for i in keep)
+                   or any(s.get("stack") == k for s in brand_sales)},
         "brand_sales": brand_sales,
         "sources": status,
         "card_scout_url": C.CARD_SCOUT_URL,
@@ -178,7 +202,7 @@ def write_outputs(items, status, brand_sales, hist) -> Path:
 
     cols = ["score", "tier", "kind", "category", "is_clothing", "title", "store", "price", "orig_price", "pct_off",
             "saved", "votes", "is_new", "is_bf", "clothing_tags", "gender", "brands",
-            "reasons", "warnings", "source", "published", "link"]
+            "reasons", "warnings", "codes", "price_note", "source", "published", "link"]
     with open(SITE / "deals.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(cols)
@@ -214,13 +238,16 @@ def main() -> int:
         feed_items, feed_status = f_feeds.result()
         shop_items, brand_sales, shop_status = f_shop.result()
     print(f"  brand stores: {len(shop_items)} items kept from {len(brand_sales)} stores")
-    status = feed_status + shop_status
+    stack_data, stack_status = STACKS.load(C.CARD_SCOUT_URL)
+    print(f"  card scout stack data: {len(stack_data)} stores")
+    status = feed_status + shop_status + [stack_status]
 
     items = scoring.process(feed_items + shop_items)
     history.apply(hist, items)
     history.apply_promos(hist, brand_sales)
+    STACKS.apply(stack_data, items, brand_sales)
     scoring.score_all(items)
-    out = write_outputs(items, status, brand_sales, hist)
+    out = write_outputs(items, status, brand_sales, hist, stack_data)
 
     deals = [x for x in items if x.kind == "deal"]
     print(f"\nKept {len(items)} items ({sum(i.is_clothing for i in deals)} clothing deals) in {time.time() - t0:.0f}s")
