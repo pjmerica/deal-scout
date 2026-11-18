@@ -92,25 +92,6 @@ SHOPIFY_STORES = {
     "Darn Tough": "darntough.com", "Gymshark": "gymshark.com", "Ten Thousand": "tenthousand.cc",
 }
 
-# Clothing / department stores to look up on Rakuten (matched against its store directory).
-RAKUTEN_CLOTHING = [
-    "Old Navy", "Gap", "Gap Factory", "Banana Republic", "Banana Republic Factory", "J.Crew", "J.Crew Factory",
-    "Levi's", "Nike", "adidas", "Under Armour", "The North Face", "Columbia Sportswear", "Nordstrom",
-    "Nordstrom Rack", "Macy's", "Kohl's", "JCPenney", "Saks Fifth Avenue", "Saks OFF 5TH", "Bloomingdale's",
-    "Neiman Marcus", "Express", "Abercrombie & Fitch", "Hollister", "American Eagle", "Aerie", "L.L.Bean",
-    "Lands' End", "Eddie Bauer", "UNIQLO", "H&M", "ASOS", "Zappos", "DSW", "Famous Footwear", "Foot Locker",
-    "Finish Line", "New Balance", "PUMA", "Reebok", "UGG", "Dr. Martens", "Timberland", "Sorel", "Merrell",
-    "Crocs", "Skechers", "Converse", "Vans", "HOKA", "REI", "Backcountry", "Dick's Sporting Goods", "Champion",
-    "Hanes", "Calvin Klein", "Tommy Hilfiger", "Ralph Lauren", "Brooks Brothers", "Jos. A. Bank",
-    "Men's Wearhouse", "Bonobos", "Everlane", "Todd Snyder", "Madewell", "Anthropologie", "Free People",
-    "Urban Outfitters", "Athleta", "Fabletics", "LOFT", "Ann Taylor", "Chico's", "Torrid", "Lane Bryant",
-    "Carter's", "The Children's Place", "Vineyard Vines", "Lucky Brand", "Guess", "Steve Madden", "Coach Outlet",
-    "Kate Spade", "Michael Kors", "Allbirds", "Patagonia", "Lululemon", "Quince", "Nautica", "Perry Ellis",
-    "Cole Haan", "Clarks", "Birkenstock", "Saucony", "Brooks Running", "ASICS", "Mango", "Revolve", "Shopbop",
-    "Farfetch", "SSENSE", "Mr Porter", "Net-a-Porter", "Taylor Stitch", "Faherty", "Rhone", "Vuori", "Cotopaxi",
-    "Duluth Trading", "Carhartt", "Wrangler", "Lee", "Dockers", "Spanx", "SKIMS", "Aritzia", "Zara",
-]
-
 
 # Who a brand mainly sells to (used when a product title doesn't say).
 BRAND_AUDIENCE = {

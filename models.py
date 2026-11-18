@@ -11,7 +11,7 @@ class Item:
     title: str
     link: str
     source: str
-    kind: str                      # deal | article | card
+    kind: str                      # deal | article
     published: str = ""            # ISO timestamp
     age_days: float = 0.0
     summary: str = ""
@@ -42,8 +42,6 @@ class Item:
     flags: list[str] = field(default_factory=list)       # frontpage, popular, price_history, ...
     reasons: list[str] = field(default_factory=list)     # human-readable "why it ranks"
     warnings: list[str] = field(default_factory=list)    # catches: membership, in-store, ...
-    card_category: str = ""
-    bonus_value: int | None = None
     score: float = 0.0
     tier: str = ""
     boost: float = 0.0

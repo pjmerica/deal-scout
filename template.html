@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deal Scout</title>
-<meta name="description" content="The best Black Friday deals (clothing-first), ranked by an explainable quality score, plus the best credit card offers and cash-back rates. Updated every 3 hours.">
+<meta name="description" content="The best Black Friday deals, clothing first, ranked by a quality score that shows its reasons. Brand-store sales, Men/Women/Kids filter. Updated every 3 hours.">
 <style>
 :root{
   --bg:#f6f5f2;--surface:#fff;--surface-2:#efede8;--text:#1b1a17;--muted:#67645e;--line:#e2dfd8;
@@ -32,6 +32,7 @@ h1{margin:0;font-size:28px;letter-spacing:-.02em}
 h1 span{color:var(--accent)}
 h2{font-size:19px;margin:22px 0 4px;letter-spacing:-.01em}
 .sub{color:var(--muted);margin:4px 0 0;max-width:760px}
+.sub a{color:var(--accent)}
 .countdown{display:inline-block;margin-top:8px;font-weight:600;font-size:13px;background:var(--bf);color:var(--bf-text);padding:3px 10px;border-radius:999px}
 .theme-btn{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:16px 0 6px}
@@ -73,7 +74,6 @@ nav.tabs button[aria-selected="true"]{background:var(--text);color:var(--bg);bor
 .b.off{background:var(--good-soft);color:var(--good)}
 .b.cl{background:var(--accent-soft);color:var(--accent)}
 .b.bf{background:var(--bf);color:var(--bf-text)}
-.b.cc{background:var(--card-soft);color:var(--card)}
 .b.new{background:var(--violet-soft);color:var(--violet)}
 .b.tier{background:var(--gold-soft);color:var(--gold)}
 .b.warn{background:var(--warn-soft);color:var(--warn)}
@@ -115,12 +115,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr:last-child td{border-bottom:0}
 td small{color:var(--muted)}
 .ok{color:var(--good)}.bad{color:var(--accent)}
-.playbook{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin:14px 0 40px}
-.play{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
-.play h3{margin:0 0 6px;font-size:16px}
-.play p{margin:0;color:var(--muted)}
-.play .n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--card-soft);color:var(--card);
-  align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-right:8px}
 .method{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin:12px 0 24px}
 .method div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
 .method h3{margin:0 0 4px;font-size:15px}
@@ -135,7 +129,7 @@ footer{color:var(--muted);font-size:13px;padding:14px 0 40px;border-top:1px soli
     <div class="top">
       <div>
         <h1>Deal <span>Scout</span></h1>
-        <p class="sub">The best Black Friday deals, clothing first. Each deal is ranked by a quality score that shows its reasons. Credit card offers and cash-back rates are on their own tabs. <span id="updated"></span></p>
+        <p class="sub">The best Black Friday deals, clothing first. Each deal is ranked by a quality score that shows its reasons. Credit card offers and cash back are on <a id="csLink" href="#">Card Scout</a>. <span id="updated"></span></p>
         <span class="countdown" id="countdown"></span>
       </div>
       <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">◐ Theme</button>
@@ -147,7 +141,7 @@ footer{color:var(--muted);font-size:13px;padding:14px 0 40px;border-top:1px soli
   <main id="main"></main>
 
   <footer>
-    Prices and offers change fast, so confirm them before you buy. Card values are estimates. Clothing deals get a ×<span id="mult"></span> boost.
+    Prices and offers change fast, so confirm them before you buy. Clothing deals get a ×<span id="mult"></span> boost.
     Data: <a href="deals.json">deals.json</a> · <a href="deals.csv">deals.csv</a>
   </footer>
 </div>
@@ -175,6 +169,7 @@ function header(){
   if(!DATA) return;
   document.getElementById('updated').textContent='Updated '+new Date(DATA.generated).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})+'.';
   document.getElementById('mult').textContent=DATA.clothing_multiplier;
+  const cs=document.getElementById('csLink'); if(cs&&DATA.card_scout_url) cs.href=DATA.card_scout_url;
   const now=new Date(), y=now.getFullYear();
   const nov1=new Date(y,10,1), thanks=new Date(y,10,1+((11-nov1.getDay())%7)+21), bf=new Date(thanks.getTime()+86400000);
   const cm=new Date(bf.getTime()+3*86400000);
@@ -184,7 +179,7 @@ function header(){
   const c=DATA.counts;
   document.getElementById('stats').innerHTML=[
     [c.clothing,'clothing deals'],[c.deals,'deals ranked'],[c.brands,'brand stores scanned'],
-    [c.card_offers,'card offers valued'],[c.rakuten,'cash-back rates'],[`${c.sources_ok}/${c.sources_total}`,'sources online']
+    [c.brand_items,'brand sale items read'],[c.new,'new since last check'],[`${c.sources_ok}/${c.sources_total}`,'sources online']
   ].map(([v,l])=>`<div class="stat"><b>${v??0}</b><small>${l}</small></div>`).join('');
 }
 
@@ -192,21 +187,17 @@ const TABS=[
   {id:'best',label:'🏆 Best'},
   {id:'clothing',label:'👕 Clothing',filter:i=>i.is_clothing&&i.kind==='deal',note:'Clothing and footwear deals ranked by quality score. Filter by category, gender or discount.',clothingChips:true},
   {id:'brands',label:'🏷 Brand sales'},
-  {id:'bf',label:'🖤 Black Friday',filter:i=>i.is_bf&&i.kind!=='card',note:'Deals that mention Black Friday, Cyber Monday or doorbusters.',clothingChips:true},
+  {id:'bf',label:'🖤 Black Friday',filter:i=>i.is_bf,note:'Deals that mention Black Friday, Cyber Monday or doorbusters.',clothingChips:true},
   {id:'all',label:'🔥 All deals',filter:i=>i.kind==='deal',note:'Every deal across categories. Clothing still gets its boost.',catChips:true},
-  {id:'cards',label:'💳 Credit cards'},
-  {id:'cashback',label:'💸 Cash back'},
   {id:'roundups',label:'📰 Sale roundups',filter:i=>i.kind==='article',note:'Sale roundups from fashion and deal editors.'},
-  {id:'playbook',label:'📋 Card playbook'},
   {id:'how',label:'⚙️ How it works'},
 ];
 const CLOTH_CATS=['Outerwear','Tops','Bottoms','Dresses & Sets','Footwear','Activewear','Basics & Underwear','Accessories'];
 const GENDERS=["Men's","Women's","Kids"];
-const CARD_CATS=['Shopping & Card-Linked Offers','Sign-up Bonuses','Bank & Brokerage Bonuses','Points, Awards & Transfers','Card & Points News'];
 const DEAL_CATS=[...new Set(items.filter(i=>i.kind==='deal').map(i=>i.category))].sort();
 
-let state={tab:'best',q:'',sort:'score',cats:new Set(),cardcats:new Set(),dcats:new Set(),source:'',minOff:0,limit:60,
-  bestClothing:false,cardType:'personal',promoOnly:false,newOnly:false,gender:'all',inclUnlabeled:false};
+let state={tab:'best',q:'',sort:'score',cats:new Set(),dcats:new Set(),source:'',minOff:0,limit:60,
+  bestClothing:false,promoOnly:false,newOnly:false,gender:'all',inclUnlabeled:false};
 try{const t=localStorage.getItem('ds-tab'); if(t&&TABS.some(x=>x.id===t)) state.tab=t;}catch(e){}
 try{const g=localStorage.getItem('ds-gender'); if(['all',"Men's","Women's",'Kids'].includes(g)) state.gender=g;}catch(e){}
 
@@ -256,7 +247,7 @@ function renderTabs(){
     return `<button role="tab" data-tab="${t.id}" aria-selected="${state.tab===t.id}">${t.label}${n!==''?` <small style="opacity:.6">${n}</small>`:''}</button>`;
   }).join('');
   document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
-    state.tab=b.dataset.tab; state.limit=60; state.q=''; state.cats.clear(); state.genders.clear(); state.cardcats.clear(); state.dcats.clear(); state.source='';
+    state.tab=b.dataset.tab; state.limit=60; state.q=''; state.cats.clear(); state.dcats.clear(); state.source='';
     try{localStorage.setItem('ds-tab',state.tab)}catch(e){}
     renderTabs(); render(); window.scrollTo({top:Math.min(window.scrollY,document.getElementById('tabs').offsetTop)});
   });
@@ -267,15 +258,13 @@ function itemHTML(i){
   if(i.tier&&i.kind==='deal') badges.push(`<span class="b tier">${i.tier==='Exceptional'?'★ ':''}${esc(i.tier)}</span>`);
   if(i.is_new) badges.push(`<span class="b new">NEW</span>`);
   if(i.pct_off) badges.push(`<span class="b off">${i.pct_off}% off</span>`);
-  if(i.kind==='card'&&i.bonus_value) badges.push(`<span class="b off">≈$${i.bonus_value.toLocaleString()} value</span>`);
   if(i.votes!=null&&i.votes!==0) badges.push(`<span class="b votes">👍 ${i.votes>0?'+':''}${i.votes}</span>`);
   if(i.is_bf) badges.push(`<span class="b bf">Black Friday</span>`);
-  if(i.is_clothing&&i.kind!=='card') (i.clothing_tags.length?i.clothing_tags:['Clothing']).slice(0,2).forEach(t=>badges.push(`<span class="b cl">${esc(t)}</span>`));
+  if(i.is_clothing) (i.clothing_tags.length?i.clothing_tags:['Clothing']).slice(0,2).forEach(t=>badges.push(`<span class="b cl">${esc(t)}</span>`));
   else if(i.kind==='deal'&&i.category&&i.category!=='Other') badges.push(`<span class="b">${esc(i.category)}</span>`);
-  if(i.kind==='card') badges.push(`<span class="b cc">${esc(i.card_category)}</span>`);
-  if(i.kind!=='card') i.gender.slice(0,2).forEach(g=>badges.push(`<span class="b">${g==='Everyone'?'Men &amp; Women':esc(g)}</span>`));
+  i.gender.slice(0,2).forEach(g=>badges.push(`<span class="b">${g==='Everyone'?'Men &amp; Women':esc(g)}</span>`));
   const why=i.reasons.filter(r=>!/^\d+% off$/.test(r)).slice(0,3).map(r=>`<li>${esc(r)}</li>`).join('')+i.warnings.slice(0,2).map(w=>`<li class="w">${esc(w)}</li>`).join('');
-  const price=i.price!=null&&i.kind!=='card'?`<span class="price">${money(i.price)}${i.orig_price&&i.orig_price>i.price?`<s>${money(i.orig_price)}</s>`:''}</span>`:'';
+  const price=i.price!=null?`<span class="price">${money(i.price)}${i.orig_price&&i.orig_price>i.price?`<s>${money(i.orig_price)}</s>`:''}</span>`:'';
   const img=i.image?`<div class="imgbox"><img loading="lazy" src="${esc(i.image)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`:'';
   const src=i.sources.length>1?`${esc(i.source)} +${i.sources.length-1}`:esc(i.source);
   return `<article class="item t-${esc(i.tier||'none')}">${img}<div class="body">
@@ -390,58 +379,13 @@ function renderBrands(main){
     <div class="brands">${list.map(s=>`<div class="brand">
       <h3>${esc(s.store)} ${s.premium?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
       ${s.promo?`<div class="promo">${esc(s.promo)}</div>`:''}
-      <div class="bstats">${s.on_sale?`<span><b>${countFor(s)}</b> ${state.gender==='all'?'':esc(G_LABEL[state.gender].toLowerCase())+'\'s '}items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}${s.rakuten?`<span>Rakuten <b>${esc(s.rakuten)}</b></span>`:''}</div>
+      <div class="bstats">${s.on_sale?`<span><b>${countFor(s)}</b> ${state.gender==='all'?'':esc(G_LABEL[state.gender].toLowerCase())+'\'s '}items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}</div>
       ${topFor(s).length?`<div class="thumbs">${topFor(s).slice(0,3).map(t=>`<a class="thumb" href="${esc(t.link)}" target="_blank" rel="noopener">${t.image?`<img loading="lazy" src="${esc(t.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:''}<span>${esc(t.title.slice(0,46))}</span><span><b>${money(t.price)}</b> <s>${money(t.orig)}</s> · ${t.pct}%</span></a>`).join('')}</div>`:''}
       <a class="shop" href="${esc(s.url)}" target="_blank" rel="noopener">Shop the sale →</a>
     </div>`).join('')||'<div class="empty">Nothing matches.</div>'}</div>
     ${quiet.length?`<p class="section-note">No sale found right now: ${esc(quiet.join(', '))}.</p>`:''}`;
   document.getElementById('promoBtn').onclick=()=>{state.promoOnly=!state.promoOnly;render();};
   bindSearch(render); bindGender();
-}
-
-function renderCards(main){
-  const offers=DATA.card_offers.filter(o=>(state.cardType==='business')===!!o.business).filter(o=>matchQ(o.name+' '+o.offer));
-  let news=items.filter(i=>i.kind==='card');
-  if(state.cardcats.size) news=news.filter(i=>state.cardcats.has(i.card_category));
-  news=news.filter(i=>matchQ(i.title+' '+i.summary));
-  const fee=o=>o.annual_fee==null?'':o.annual_fee===0?'$0':`$${o.annual_fee}${o.fee_waived?' <small>(waived yr 1)</small>':''}`;
-  main.innerHTML=`<div class="controls">
-      <input type="search" id="q" placeholder="Search cards…" value="${esc(state.q)}">
-      <div class="seg" role="group" aria-label="Card type"><button data-v="personal" aria-pressed="${state.cardType==='personal'}">Personal</button><button data-v="business" aria-pressed="${state.cardType==='business'}">Business</button></div>
-    </div>
-    <h2>Best sign-up offers right now</h2>
-    <p class="section-note">Ranked by estimated first-year value (bonus plus credits, minus the annual fee), with extra weight for cards on Doctor of Credit's best-offers list, elevated offers, shopping perks and minimum spends a holiday budget can reach. Values come from Frequent Miler where available. Otherwise they're estimated from the points at conservative values.</p>
-    <div class="tblwrap"><table><thead><tr><th>#</th><th>Card</th><th>Offer</th><th class="n">1st-yr value</th><th class="n">Min spend</th><th class="n">Annual fee</th><th>Why it ranks</th></tr></thead><tbody>
-    ${offers.slice(0,state.limit).map((o,n)=>`<tr><td class="n">${n+1}</td><td><a href="${esc(o.link)}" target="_blank" rel="noopener"><b>${esc(o.name)}</b></a>${o.targeted?' <span class="b warn">Targeted</span>':''}${o.elevated?' <span class="b off">Elevated</span>':''}</td>
-      <td>${esc(o.offer)}</td><td class="n"><b>${o.value?'$'+o.value.toLocaleString():''}</b>${o.value_is_estimate&&o.value?' <small>est.</small>':''}</td>
-      <td class="n">${o.spend?'$'+o.spend.toLocaleString()+(o.months?` <small>/ ${o.months} mo</small>`:''):''}</td><td class="n">${fee(o)}</td>
-      <td><small>${esc(o.reasons.slice(1).join(' · '))}</small>${o.details?`<br><small title="${esc(o.details)}">Credits: ${esc(o.details.slice(0,110))}${o.details.length>110?'…':''}</small>`:''}</td></tr>`).join('')}
-    </tbody></table></div>
-    ${offers.length>state.limit?`<button class="more" id="more">Show more cards (${offers.length-state.limit} left)</button>`:''}
-    <h2>Card news &amp; limited-time offers</h2>
-    <p class="section-note">From Doctor of Credit, The Points Guy, One Mile at a Time, Frequent Miler and more. Card-linked offers at clothing retailers rank higher.</p>
-    ${chipRow(CARD_CATS,state.cardcats,'cardcats')}
-    ${news.length?`<div class="grid">${news.slice(0,60).map(itemHTML).join('')}</div>`:'<div class="empty">Nothing matches.</div>'}`;
-  main.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{state.cardType=b.dataset.v;state.limit=60;render();});
-  const more=document.getElementById('more'); if(more) more.onclick=()=>{state.limit+=60;render();};
-  bindChips(main); bindSearch(render);
-}
-
-function renderCashback(main){
-  const list=DATA.rakuten.filter(r=>matchQ(r.store));
-  main.innerHTML=`<div class="controls"><input type="search" id="q" placeholder="Search stores…" value="${esc(state.q)}"></div>
-    <p class="section-note">Current Rakuten cash back at clothing and department stores, read live from Rakuten. Rates marked <b>Elevated</b> are above what Deal Scout has seen before for that store. Combine with a card-linked offer and your best card (see the Card playbook).</p>
-    <div class="tblwrap"><table><thead><tr><th>Store</th><th class="n">Cash back now</th><th class="n">Usual</th><th class="n">Highest seen</th><th></th></tr></thead><tbody>
-    ${list.map(r=>`<tr><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.store)}</a>${r.elevated?' <span class="b off">Elevated</span>':''}</td>
-      <td class="n"><b>${esc(r.rate)}</b></td><td class="n">${r.usual!=null?r.usual+'%':''}</td><td class="n">${r.max_seen!=null?r.max_seen+'%':''}</td>
-      <td><small>${r.pct>=8?'Strong rate':r.pct===0?'No cash back':''}</small></td></tr>`).join('')}
-    </tbody></table></div>`;
-  bindSearch(render);
-}
-
-function renderPlaybook(main){
-  main.innerHTML=`<p class="section-note" style="margin-top:14px">How to get the most out of your cards on Black Friday purchases. Live offers are on the Credit cards and Cash back tabs.</p>
-  <div class="playbook">${DATA.playbook.map((p,n)=>`<div class="play"><h3><span class="n">${n+1}</span>${esc(p.title)}</h3><p>${esc(p.body)}</p></div>`).join('')}</div>`;
 }
 
 function renderHow(main){
@@ -453,9 +397,8 @@ function renderHow(main){
     ['Editor validation','DealNews staff picks. Deals found independently by several sources get a bump.'],
     ['Quality & stock','Premium brands that rarely discount score higher. Brand-store prices are read from the retailer itself, and items with few sizes left score lower.'],
     ['Catches','Scores drop for in-store only or YMMV, membership required, refurbished, rebates, sponsored posts and "sold out" or "expired" signals. These are shown in amber on each deal.'],
-    ['Freshness','Scores halve every 5 days for deals and every 10 days for card news. There\'s a small bump when a deal ends soon, and expired deals are removed.'],
+    ['Freshness','Scores halve every 5 days. There\'s a small bump when a deal ends soon, and expired deals are removed.'],
     ['Clothing bias',`Clothing scores are multiplied by ${DATA.clothing_multiplier} with a flat bonus added. Tiers are percentiles: Exceptional is the top 3%, Great the top 12%, Good the top 35%.`],
-    ['Card offers','Ranked by first-year value: Frequent Miler\'s estimate where available, otherwise points times a conservative value plus cash, minus the fee. Being on Doctor of Credit\'s list, an elevated offer, shopping perks and a reachable minimum spend add points.'],
   ];
   const s=[...DATA.sources].sort((a,b)=>b.ok-a.ok||b.count-a.count);
   main.innerHTML=`<h2>How the score works</h2><div class="method">${M.map(([t,p])=>`<div><h3>${esc(t)}</h3><p>${esc(p)}</p></div>`).join('')}</div>
@@ -468,7 +411,7 @@ function renderHow(main){
 
 function render(){
   const main=document.getElementById('main'), tab=TABS.find(t=>t.id===state.tab);
-  const fn={best:renderBest,brands:renderBrands,cards:renderCards,cashback:renderCashback,playbook:renderPlaybook,how:renderHow}[tab.id];
+  const fn={best:renderBest,brands:renderBrands,how:renderHow}[tab.id];
   if(fn) fn(main); else renderList(main,tab);
 }
 

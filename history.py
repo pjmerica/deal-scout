@@ -2,8 +2,7 @@
 Run-to-run memory. On GitHub Actions the previous history.json is downloaded from
 the live Pages site (no commits needed); locally it's read from site/history.json.
 
-Tracks, per deal key: first seen, last price, lowest price seen. Per Rakuten store:
-rate history. Per brand store: when its sitewide promo first appeared.
+Tracks, per deal key: first seen, last price, lowest price seen. Per brand store: when its sitewide promo first appeared.
 """
 from __future__ import annotations
 
@@ -37,7 +36,6 @@ def load(local: Path) -> dict:
             data = None
     data = data or {}
     data.setdefault("items", {})
-    data.setdefault("rakuten", {})
     data.setdefault("promos", {})
     data.setdefault("runs", [])
     return data
@@ -95,20 +93,6 @@ def apply(hist: dict, items: list[Item]) -> None:
             h["min"] = min(x for x in (low, it.price) if x)
         if it.pct_off:
             h["pct"] = max(h.get("pct") or 0, it.pct_off)
-
-
-def apply_rakuten(hist: dict, rates: list[dict]) -> None:
-    R = hist["rakuten"]
-    for r in rates:
-        h = R.setdefault(r["slug"], {"rates": []})
-        series = h["rates"]
-        if not series or series[-1][1] != r["pct"]:
-            series.append([NOW.isoformat(), r["pct"]])
-        h["rates"] = series[-40:]
-        vals = [v for _, v in series]
-        r["usual"] = sorted(vals)[len(vals) // 2] if vals else r["pct"]
-        r["elevated"] = len(vals) > 1 and r["pct"] > r["usual"]
-        r["max_seen"] = max(vals) if vals else r["pct"]
 
 
 def apply_promos(hist: dict, summaries: list[dict]) -> None:

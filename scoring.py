@@ -43,14 +43,8 @@ WEAK = set(C.WEAK_RETAILERS)
 FALSE_POS_RE = re.compile("|".join(C.CLOTHING_FALSE_POSITIVE), re.I)
 BF_RE = re.compile("|".join(C.BLACK_FRIDAY_TERMS), re.I)
 SALE_RE = re.compile("|".join(C.SALE_TERMS), re.I)
-CARD_REL_RE = re.compile("|".join(C.CARD_RELEVANCE), re.I)
-CARD_JUNK_RE = re.compile(C.CARD_JUNK, re.I)
-CARD_CAT_RES = [(name, re.compile("|".join(p), re.I)) for name, p in C.CARD_CATEGORIES]
-CARD_HOT_RES = [(re.compile(p, re.I), pts) for p, pts in C.CARD_HOT_TERMS.items()]
-CARD_DEAD_RE = re.compile(C.CARD_DEAD_TERMS, re.I)
 GENDER_RES = {g: re.compile("|".join(p), re.I) for g, p in C.GENDER_TERMS.items()}
 CATEGORY_RES = [(cat, _wordre(terms)) for cat, terms in C.CATEGORY_TERMS.items()]
-AWARD_RE = re.compile(r"award|one-way|round-?trip|\bstays?\b|\bbook\b|redeem|\bfly\b|from [\d,]+k? (?:points|miles)", re.I)
 NOT_A_DEAL = re.compile(r"giveaway|sweepstakes|\bcontest\b|win a |enter to win", re.I)
 
 # --- pricing -----------------------------------------------------------------
@@ -63,8 +57,6 @@ REG_RE = re.compile(r"(?:reg\.?|regularly|was|list(?: price)?|orig(?:inal(?:ly)?
 TO_FROM_RE = re.compile(r"(?:to|for|is|at)\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)\s*,?\s*(?:down\s+)?from\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 DOLLARS_OFF_RE = re.compile(r"(?:save|\bget)\s+\$(\d{2,4})|\$(\d{2,4})\s+off\b", re.I)
 STORE_FROM_TITLE = re.compile(r"(?:\bat|@|\bvia|\bfrom)\s+([A-Z][\w'&.\- ]{1,30}?(?:\.com)?)(?:\s*(?:\(|\+|$|,| -|\|))")
-POINTS_RE = re.compile(r"(\d{1,3}(?:,\d{3})+|\d{2,3}k|\d{2,3}K)\s*(?:bonus\s*)?(?:points|miles|pts|membership rewards|ultimate rewards|thankyou|avios)", re.I)
-CASH_BONUS_RE = re.compile(r"\$(\d{2,4}(?:,\d{3})?)\s*(?:cash\s*)?(?:bonus|sign-?up|welcome)", re.I)
 
 HISTORY_PATTERNS = [
     (re.compile(r"price (?:mistake|error)|pricing error|glitch", re.I), 18, "Possible price mistake"),
@@ -365,45 +357,6 @@ def score_deal(it: Item) -> None:
     it.score = round(s * decay(it.age_days, C.DEAL_HALF_LIFE_DAYS), 1)
 
 
-def score_card(it: Item) -> None:
-    text = f"{it.title} {it.summary[:300]}"
-    s = 8.0 + it.boost
-    val = 0
-    for m in ([] if AWARD_RE.search(it.title) else POINTS_RE.finditer(it.title)):
-        raw = m.group(1).lower().replace(",", "")
-        pts = int(raw[:-1]) * 1000 if raw.endswith("k") else int(raw)
-        val = max(val, int(pts * C.POINT_VALUE_CENTS / 100))
-    for m in CASH_BONUS_RE.finditer(it.title):
-        val = max(val, int(_money(m.group(1))))
-    if val:
-        it.bonus_value = val
-        s += min(45, val / 25)
-        it.reasons.append(f"≈${val:,} bonus value")
-    for rx, pts in CARD_HOT_RES:
-        m = rx.search(text)
-        if m:
-            s += pts
-            it.reasons.append(m.group(0).strip().capitalize())
-    if it.brands or it.is_clothing:
-        s += C.CARD_CLOTHING_RETAILER_BONUS
-        it.reasons.append("Clothing retailer")
-    if it.comments:
-        s += 3 * math.log2(1 + it.comments)
-    if it.votes and it.votes > 0:
-        s += 6 * math.log2(1 + it.votes)
-    if CARD_DEAD_RE.search(it.title):
-        s -= 30
-        it.warnings.append("May be expired")
-    for name, rx in CARD_CAT_RES:
-        if rx.search(it.title):
-            it.card_category = name
-            break
-    if not it.card_category:
-        it.card_category = "Card & Points News"
-        s -= 6
-    it.score = round(s * decay(it.age_days, C.CARD_HALF_LIFE_DAYS), 1)
-
-
 # --- pipeline ---------------------------------------------------------------
 def _title_key(t: str) -> str:
     t = re.sub(r"[^a-z0-9 ]", "", t.lower())
@@ -461,11 +414,6 @@ def process(raw: list[Item]) -> list[Item]:
             if d and d < NOW:
                 continue
         classify(it)
-        if it.kind == "card":
-            if not CARD_REL_RE.search(it.title) or CARD_JUNK_RE.search(it.title):
-                continue
-            kept.append(it)
-            continue
         if it.kind == "article" and not SALE_RE.search(it.title):
             continue
         extract_pricing(it)
@@ -477,10 +425,7 @@ def process(raw: list[Item]) -> list[Item]:
 
 def score_all(items: list[Item]) -> None:
     for it in items:
-        if it.kind == "card":
-            score_card(it)
-        else:
-            score_deal(it)
+        score_deal(it)
         if len(it.sources) > 1:
             bump = min(15, 5 * (len(it.sources) - 1))
             it.score = round(it.score + bump, 1)

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Deal Scout: finds the best Black Friday deals (with a clothing bias) and the best
-credit card offers, then writes a static site.
+Deal Scout: finds the best Black Friday deals (with a clothing bias) and writes a static site.
+(Credit card offers, cash back and card news live in the separate card-scout repo.)
 
 Pipeline
   1. Gather   RSS feeds + ~100 Slickdeals keyword searches, 80 Shopify brand stores
-              (retailer-verified prices), Frequent Miler + Doctor of Credit card offers,
-              Rakuten cash-back rates, optional Reddit.
+              (retailer-verified prices), optional Reddit.
   2. Process  cross-feed signals (Frontpage/Popular), de-dupe, classify, stacked-discount math.
   3. Remember compare with the previous run (new deals, price drops, tracked lows, rate changes).
   4. Score    explainable Deal Quality Score -> tiers -> diversified "best of" lists.
@@ -34,7 +33,6 @@ from urllib.parse import quote_plus
 
 import requests
 
-import cards
 import config as C
 import history
 import scoring
@@ -89,9 +87,8 @@ def gather_feeds(quick: bool) -> tuple[list[Item], list[dict]]:
     jobs = [(f["url"], f["name"], f["kind"], f.get("boost", 0)) for f in C.FEEDS]
     clothing_q = C.SLICKDEALS_CLOTHING_QUERIES[:15] if quick else C.SLICKDEALS_CLOTHING_QUERIES
     general_q = C.SLICKDEALS_GENERAL_QUERIES[:6] if quick else C.SLICKDEALS_GENERAL_QUERIES
-    for q in clothing_q + general_q + C.SLICKDEALS_CARD_QUERIES:
-        kind = "card" if q in C.SLICKDEALS_CARD_QUERIES else "deal"
-        jobs.append((C.SLICKDEALS_SEARCH_URL.format(q=quote_plus(q)), f"Slickdeals: {q}", kind, 0))
+    for q in clothing_q + general_q:
+        jobs.append((C.SLICKDEALS_SEARCH_URL.format(q=quote_plus(q)), f"Slickdeals: {q}", "deal", 0))
 
     items, status = [], []
 
@@ -125,26 +122,12 @@ def gather_feeds(quick: bool) -> tuple[list[Item], list[dict]]:
     return items, status
 
 
-def gather_cards() -> tuple[list[dict], list[dict], list[dict]]:
-    offers, st = cards.best_card_offers()
-    rates = cards.rakuten_rates()
-    status = [
-        {"name": "Frequent Miler: Best Card Offers", "url": cards.FM_URL, "kind": "card", "ok": st["fm"] > 0, "count": st["fm"]},
-        {"name": "Doctor of Credit: Best Sign-up Bonuses", "url": cards.DOC_URL, "kind": "card", "ok": st["doc"] > 0, "count": st["doc"]},
-        {"name": "Rakuten cash-back rates", "url": "https://www.rakuten.com/stores/all", "kind": "portal",
-         "ok": bool(rates), "count": len(rates)},
-    ]
-    print(f"  cards: {st['fm']} FM offers, {st['doc']} DoC picks, {len(rates)} Rakuten rates")
-    return offers, rates, status
-
-
 # ---------------------------------------------------------------------------
-def write_outputs(items, status, brand_sales, card_offers, rates, hist) -> Path:
+def write_outputs(items, status, brand_sales, hist) -> Path:
     SITE.mkdir(exist_ok=True)
     deals = [i for i in items if i.kind == "deal"]
-    cards_ = [i for i in items if i.kind == "card"]
     arts = [i for i in items if i.kind == "article"]
-    keep = deals[:2400] + cards_ + arts[:200]
+    keep = deals[:2400] + arts[:200]
     keep.sort(key=lambda x: -x.score)
     idx = {id(it): n for n, it in enumerate(keep)}
 
@@ -162,10 +145,7 @@ def write_outputs(items, status, brand_sales, card_offers, rates, hist) -> Path:
         d["age_days"] = round(d["age_days"], 2)
         return d
 
-    rakuten_by_store = {r["store"].lower(): r for r in rates}
     for s in brand_sales:
-        r = rakuten_by_store.get(s["store"].lower())
-        s["rakuten"] = r["rate"] if r else None
         s["strength"] = round(
             (s["promo_pct"] * (0.75 if s.get("promo_up_to") else 1.0)) * 0.6
             + s["median_pct"] * 0.6 * min(1.0, s["on_sale"] / 10)  # a 1-item "sale" isn't a sale
@@ -179,9 +159,9 @@ def write_outputs(items, status, brand_sales, card_offers, rates, hist) -> Path:
             "total": len(keep),
             "clothing": sum(1 for i in keep if i.is_clothing and i.kind == "deal"),
             "deals": len([i for i in keep if i.kind == "deal"]),
-            "cards": len(cards_), "card_offers": len(card_offers), "articles": len(arts[:200]),
+            "articles": len(arts[:200]),
             "brands": len(brand_sales), "brand_items": sum(s["on_sale"] for s in brand_sales),
-            "rakuten": len(rates), "new": sum(1 for i in keep if i.is_new),
+            "new": sum(1 for i in keep if i.is_new),
             "sources_ok": sum(1 for s in status if s["ok"]), "sources_total": len(status),
             "runs_tracked": len(hist.get("runs", [])),
         },
@@ -190,16 +170,14 @@ def write_outputs(items, status, brand_sales, card_offers, rates, hist) -> Path:
         "best_clothing": [idx[id(i)] for i in best_clothing],
         "best_by_cat": best_by_cat,
         "brand_sales": brand_sales,
-        "card_offers": card_offers,
-        "rakuten": rates,
         "sources": status,
-        "playbook": [{"title": t, "body": b} for t, b in C.CARD_PLAYBOOK],
+        "card_scout_url": C.CARD_SCOUT_URL,
         "clothing_multiplier": C.CLOTHING_MULTIPLIER,
     }
     (SITE / "deals.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
     cols = ["score", "tier", "kind", "category", "is_clothing", "title", "store", "price", "orig_price", "pct_off",
-            "saved", "votes", "is_new", "card_category", "bonus_value", "is_bf", "clothing_tags", "gender", "brands",
+            "saved", "votes", "is_new", "is_bf", "clothing_tags", "gender", "brands",
             "reasons", "warnings", "source", "published", "link"]
     with open(SITE / "deals.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
@@ -229,32 +207,26 @@ def main() -> int:
     t0 = time.time()
     hist = history.load(SITE / "history.json")
     print(f"History: {len(hist['items'])} tracked items from {len(hist['runs'])} previous runs")
-    print("Gathering (feeds, brand stores, card offers in parallel)…")
-    with cf.ThreadPoolExecutor(max_workers=3) as ex:
+    print("Gathering (feeds and brand stores in parallel)…")
+    with cf.ThreadPoolExecutor(max_workers=2) as ex:
         f_feeds = ex.submit(gather_feeds, args.quick)
         f_shop = ex.submit(lambda: ([], [], []) if args.quick else shopify.scan_all())
-        f_cards = ex.submit(gather_cards)
         feed_items, feed_status = f_feeds.result()
         shop_items, brand_sales, shop_status = f_shop.result()
-        card_offers, rates, card_status = f_cards.result()
     print(f"  brand stores: {len(shop_items)} items kept from {len(brand_sales)} stores")
-    status = feed_status + shop_status + card_status
+    status = feed_status + shop_status
 
     items = scoring.process(feed_items + shop_items)
-    history.apply(hist, [i for i in items if i.kind != "card"])
-    history.apply_rakuten(hist, rates)
+    history.apply(hist, items)
     history.apply_promos(hist, brand_sales)
     scoring.score_all(items)
-    out = write_outputs(items, status, brand_sales, card_offers, rates, hist)
+    out = write_outputs(items, status, brand_sales, hist)
 
     deals = [x for x in items if x.kind == "deal"]
     print(f"\nKept {len(items)} items ({sum(i.is_clothing for i in deals)} clothing deals) in {time.time() - t0:.0f}s")
     print("\nBest overall (diversified):")
     for i in scoring.diversify(deals, 15):
         print(f"  {i.score:6.1f} {i.tier[:5]:5} {i.title[:85]}\n{'':14}↳ {' · '.join(i.reasons[:4])}")
-    print("\nTop card offers:")
-    for o in card_offers[:6]:
-        print(f"  {o['score']:5.1f}  {o['name'][:55]} | {o['offer'][:40]} | {' · '.join(o['reasons'][:2])}")
     print("\nStrongest brand sales:")
     for s in brand_sales[:8]:
         print(f"  {s['strength']:5.1f}  {s['store']}: {s['on_sale']} items, median {s['median_pct']}% | {s['promo'][:60]}")
