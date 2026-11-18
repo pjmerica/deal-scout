@@ -133,6 +133,19 @@ def test_gender_detection():
     assert G.detect("Eddie Bauer Black Friday Deals: 50% off", has_garment=False) == ["Everyone"]
     assert G.detect("Oxford Shirt", tags="Mens Tops") == ["Men's"]
     assert G.detect("Oxford Shirt") == []
+    # structured retailer tags win; "color-family:BLUE" is not "family" = unisex (Faherty, 2026-11-18)
+    assert G.detect("Coastline Knit Shirt", brands=["Faherty"],
+                    tags="Men's Button Ups color family BLUE division Mens gender Men") == ["Men's"]
+    assert G.detect("Tee", tags="color family BLUE") == []
+    assert G.detect("Tee", tags="gender Men gender Women") == ["Everyone"]
+    assert G.detect("Tee", tags="department Unisex") == ["Everyone"]
+
+
+def test_promo_tidy():
+    assert shopify._tidy("Shop All Black Friday Sale NEW Shop Represent Black Friday Sale Now Live - Up to 70% Off") \
+        .startswith("Black Friday Sale")
+    assert shopify._tidy("BLACK FRIDAY: 40% Off Everything* BLACK FRIDAY: 40% Off Everything* Shop Women") == \
+        "BLACK FRIDAY: 40% Off Everything"
 
 
 def test_gender_on_scored_items():

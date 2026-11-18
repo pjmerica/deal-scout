@@ -109,11 +109,16 @@ PROMO_BAD = re.compile(r"first (?:order|purchase)|sign ?up|subscribe|e-?mail|new
 TRAILING_NAV = re.compile(r"\s+(?:shop (?:women|men|now|kids|all|the sale|early access)|terms\*?|see details)\b.*$", re.I)
 
 
+LEADING_NAV = re.compile(r"^(?:(?:shop(?: all| now)?|new(?: arrivals)?|menu|home|sale)\b[\s:|-]*)+(?=\S)", re.I)
+
+
 def _tidy(snippet: str) -> str:
     m = re.match(r"^(.{12,}?)\s+\1", snippet)  # "X X" repeated banner text
     if m:
         snippet = m.group(1)
-    return TRAILING_NAV.sub("", snippet).strip(" ,.-|*—–")
+    snippet = TRAILING_NAV.sub("", snippet).strip(" ,.-|*—–")
+    stripped = LEADING_NAV.sub("", snippet)
+    return stripped if PROMO_RE.search(stripped) else snippet
 JUNK_PREFIX = re.compile(r"^.*?(?:skip to (?:main )?content|continue to checkout|your cart is empty|"
                          r"cart \(\s*\d+\s*\)|enable accessibility)\s*", re.I)
 
@@ -141,6 +146,10 @@ def detect_promo(domain: str) -> tuple[str, int, bool]:
     for node in soup.find_all(string=PROMO_RE):
         el, snippet = node.parent, str(node)
         for _ in range(3):
+            # stop growing once the snippet explains itself ("Black Friday ... 40% off"); bigger
+            # containers mostly add navigation text ("Shop All ... NEW Shop ...")
+            if PROMO_GOOD.search(snippet) and len(snippet.split()) >= 4:
+                break
             if el is None or el.name in ("body", "html", "main", "header", "nav", "footer"):
                 break
             t = re.sub(r"\s+", " ", el.get_text(" ", strip=True))

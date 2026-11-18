@@ -31,6 +31,8 @@ WOMEN_HINT = re.compile(r"\bdress(?:es)?\b(?! shirts?\b| shoes?\b| pants?\b| soc
                         r"\bbodysuits?\b|\bpanties\b|\bbikini briefs?\b|\bthongs?\b(?! sandal)|\bmules?\b|\bballet flats?\b", re.I)
 MEN_HINT = re.compile(r"\bboxer briefs?\b|\bboxers\b|\btrunks? \(\d|\btuxedo\b|\bneckties?\b|\bbow ties?\b|\bbeard\b|"
                       r"\bsport coat\b|\bchinos?\b(?=.*\bmen)|\bdress shirts?\b", re.I)
+TAG_KEYED = re.compile(r"\b(?:gender|division|department|dept|sex|audience)\s+(men['’]?s?|women['’]?s?|kids?|boys?|girls?|unisex|all gender)\b", re.I)
+UNISEX_TAG = re.compile(r"\bunisex\b|\ball genders?\b|\bgender neutral\b", re.I)
 STOREWIDE = re.compile(r"sitewide|site-wide|storewide|everything|\bsale\b|% off|deals\b|clearance|outlet|"
                        r"\bsavings\b|black friday|cyber monday|& more|\bstyles\b", re.I)
 
@@ -55,8 +57,18 @@ def detect(title: str, summary: str = "", brands: list[str] | None = None, store
     if MEN_HINT.search(title):
         return ["Men's"]
     if tags:
+        # Structured retailer tags first ("gender:Men", "division:Womens", "department:Unisex")
+        keyed = {m.group(1).lower().rstrip("s").replace("'", "") for m in TAG_KEYED.finditer(tags)}
+        keyed = {{"men": "Men's", "women": "Women's", "kid": "Kids", "boy": "Kids", "girl": "Kids",
+                  "unisex": "Everyone", "all gender": "Everyone"}[k] for k in keyed if k in
+                 ("men", "women", "kid", "boy", "girl", "unisex", "all gender")}
+        if keyed:
+            if "Everyone" in keyed or {"Men's", "Women's"} <= keyed:
+                return sorted((keyed - {"Men's", "Women's"}) | {"Everyone"})
+            return sorted(keyed)
         tm, tw = bool(MEN.search(tags)), bool(WOMEN.search(tags))
-        if UNISEX.search(tags) or (tm and tw):
+        # free-text tags: "family" here is usually "color-family", so only explicit unisex words count
+        if UNISEX_TAG.search(tags) or (tm and tw):
             return ["Everyone"]
         if tm:
             return ["Men's"]
