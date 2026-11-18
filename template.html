@@ -52,6 +52,9 @@ nav.tabs button[aria-selected="true"]{background:var(--text);color:var(--bg);bor
 .seg button{border-radius:0;cursor:pointer}
 .seg button:first-child{border-radius:10px 0 0 10px}.seg button:last-child{border-radius:0 10px 10px 0}
 .seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.seg .seglabel{align-self:center;font-size:13px;color:var(--muted);margin-right:8px;white-space:nowrap}
+.seg .seglabel+button{border-radius:10px 0 0 10px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-size:inherit;cursor:pointer;text-decoration:underline}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;font-size:13px;cursor:pointer}
 .chip.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
@@ -202,9 +205,50 @@ const GENDERS=["Men's","Women's","Kids"];
 const CARD_CATS=['Shopping & Card-Linked Offers','Sign-up Bonuses','Bank & Brokerage Bonuses','Points, Awards & Transfers','Card & Points News'];
 const DEAL_CATS=[...new Set(items.filter(i=>i.kind==='deal').map(i=>i.category))].sort();
 
-let state={tab:'best',q:'',sort:'score',cats:new Set(),genders:new Set(),cardcats:new Set(),dcats:new Set(),source:'',minOff:0,limit:60,
-  bestClothing:false,cardType:'personal',promoOnly:false,newOnly:false};
+let state={tab:'best',q:'',sort:'score',cats:new Set(),cardcats:new Set(),dcats:new Set(),source:'',minOff:0,limit:60,
+  bestClothing:false,cardType:'personal',promoOnly:false,newOnly:false,gender:'all',inclUnlabeled:false};
 try{const t=localStorage.getItem('ds-tab'); if(t&&TABS.some(x=>x.id===t)) state.tab=t;}catch(e){}
+try{const g=localStorage.getItem('ds-gender'); if(['all',"Men's","Women's",'Kids'].includes(g)) state.gender=g;}catch(e){}
+
+// ---------- gender ("Shopping for") ----------
+const G_LABEL={'all':'Everyone',"Men's":'Men',"Women's":'Women','Kids':'Kids'};
+// Non-clothing deals are never hidden by the gender switch. "Everyone" = unisex items and storewide sales.
+function genderOK(i){
+  const sel=state.gender;
+  if(sel==='all'||!i.is_clothing) return true;
+  const g=i.gender||[];
+  if(g.includes(sel)) return true;
+  if(sel!=='Kids'&&g.includes('Everyone')) return true;
+  return !g.length&&state.inclUnlabeled;
+}
+function genderSeg(){
+  return `<div class="seg" role="group" aria-label="Shopping for"><span class="seglabel">Shopping for</span>${Object.entries(G_LABEL).map(([v,l])=>
+    `<button data-g="${esc(v)}" aria-pressed="${state.gender===v}">${l}</button>`).join('')}</div>`;
+}
+function unlabeledNote(pool){
+  if(state.gender==='all'||state.gender==='Kids') return '';
+  const n=pool.filter(i=>i.is_clothing&&!(i.gender||[]).length).length;
+  if(!n) return '';
+  return ` <button class="linkbtn" id="unlab">${state.inclUnlabeled?`Hide ${n} unlabeled`:`+ ${n} clothing deals with no men's/women's label`}</button>`;
+}
+function bindGender(){
+  document.querySelectorAll('.seg button[data-g]').forEach(b=>b.onclick=()=>{
+    state.gender=b.dataset.g; state.limit=60; try{localStorage.setItem('ds-gender',state.gender)}catch(e){} render();});
+  const u=document.getElementById('unlab'); if(u) u.onclick=()=>{state.inclUnlabeled=!state.inclUnlabeled; render();};
+}
+
+// Same rule as scoring.diversify(): at most N per store and per brand, colour variants collapsed.
+const titleKey=t=>t.split(/\s[-–|]\s|\s\(/)[0].toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,10).join(' ').slice(0,40);
+function diversify(list,n,perStore=1,perBrand=1){
+  const out=[],sc={},bc={},keys=new Set();
+  for(const it of list){
+    const st=(it.store||'').toLowerCase(), br=(it.brands[0]||'').toLowerCase(), k=titleKey(it.title);
+    if((st&&(sc[st]||0)>=perStore)||(br&&(bc[br]||0)>=perBrand)||keys.has(k)) continue;
+    out.push(it); keys.add(k); if(st) sc[st]=(sc[st]||0)+1; if(br) bc[br]=(bc[br]||0)+1;
+    if(out.length>=n) break;
+  }
+  return out;
+}
 
 function renderTabs(){
   document.getElementById('tabs').innerHTML=TABS.map(t=>{
@@ -229,7 +273,7 @@ function itemHTML(i){
   if(i.is_clothing&&i.kind!=='card') (i.clothing_tags.length?i.clothing_tags:['Clothing']).slice(0,2).forEach(t=>badges.push(`<span class="b cl">${esc(t)}</span>`));
   else if(i.kind==='deal'&&i.category&&i.category!=='Other') badges.push(`<span class="b">${esc(i.category)}</span>`);
   if(i.kind==='card') badges.push(`<span class="b cc">${esc(i.card_category)}</span>`);
-  i.gender.slice(0,2).forEach(g=>badges.push(`<span class="b">${esc(g)}</span>`));
+  if(i.kind!=='card') i.gender.slice(0,2).forEach(g=>badges.push(`<span class="b">${g==='Everyone'?'Men &amp; Women':esc(g)}</span>`));
   const why=i.reasons.filter(r=>!/^\d+% off$/.test(r)).slice(0,3).map(r=>`<li>${esc(r)}</li>`).join('')+i.warnings.slice(0,2).map(w=>`<li class="w">${esc(w)}</li>`).join('');
   const price=i.price!=null&&i.kind!=='card'?`<span class="price">${money(i.price)}${i.orig_price&&i.orig_price>i.price?`<s>${money(i.orig_price)}</s>`:''}</span>`:'';
   const img=i.image?`<div class="imgbox"><img loading="lazy" src="${esc(i.image)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`:'';
@@ -256,30 +300,33 @@ const matchQ=(txt)=>!state.q.trim()||txt.toLowerCase().includes(state.q.trim().t
 
 // ---------- tabs ----------
 function renderBest(main){
-  const ids=state.bestClothing?DATA.best_clothing:DATA.best;
-  let list=ids.map(n=>items[n]).filter(i=>matchQ(i.title+' '+i.store+' '+i.brands.join(' ')));
-  if(state.newOnly) list=list.filter(i=>i.is_new);
-  const cats=Object.keys(DATA.best_by_cat).sort((a,b)=>(a==='Clothing & Shoes'?-1:b==='Clothing & Shoes'?1:a.localeCompare(b)));
+  // items arrive sorted by score, so the diversified pass picks the best of each store/brand.
+  const pool=items.filter(i=>i.kind==='deal'&&genderOK(i)&&(!state.newOnly||i.is_new));
+  const list=diversify(pool.filter(i=>(!state.bestClothing||i.is_clothing)&&matchQ(i.title+' '+i.store+' '+i.brands.join(' '))),60);
+  const cats=[...new Set(pool.map(i=>i.category))].sort((a,b)=>(a==='Clothing & Shoes'?-1:b==='Clothing & Shoes'?1:a.localeCompare(b)));
+  const who=state.gender==='all'?'':` for ${G_LABEL[state.gender].toLowerCase()}`;
   main.innerHTML=`<div class="controls">
       <input type="search" id="q" placeholder="Search the best picks…" value="${esc(state.q)}">
-      <div class="seg" role="group" aria-label="Scope"><button data-v="0" aria-pressed="${!state.bestClothing}">Everything</button><button data-v="1" aria-pressed="${state.bestClothing}">Clothing only</button></div>
+      ${genderSeg()}
+      <div class="seg" role="group" aria-label="Scope"><button data-v="0" aria-pressed="${!state.bestClothing}">All categories</button><button data-v="1" aria-pressed="${state.bestClothing}">Clothing only</button></div>
       <div class="seg"><button id="newBtn" aria-pressed="${state.newOnly}">New since last check</button></div>
     </div>
-    <p class="section-note">The top deals by quality score, limited to 2 per store and 2 per brand so one sale can't fill the list. Each card lists why it ranks and any catches.</p>
+    <p class="section-note">The top deals${who} by quality score, one per store and per brand so a single sale can't fill the list. Each card lists why it ranks and any catches.${unlabeledNote(items.filter(i=>i.kind==='deal'))}</p>
     ${list.length?`<div class="grid">${list.map(itemHTML).join('')}</div>`:'<div class="empty">Nothing matches.</div>'}
-    <h2>Best in each category</h2>
-    ${cats.map(c=>{const l=DATA.best_by_cat[c].slice(0,6).map(n=>items[n]); return l.length?`<div class="catrow"><h3>${esc(c)}</h3><div class="grid">${l.map(itemHTML).join('')}</div></div>`:''}).join('')}`;
+    <h2>Best in each category${esc(who)}</h2>
+    ${cats.map(c=>{const l=diversify(pool.filter(i=>i.category===c),6); return l.length?`<div class="catrow"><h3>${esc(c)}</h3><div class="grid">${l.map(itemHTML).join('')}</div></div>`:''}).join('')}`;
   main.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{state.bestClothing=b.dataset.v==='1';render();});
   document.getElementById('newBtn').onclick=()=>{state.newOnly=!state.newOnly;render();};
-  bindSearch(render);
+  bindSearch(render); bindGender();
 }
 
 function renderList(main,tab){
   let list=items.filter(tab.filter);
   const sources=[...new Set(list.map(i=>i.source.replace(/^Slickdeals: .*/,'Slickdeals search').replace(/^Brand store: .*/,'Brand stores')))].sort();
   list=list.filter(i=>matchQ(i.title+' '+i.summary+' '+i.store+' '+i.brands.join(' ')));
+  const preGender=list;
   if(state.cats.size) list=list.filter(i=>i.clothing_tags.some(t=>state.cats.has(t)));
-  if(state.genders.size) list=list.filter(i=>i.gender.some(g=>state.genders.has(g)));
+  list=list.filter(genderOK);
   if(state.dcats.size) list=list.filter(i=>state.dcats.has(i.category));
   if(state.source) list=list.filter(i=>i.source===state.source||(state.source==='Slickdeals search'&&i.source.startsWith('Slickdeals: '))||(state.source==='Brand stores'&&i.source.startsWith('Brand store: ')));
   if(state.minOff) list=list.filter(i=>(i.pct_off||0)>=state.minOff);
@@ -294,10 +341,11 @@ function renderList(main,tab){
     <select id="minOff" aria-label="Minimum discount"><option value="0">Any discount</option><option value="30">30%+ off</option><option value="50">50%+ off</option><option value="70">70%+ off</option></select>
     <select id="source" aria-label="Source"><option value="">All sources</option>${sources.map(s=>`<option ${state.source===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
     <div class="seg"><button id="newBtn" aria-pressed="${state.newOnly}">New only</button></div>
+    ${genderSeg()}
   </div>
-  ${tab.clothingChips?chipRow(CLOTH_CATS,state.cats,'cats')+chipRow(GENDERS,state.genders,'genders'):''}
+  ${tab.clothingChips?chipRow(CLOTH_CATS,state.cats,'cats'):''}
   ${tab.catChips?chipRow(DEAL_CATS,state.dcats,'dcats'):''}
-  <p class="section-note">${esc(tab.note)} Showing ${Math.min(list.length,state.limit)} of ${list.length}.</p>
+  <p class="section-note">${esc(tab.note)} Showing ${Math.min(list.length,state.limit)} of ${list.length}${state.gender!=='all'?` for ${G_LABEL[state.gender].toLowerCase()}${tab.id==='all'||tab.id==='bf'?' (non-clothing deals always shown)':''}`:''}.${unlabeledNote(preGender)}</p>
   ${list.length?`<div class="grid">${list.slice(0,state.limit).map(itemHTML).join('')}</div>`:'<div class="empty">Nothing matches these filters.</div>'}
   ${list.length>state.limit?`<button class="more" id="more">Show more (${list.length-state.limit} left)</button>`:''}`;
   document.getElementById('sort').value=state.sort;
@@ -306,29 +354,49 @@ function renderList(main,tab){
   document.getElementById('source').onchange=e=>{state.source=e.target.value;render();};
   document.getElementById('newBtn').onclick=()=>{state.newOnly=!state.newOnly;render();};
   const more=document.getElementById('more'); if(more) more.onclick=()=>{state.limit+=60;render();};
-  bindChips(main); bindSearch(render);
+  bindChips(main); bindSearch(render); bindGender();
+}
+
+// Brand-level gender: a brand matches if it has sale items for that audience (or sells to everyone).
+function brandFor(s){
+  const sel=state.gender; if(sel==='all') return true;
+  const a=s.audience||{};
+  if((a[sel]||0)>0) return true;
+  if(sel!=='Kids'&&(a.Everyone||0)>0) return true;
+  if(!s.on_sale) return s.brand_audience===sel||(sel!=='Kids'&&s.brand_audience==='Everyone');
+  return false;
+}
+function topFor(s){
+  const sel=state.gender;
+  return (s.top||[]).filter(t=>sel==='all'||(t.gender||[]).includes(sel)||(sel!=='Kids'&&(t.gender||[]).includes('Everyone')));
+}
+function countFor(s){
+  const a=s.audience||{}, sel=state.gender;
+  if(sel==='all'||!s.audience) return s.on_sale;
+  return (a[sel]||0)+(sel!=='Kids'?(a.Everyone||0):0);
 }
 
 function renderBrands(main){
-  let list=DATA.brand_sales.filter(s=>s.on_sale>0||s.promo);
+  let list=DATA.brand_sales.filter(s=>s.on_sale>0||s.promo).filter(brandFor);
   if(state.promoOnly) list=list.filter(s=>s.promo);
   list=list.filter(s=>matchQ(s.store+' '+s.promo+' '+s.top.map(t=>t.title).join(' ')));
   const quiet=DATA.brand_sales.filter(s=>!(s.on_sale>0||s.promo)).map(s=>s.store);
   main.innerHTML=`<div class="controls">
       <input type="search" id="q" placeholder="Search brands or items…" value="${esc(state.q)}">
+      ${genderSeg()}
       <div class="seg"><button id="promoBtn" aria-pressed="${state.promoOnly}">Live sitewide promo only</button></div>
     </div>
     <p class="section-note">Read straight from each brand's own store: live sale prices against the original price, in-stock items only, and the promo shown in the homepage banner. Brands are ranked by how strong the sale is compared with how often that brand usually discounts.</p>
     <div class="brands">${list.map(s=>`<div class="brand">
       <h3>${esc(s.store)} ${s.premium?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
       ${s.promo?`<div class="promo">${esc(s.promo)}</div>`:''}
-      <div class="bstats">${s.on_sale?`<span><b>${s.on_sale}</b> items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}${s.rakuten?`<span>Rakuten <b>${esc(s.rakuten)}</b></span>`:''}</div>
-      ${s.top.length?`<div class="thumbs">${s.top.slice(0,3).map(t=>`<a class="thumb" href="${esc(t.link)}" target="_blank" rel="noopener">${t.image?`<img loading="lazy" src="${esc(t.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:''}<span>${esc(t.title.slice(0,46))}</span><span><b>${money(t.price)}</b> <s>${money(t.orig)}</s> · ${t.pct}%</span></a>`).join('')}</div>`:''}
+      <div class="bstats">${s.on_sale?`<span><b>${countFor(s)}</b> ${state.gender==='all'?'':esc(G_LABEL[state.gender].toLowerCase())+'\'s '}items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}${s.rakuten?`<span>Rakuten <b>${esc(s.rakuten)}</b></span>`:''}</div>
+      ${topFor(s).length?`<div class="thumbs">${topFor(s).slice(0,3).map(t=>`<a class="thumb" href="${esc(t.link)}" target="_blank" rel="noopener">${t.image?`<img loading="lazy" src="${esc(t.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:''}<span>${esc(t.title.slice(0,46))}</span><span><b>${money(t.price)}</b> <s>${money(t.orig)}</s> · ${t.pct}%</span></a>`).join('')}</div>`:''}
       <a class="shop" href="${esc(s.url)}" target="_blank" rel="noopener">Shop the sale →</a>
     </div>`).join('')||'<div class="empty">Nothing matches.</div>'}</div>
     ${quiet.length?`<p class="section-note">No sale found right now: ${esc(quiet.join(', '))}.</p>`:''}`;
   document.getElementById('promoBtn').onclick=()=>{state.promoOnly=!state.promoOnly;render();};
-  bindSearch(render);
+  bindSearch(render); bindGender();
 }
 
 function renderCards(main){

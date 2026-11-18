@@ -31,11 +31,14 @@ const harness = `
 ;globalThis.__run = () => {
   const out = {};
   const variants = [{}, {sort:'off'}, {sort:'saved'}, {minOff:50}, {newOnly:true}, {q:'jacket'},
-                    {bestClothing:true}, {cardType:'business'}, {promoOnly:true}];
+                    {bestClothing:true}, {cardType:'business'}, {promoOnly:true},
+                    {gender:"Men's"}, {gender:"Women's"}, {gender:'Kids'}, {gender:"Women's", inclUnlabeled:true},
+                    {gender:"Men's", bestClothing:true}, {gender:"Women's", promoOnly:true}];
+  const counts = {};
   for (const t of TABS) {
     for (const v of variants) {
       Object.assign(state, {tab:t.id, q:'', sort:'score', minOff:0, newOnly:false, bestClothing:false,
-                            cardType:'personal', promoOnly:false, limit:60}, v);
+                            cardType:'personal', promoOnly:false, limit:60, gender:'all', inclUnlabeled:false}, v);
       render();
       const h = document.getElementById('main').innerHTML;
       if (!h || h.length < 50) throw new Error('empty render: ' + t.id + ' ' + JSON.stringify(v));
@@ -44,8 +47,14 @@ const harness = `
         throw new Error('"undefined"/NaN in ' + t.id + ': ' + h.slice(Math.max(0, i - 120), i + 40));
       }
       out[t.id] = h.length;
+      if (v.gender && Object.keys(v).length === 1 && (t.id === 'best' || t.id === 'clothing' || t.id === 'brands'))
+        counts[t.id + ':' + v.gender] = (h.match(/class="(item|brand)[ "]/g) || []).length;
     }
   }
+  // A gender view must actually filter: men's and women's clothing views can't both equal the unfiltered list
+  // and must not be empty.
+  for (const k of Object.keys(counts)) if (!counts[k] && !k.endsWith('Kids')) throw new Error('empty gender view ' + k);
+  out.genderCounts = counts;
   return out;
 };`;
 vm.runInContext(scripts[scripts.length - 1] + harness, ctx, { filename: 'page.js' });

@@ -24,6 +24,7 @@ from datetime import datetime
 
 import brands as BR
 import config as C
+import gender as G
 from feeds import normalize_link, parse_date
 from models import NOW, Item
 
@@ -139,7 +140,10 @@ def classify(it: Item) -> None:
     if not brand_store:
         it.brands = sorted({b.title() for b in brands | other})[:6]
     if not it.gender:
-        it.gender = [g for g, rx in GENDER_RES.items() if rx.search(title)]
+        if it.is_clothing:
+            it.gender = G.detect(title, it.summary, it.brands, it.store, has_garment=bool(tags))
+        else:
+            it.gender = [g for g, rx in GENDER_RES.items() if rx.search(title)]
     if it.is_clothing:
         it.category = "Clothing & Shoes"
     else:

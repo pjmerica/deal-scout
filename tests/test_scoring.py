@@ -122,6 +122,24 @@ def test_history_new_and_price_drop():
     assert not a2.is_new and "price_drop" in a2.flags and b.is_new
 
 
+def test_gender_detection():
+    import gender as G
+    assert G.detect("Women’s Birkenstock Sandals $42") == ["Women's"]          # curly apostrophe
+    assert G.detect("Alo Yoga: Unisex Throwback Sock") == ["Everyone"]
+    assert G.detect("Men's & Women's Fleece Jackets 40% off") == ["Everyone"]
+    assert G.detect("The Silky Flutter Sleeve Dress", brands=["Summersalt"]) == ["Women's"]
+    assert G.detect("Cashmere Turtleneck", brands=["Todd Snyder"]) == ["Men's"]
+    assert G.detect("Girls' Puffer Jacket $20") == ["Kids"]
+    assert G.detect("Eddie Bauer Black Friday Deals: 50% off", has_garment=False) == ["Everyone"]
+    assert G.detect("Oxford Shirt", tags="Mens Tops") == ["Men's"]
+    assert G.detect("Oxford Shirt") == []
+
+
+def test_gender_on_scored_items():
+    assert mk("Women’s Snow Boots Only $31.84 (Regularly $90)").gender == ["Women's"]
+    assert "Men's" in mk("Adidas men's hyperboost shoes - $59.50 (reg $170)").gender
+
+
 def test_baseline_lookup():
     assert BR.baseline_for(["Patagonia"]) == 10
     assert BR.baseline_for([], "Old Navy") == 50

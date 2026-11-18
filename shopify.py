@@ -18,6 +18,7 @@ import time
 from bs4 import BeautifulSoup
 
 import brands as BR
+import gender as G
 from feeds import fetch, session
 from models import NOW, Item
 
@@ -25,9 +26,6 @@ from models import NOW, Item
 
 SKIP_TITLE = re.compile(r"gift ?card|e-?gift|shipping protection|\broute\b|warranty|insurance|donation|"
                         r"mystery|sample|swatch|test product|do not purchase", re.I)
-GENDER_MEN = re.compile(r"\bmen'?s?\b|\bmens\b|\bmale\b|gender[:_-]?men", re.I)
-GENDER_WOMEN = re.compile(r"\bwomen'?s?\b|\bwomens\b|\bfemale\b|gender[:_-]?women|\bladies\b", re.I)
-PER_STORE_ITEMS = 14
 
 
 EXACT_SALE = re.compile(r"^(?:sale|sales|shop-sale|all-sale|sale-all|on-sale|the-sale|sale-items|black-?friday|"
@@ -177,6 +175,7 @@ def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: b
         history_key=f"{domain}:promo",
     )
     it.brands = [store]
+    it.gender = [BR.audience_for([store]) or "Everyone"]
     it.flags.append("sitewide_promo")
     it.reasons.append("Live sitewide promo on the brand's homepage")
     return it
@@ -210,13 +209,8 @@ def _product_item(store: str, domain: str, p: dict) -> Item | None:
     tags = p.get("tags") or []
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",")]
-    tag_text = " ".join(tags)
-    gender = []
-    gtxt = f"{title} {p.get('product_type', '')} {tag_text}"
-    if GENDER_MEN.search(gtxt) and not GENDER_WOMEN.search(title):
-        gender.append("Men's")
-    if GENDER_WOMEN.search(gtxt) and not GENDER_MEN.search(title):
-        gender.append("Women's")
+    tag_text = " ".join(t.replace("-", " ").replace("_", " ").replace(":", " ") for t in tags)
+    gender = G.detect(title, "", [store], store, tags=f"{p.get('product_type', '')} {tag_text}")
     img = ""
     if p.get("images"):
         img = p["images"][0].get("src", "")
@@ -269,17 +263,35 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
         i.store_median = median
     items.sort(key=lambda i: (-(i.pct_off or 0), -(i.orig_price or 0)))
     url = f"https://{domain}/collections/{used_handle}" if used_handle else f"https://{domain}/"
+    audience = {k: sum(1 for i in items if k in i.gender) for k in ("Men's", "Women's", "Kids", "Everyone")}
+    # Keep a balanced slice so a Men's or Women's view still has this brand's best items.
+    keep, seen = [], set()
+    for pool, n in ((items, 8), ([i for i in items if "Men's" in i.gender], 6),
+                    ([i for i in items if "Women's" in i.gender], 6), ([i for i in items if "Kids" in i.gender], 2)):
+        for i in pool[:n]:
+            if i.history_key not in seen:
+                seen.add(i.history_key)
+                keep.append(i)
+    keep.sort(key=lambda i: (-(i.pct_off or 0), -(i.orig_price or 0)))
+    top = []
+    for k in ("Men's", "Women's", "Kids", "Everyone", None):
+        for i in [x for x in items if k is None or k in x.gender][:6]:
+            if all(t["link"] != i.link for t in top):
+                top.append({"title": i.title.split(": ", 1)[-1], "price": i.price, "orig": i.orig_price,
+                            "pct": i.pct_off, "link": i.link, "image": i.image, "gender": i.gender})
+    top.sort(key=lambda t: -(t["pct"] or 0))
     if promo and promo_pct >= 20:
-        items.insert(0, promo_item(store, domain, url, promo, promo_pct, up_to))
+        pi = promo_item(store, domain, url, promo, promo_pct, up_to)
+        keep.insert(0, pi)
     summary = {
         "store": store, "domain": domain, "url": url,
         "scanned": scanned, "on_sale": len(pcts), "median_pct": round(median), "max_pct": max(pcts) if pcts else 0,
         "promo": promo, "promo_pct": promo_pct, "promo_up_to": up_to,
         "premium": BR.is_premium([store]), "baseline": BR.baseline_for([store]),
-        "top": [{"title": i.title.split(": ", 1)[-1], "price": i.price, "orig": i.orig_price, "pct": i.pct_off,
-                 "link": i.link, "image": i.image} for i in items if "retailer_verified" in i.flags][:6],
+        "audience": audience, "brand_audience": BR.audience_for([store]) or "Everyone",
+        "top": top[:24],
     }
-    return items[:PER_STORE_ITEMS], summary
+    return keep, summary
 
 
 def scan_all(workers: int = 8) -> tuple[list[Item], list[dict], list[dict]]:

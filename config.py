@@ -199,9 +199,9 @@ CASE_SENSITIVE_EXCLUDE = {"Express": r"American Express|ExpressVPN|Express Scrip
                           "Coach": r"Coach (?:seat|class|flight|ticket)"}
 
 GENDER_TERMS = {
-    "Men's": [r"\bmen'?s\b", r"\bmens\b", r"\bmenswear\b", r"\bfor men\b"],
-    "Women's": [r"\bwomen'?s\b", r"\bwomens\b", r"\bwomenswear\b", r"\bfor women\b", r"\bladies\b"],
-    "Kids": [r"\bkids'?\b", r"\bboys'?\b", r"\bgirls'?\b", r"\btoddler\b", r"\bbaby\b", r"\bchildren'?s\b"],
+    "Men's": [r"\bmen['’]?s\b", r"\bmens\b", r"\bmenswear\b", r"\bfor men\b"],
+    "Women's": [r"\bwomen['’]?s\b", r"\bwomens\b", r"\bwomenswear\b", r"\bfor women\b", r"\bladies\b"],
+    "Kids": [r"\bkids['’]?\b", r"\bboys['’]?\b", r"\bgirls['’]?\b", r"\btoddler\b", r"\bbaby\b", r"\bchildren['’]?s\b"],
 }
 
 # Non-clothing categories (first match wins; clothing is detected separately)

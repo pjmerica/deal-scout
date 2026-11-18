@@ -112,6 +112,49 @@ RAKUTEN_CLOTHING = [
 ]
 
 
+# Who a brand mainly sells to (used when a product title doesn't say).
+BRAND_AUDIENCE = {
+    "Women's": [
+        "knix", "summersalt", "universal standard", "princess polly", "petal & pup", "showpo", "girlfriend collective",
+        "beyond yoga", "set active", "birdies", "cupshe", "fashion nova", "spanx", "negative underwear", "aritzia",
+        "free people", "anthropologie", "athleta", "lane bryant", "torrid", "loft", "ann taylor", "chico's", "j.jill",
+        "aerie", "lulus", "reformation", "white house black market", "eloquii", "kate spade", "tory burch",
+        "michael kors", "sam edelman", "victoria's secret", "intimissimi", "cuup", "parade", "andie",
+    ],
+    "Men's": [
+        "todd snyder", "bonobos", "mack weldon", "untuckit", "saxx", "true classic", "cuts", "chubbies", "johnnie-o",
+        "robert graham", "jachs", "iron & resin", "howler brothers", "naked & famous", "beckett simonon",
+        "oliver cabell", "taft", "ten thousand", "jos. a. bank", "jos a bank", "men's wearhouse", "taylor stitch",
+        "buck mason", "peter millar", "rhone", "mizzen+main", "proper cloth", "suitsupply", "indochino",
+        "billy reid", "roark", "wool&prince", "aimé leon dore", "aime leon dore", "huckberry", "duluth trading",
+    ],
+    "Everyone": [
+        "comfrt", "noah", "alo yoga", "alo", "kith", "stussy", "fear of god", "represent", "gymshark", "allbirds",
+        "vessi", "kizik", "xero shoes", "koio", "everlane", "faherty", "naadam", "kotn", "outerknown", "marine layer",
+        "cotopaxi", "filson", "olukai", "tecovas", "thursday boots", "nisolo", "duer", "ministry of supply",
+        "unbound merino", "topo designs", "toad&co", "district vision", "satisfy", "janji", "ronhill",
+        "sunday afternoons", "darn tough", "rails", "mott & bow", "tommy john", "frank and oak", "outdoor voices",
+        "reigning champ", "rothy's", "skims", "steve madden", "uniqlo", "old navy", "gap", "gap factory",
+        "banana republic", "banana republic factory", "j.crew", "j.crew factory", "eddie bauer", "lands' end",
+        "ll bean", "l.l.bean", "columbia", "the north face", "patagonia", "arc'teryx", "levi's", "nordstrom",
+        "nordstrom rack", "macy's", "kohl's", "rei", "abercrombie", "american eagle", "h&m", "zara", "express",
+        "carhartt", "under armour", "nike", "adidas", "new balance", "puma", "hoka", "on running", "lululemon", "vuori",
+    ],
+}
+_AUDIENCE = {b: aud for aud, names in BRAND_AUDIENCE.items() for b in names}
+
+
+def audience_for(brands: list[str], store: str = "") -> str | None:
+    for b in brands + ([store] if store else []):
+        a = _AUDIENCE.get(norm_brand(b))
+        if a and a != "Everyone":
+            return a  # a single-audience brand is the most specific evidence
+    for b in brands + ([store] if store else []):
+        if _AUDIENCE.get(norm_brand(b)) == "Everyone":
+            return "Everyone"
+    return None
+
+
 def norm_brand(b: str) -> str:
     return b.lower().replace("’", "'").strip()
 
