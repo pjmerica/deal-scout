@@ -1,0 +1,32 @@
+name: Probe candidate brand stores (manual)
+
+# Checks tools/store_candidates.txt (or the domains you pass) from a fresh CI IP.
+# Run: gh workflow run probe.yml            (or: -f domains="brand1.com brand2.com")
+# Results: the run's summary page (table + ready-to-paste SHOPIFY_STORES lines).
+on:
+  workflow_dispatch:
+    inputs:
+      domains:
+        description: "Space-separated domains to check (blank = tools/store_candidates.txt)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Probe stores
+        run: python tools/probe_stores.py ${{ inputs.domains }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-results
+          path: probe_results.json

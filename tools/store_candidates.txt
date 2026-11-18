@@ -1,0 +1,59 @@
+# Candidate Shopify clothing stores: "Display Name | domain | audience (Men's / Women's / Kids / Everyone)"
+# Check them from CI (fresh IP, no throttling):  gh workflow run probe.yml   (results in the run's summary)
+# Stores that pass go into brands.SHOPIFY_STORES (+ BRAND_AUDIENCE, and BASELINE / PREMIUM if known).
+Hill House Home | hillhousehome.com | Women's
+Christy Dawn | christydawn.com | Women's
+Faithfull the Brand | faithfullthebrand.com | Women's
+Meshki | meshki.us | Women's
+Oh Polly | us.ohpolly.com | Women's
+Wildfang | wildfang.com | Women's
+Kirrin Finch | kirrinfinch.com | Women's
+Andie | andieswim.com | Women's
+Montce | montce.com | Women's
+Lake Pajamas | lakepajamas.com | Everyone
+Cozy Earth | cozyearth.com | Everyone
+Barefoot Dreams | barefootdreams.com | Everyone
+Splits59 | splits59.com | Women's
+Year of Ours | yearofours.com | Women's
+Naked Cashmere | nakedcashmere.com | Women's
+White + Warren | whiteandwarren.com | Women's
+Jenni Kayne | jennikayne.com | Women's
+Motel Rocks | motelrocks.com | Women's
+LoveShackFancy | loveshackfancy.com | Women's
+AGOLDE | agolde.com | Women's
+MOTHER | motherdenim.com | Women's
+STAUD | staud.clothing | Women's
+Solid & Striped | solidandstriped.com | Women's
+Edikted | edikted.com | Women's
+FRAME | frame-store.com | Everyone
+PAIGE | paige.com | Everyone
+DL1961 | dl1961.com | Everyone
+Citizens of Humanity | citizensofhumanity.com | Everyone
+RE/DONE | shopredone.com | Women's
+Cuyana | cuyana.com | Women's
+M.M.LaFleur | mmlafleur.com | Women's
+Rebecca Minkoff | rebeccaminkoff.com | Women's
+Freda Salvador | fredasalvador.com | Women's
+Loeffler Randall | loefflerrandall.com | Women's
+Thousand Fell | thousandfell.com | Everyone
+Sarah Flint | sarahflint.com | Women's
+Margaux | margauxny.com | Women's
+Greats | greats.com | Everyone
+Feetures | feetures.com | Everyone
+Stance | stance.com | Everyone
+Taos Footwear | taosfootwear.com | Women's
+TOMS | toms.com | Everyone
+Native Shoes | nativeshoes.com | Everyone
+Primary | primary.com | Kids
+Kyte Baby | kytebaby.com | Kids
+Little Sleepies | littlesleepies.com | Kids
+Tea Collection | teacollection.com | Kids
+Pangaia | pangaia.com | Everyone
+tentree | tentree.com | Everyone
+Peter Manning | petermanningnyc.com | Men's
+Stio | stio.com | Everyone
+Duckworth | duckworthco.com | Everyone
+Bearbottom | bearbottomclothing.com | Men's
+Linksoul | linksoul.com | Men's
+Ibex | ibex.com | Everyone
+Outdoor Research | outdoorresearch.com | Everyone
