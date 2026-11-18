@@ -58,8 +58,17 @@ def _ago(iso: str) -> float:
         return 1e9
 
 
+def _recent(first_iso: str, hist: dict) -> bool:
+    """True if first seen in the previous run (but not the baseline run that seeded history)."""
+    runs = hist["runs"]
+    if len(runs) < 2:
+        return False
+    return first_iso >= runs[-1] and first_iso != runs[0] and _ago(first_iso) <= NEW_HOURS
+
+
 def apply(hist: dict, items: list[Item]) -> None:
-    """Annotate items with history signals and update the history in place."""
+    """Annotate items with history signals and update the history in place.
+    NEW = appeared in this run or the previous one (never items from the baseline run)."""
     first_run = not hist["runs"]
     H = hist["items"]
     for it in items:
@@ -71,7 +80,7 @@ def apply(hist: dict, items: list[Item]) -> None:
             if not first_run:
                 it.is_new = True
             continue
-        if _ago(h["first"]) <= NEW_HOURS:
+        if _recent(h["first"], hist):
             it.is_new = True
         prev, low = h.get("price"), h.get("min")
         if it.price and prev and it.price < prev - 0.5:
@@ -112,7 +121,7 @@ def apply_promos(hist: dict, summaries: list[dict]) -> None:
             P[s["domain"]] = {"text": s["promo"], "first": NOW.isoformat()}
             s["promo_new"] = bool(hist["runs"])
         else:
-            s["promo_new"] = _ago(h["first"]) <= NEW_HOURS
+            s["promo_new"] = _recent(h["first"], hist)
 
 
 def save(hist: dict, path: Path) -> None:

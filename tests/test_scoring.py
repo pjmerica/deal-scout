@@ -105,6 +105,23 @@ def test_promo_filters():
     assert not shopify.PROMO_BAD.search("BLACK FRIDAY: 40% Off Everything")
 
 
+def test_history_new_and_price_drop():
+    import datetime
+    import history
+    from models import NOW
+    h = {"items": {}, "rakuten": {}, "promos": {}, "runs": []}
+    a = Item(title="A", link="https://a", source="s", kind="deal", price=10)
+    history.apply(h, [a])
+    assert not a.is_new  # the baseline run never marks NEW
+    old = (NOW - datetime.timedelta(hours=3)).isoformat()
+    h["runs"] = [old]
+    h["items"]["https://a"]["first"] = old
+    a2 = Item(title="A", link="https://a", source="s", kind="deal", price=8)
+    b = Item(title="B", link="https://b", source="s", kind="deal", price=5)
+    history.apply(h, [a2, b])
+    assert not a2.is_new and "price_drop" in a2.flags and b.is_new
+
+
 def test_baseline_lookup():
     assert BR.baseline_for(["Patagonia"]) == 10
     assert BR.baseline_for([], "Old Navy") == 50
