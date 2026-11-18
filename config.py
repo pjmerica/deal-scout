@@ -33,7 +33,13 @@ SLICKDEALS_CLOTHING_QUERIES = [
     # event terms
     "black friday clothing", "black friday apparel", "doorbuster",
 ]
-SLICKDEALS_GENERAL_QUERIES = ["black friday", "cyber monday", "early black friday"]
+SLICKDEALS_GENERAL_QUERIES = [
+    "black friday", "cyber monday", "early black friday", "price mistake", "all time low", "lowest price",
+    # broad "best deal period" coverage outside clothing
+    "tv", "laptop", "airpods", "ipad", "headphones", "nintendo switch", "ps5", "xbox", "ssd", "monitor",
+    "apple watch", "kindle", "air fryer", "vacuum", "dyson", "kitchenaid", "lego", "yeti", "power tools",
+    "mattress", "coffee maker", "espresso", "luggage", "smart home",
+]
 SLICKDEALS_CARD_QUERIES = [
     "credit card", "amex offer", "chase offer", "capital one offer", "rakuten",
     "cash back", "gift card", "statement credit", "sign up bonus",
@@ -68,6 +74,20 @@ FEEDS = [
     {"name": "Krazy Coupon Lady", "kind": "deal", "boost": 0, "url": "https://www.thekrazycouponlady.com/rss"},
     {"name": "Ben's Bargains", "kind": "deal", "boost": 0, "url": "https://www.bensbargains.com/rss/"},
     {"name": "9to5Toys", "kind": "deal", "boost": 0, "url": "https://9to5toys.com/feed/"},
+    {"name": "DealNews Kids' Clothes", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c205/Clothing-Accessories/Mens-Clothing/?rss=1"},
+    {"name": "DealNews Electronics", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c142/Electronics/?rss=1"},
+    {"name": "DealNews Computers", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c39/Computers/?rss=1"},
+    {"name": "DealNews Home", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c196/Home-Garden/?rss=1"},
+    {"name": "DealCatcher", "kind": "deal", "boost": 0, "url": "https://www.dealcatcher.com/rss"},
+    {"name": "camelcamelcamel Top Drops", "kind": "deal", "boost": 0, "url": "https://camelcamelcamel.com/top_drops/feed"},
+    # editor-curated deal desks (articles; kept only if sale-related)
+    {"name": "CNET Deals", "kind": "article", "boost": 2, "url": "https://www.cnet.com/rss/deals/"},
+    {"name": "ZDNet Deals", "kind": "article", "boost": 0, "url": "https://www.zdnet.com/topic/deals/rss.xml"},
+    {"name": "The Verge", "kind": "article", "boost": 0, "url": "https://www.theverge.com/rss/index.xml"},
+    {"name": "Tom's Guide", "kind": "article", "boost": 0, "url": "https://www.tomsguide.com/feeds/all"},
+    {"name": "TechRadar", "kind": "article", "boost": 0, "url": "https://www.techradar.com/feeds/all"},
+    {"name": "Lifehacker", "kind": "article", "boost": 0, "url": "https://lifehacker.com/feed/rss"},
     {"name": "RetailMeNot Blog", "kind": "article", "boost": 0, "url": "https://www.retailmenot.com/blog/feed"},
     {"name": "Offers.com Blog", "kind": "article", "boost": 0, "url": "https://www.offers.com/blog/feed/"},
 
@@ -168,7 +188,7 @@ CLOTHING_BRANDS = [
     "target clothing", "goodfellow", "express men", "shein", "asos", "revolve", "shopbop", "net-a-porter",
     "farfetch", "comfrt", "nautica", "guess", "vineyard vines", "southern tide", "peter millar", "brooks brothers",
     "jos. a. bank", "jos a bank", "men's wearhouse", "suitsupply", "indochino", "lacoste", "hugo boss",
-    "boss", "diesel", "g-star", "true religion", "7 for all mankind", "ag jeans", "frame denim", "citizens of humanity",
+    "diesel", "g-star", "true religion", "7 for all mankind", "ag jeans", "frame denim", "citizens of humanity",
     "girlfriend collective", "skims", "uniqlo u", "cos", "& other stories", "arket", "theory", "vince",
     "rag & bone", "club monaco", "j.jill", "loft", "ann taylor", "white house black market", "chico's",
     "torrid", "lane bryant", "eloquii", "universal standard", "hoka one one", "on cloud", "ugg australia",
@@ -182,6 +202,33 @@ GENDER_TERMS = {
     "Men's": [r"\bmen'?s\b", r"\bmens\b", r"\bmenswear\b", r"\bfor men\b"],
     "Women's": [r"\bwomen'?s\b", r"\bwomens\b", r"\bwomenswear\b", r"\bfor women\b", r"\bladies\b"],
     "Kids": [r"\bkids'?\b", r"\bboys'?\b", r"\bgirls'?\b", r"\btoddler\b", r"\bbaby\b", r"\bchildren'?s\b"],
+}
+
+# Non-clothing categories (first match wins; clothing is detected separately)
+CATEGORY_TERMS = {
+    "Tech": ["laptop", "macbook", "chromebook", "tv", "oled", "qled", "4k", "monitor", "ssd", "hard drive", "headphones",
+             "earbuds", "airpods", "ipad", "iphone", "tablet", "kindle", "camera", "gopro", "drone", "router", "mesh wifi",
+             "speaker", "soundbar", "smartwatch", "apple watch", "galaxy", "pixel", "charger", "power bank", "usb-c",
+             "gpu", "graphics card", "cpu", "keyboard", "mouse", "gaming", "ps5", "playstation", "xbox", "nintendo",
+             "switch 2", "steam deck", "vr", "meta quest", "projector", "roku", "fire tv", "echo", "ring", "smart home",
+             "electronics", "computers", "tablets", "cell phones", "video games", "printer", "nas", "microsd"],
+    "Home & Kitchen": ["air fryer", "vacuum", "robot vacuum", "roomba", "dyson", "blender", "kitchenaid", "instant pot",
+                       "cookware", "pan", "knife set", "coffee maker", "espresso", "keurig", "nespresso", "mattress",
+                       "pillow", "sofa", "sectional", "furniture", "lamp", "rug", "bedding", "sheets", "towels",
+                       "christmas tree", "string lights", "decor", "candle", "storage", "humidifier", "air purifier",
+                       "space heater", "grill", "home & garden", "kitchen", "appliances", "dishwasher", "refrigerator"],
+    "Toys & Games": ["lego", "toy", "toys", "board game", "puzzle", "doll", "nerf", "playset", "hot wheels", "barbie",
+                     "squishmallow", "stuffed animal", "kids' toys"],
+    "Beauty & Health": ["skincare", "makeup", "fragrance", "perfume", "cologne", "shampoo", "razor", "trimmer",
+                        "toothbrush", "vitamin", "supplement", "lotion", "serum", "hair dryer", "beauty", "health"],
+    "Outdoor & Fitness": ["tent", "sleeping bag", "yeti", "stanley", "cooler", "bike", "e-bike", "treadmill",
+                          "dumbbell", "kayak", "camping", "hiking", "fishing", "golf", "peloton", "rower", "sporting goods"],
+    "Tools & Auto": ["drill", "impact driver", "tool set", "power tools", "ryobi", "dewalt", "milwaukee", "kobalt",
+                     "craftsman", "jump starter", "tire", "dash cam", "car", "automotive", "tools"],
+    "Travel & Experiences": ["cruise", "vacation", "flight", "hotel", "tickets", "luggage", "suitcase", "travel",
+                             "theme park", "airfare"],
+    "Food & Grocery": ["snack", "coffee beans", "soda", "grocery", "chocolate", "meal kit", "protein", "food",
+                       "pizza", "restaurant"],
 }
 
 # Category tags from feeds that mean apparel

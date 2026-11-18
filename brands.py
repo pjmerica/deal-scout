@@ -1,0 +1,128 @@
+"""
+Brand knowledge used by the scoring logic.
+
+BASELINE: the discount a brand offers on a normal day, roughly. A deal's
+"excess discount" (deal % minus baseline) is what makes it special: 40% off
+Patagonia is rarer than 60% off Old Navy, which runs that most weeks.
+
+PREMIUM: brands that rarely discount and hold resale value. They get a quality bonus.
+
+SHOPIFY_STORES: clothing brands whose Shopify storefront exposes
+/products.json, so we can read real price vs compare-at price, plus stock.
+"""
+
+DEFAULT_BASELINE = 25          # unknown brands
+GENERIC_BASELINE = 35          # no-name Amazon-style listings are perpetually "on sale"
+
+BASELINE = {
+    # always-on-sale mall & factory brands
+    "old navy": 50, "gap factory": 50, "gap": 40, "banana republic factory": 55, "banana republic": 35,
+    "j.crew factory": 55, "j.crew": 35, "jcpenney": 55, "kohl's": 45, "macy's": 45, "express": 45,
+    "american eagle": 35, "aerie": 35, "aeropostale": 55, "the children's place": 55, "carter's": 50,
+    "nautica": 45, "izod": 45, "perry ellis": 45, "jos. a. bank": 60, "men's wearhouse": 45, "loft": 45,
+    "ann taylor": 40, "h&m": 30, "shein": 55, "fashion nova": 45, "princess polly": 30, "petal & pup": 40,
+    "showpo": 40, "nordstrom rack": 50, "saks off 5th": 55, "calvin klein": 45, "tommy hilfiger": 45,
+    "eddie bauer": 45, "lands' end": 45, "lands end": 45, "robert graham": 35, "bonobos": 30,
+    "steve madden": 30, "skechers": 30, "crocs": 30, "under armour": 35, "adidas": 35, "puma": 35,
+    "reebok": 40, "columbia": 30, "sorel": 30, "merrell": 25, "timberland": 25, "levi's": 30, "wrangler": 30,
+    "ralph lauren": 30, "polo ralph lauren": 30, "abercrombie": 25, "hollister": 30, "zara": 20,
+    "macys": 45, "kohls": 45, "nordstrom": 30, "dsw": 30, "famous footwear": 35, "cupshe": 40,
+    # moderate
+    "nike": 25, "new balance": 25, "the north face": 20, "north face": 20, "rei": 20, "uniqlo": 15,
+    "everlane": 20, "allbirds": 25, "todd snyder": 25, "taylor stitch": 15, "faherty": 20, "rhone": 15,
+    "mack weldon": 25, "untuckit": 25, "naadam": 25, "kotn": 25, "vessi": 25, "nisolo": 20, "kizik": 15,
+    "set active": 20, "saxx": 20, "unbound merino": 15, "wool&prince": 15, "cotopaxi": 20, "ugg": 15,
+    "dr. martens": 20, "dr martens": 20, "hoka": 10, "asics": 25, "brooks": 20, "saucony": 25,
+    "ll bean": 15, "l.l.bean": 15, "smartwool": 20, "darn tough": 10, "marine layer": 20, "outerknown": 20,
+    "chubbies": 25, "true classic": 25, "cuts": 15, "johnnie-o": 20, "southern tide": 20, "billy reid": 25,
+    "frank and oak": 30, "ministry of supply": 25, "girlfriend collective": 15, "beyond yoga": 20,
+    "summersalt": 25, "birdies": 20, "beckett simonon": 20, "koio": 20, "oliver cabell": 20, "xero shoes": 20,
+    "olukai": 15, "tecovas": 5, "thursday boots": 10, "rothy's": 10, "knix": 20, "tommy john": 20,
+    "negative underwear": 15, "universal standard": 25, "naked & famous": 15, "iron & resin": 20,
+    "roark": 20, "howler brothers": 20, "ronhill": 30, "janji": 20, "satisfy": 10, "district vision": 15,
+    "topo designs": 20, "toad&co": 25, "sunday afternoons": 20, "jachs": 40, "duer": 20, "comfrt": 30,
+    "rails": 25, "mott & bow": 25, "taft": 20, "representclo": 10, "represent": 10, "gymshark": 25,
+    # rarely discounted
+    "patagonia": 10, "arc'teryx": 5, "arcteryx": 5, "canada goose": 0, "moncler": 0, "lululemon": 10,
+    "vuori": 10, "on running": 0, "on": 0, "birkenstock": 5, "aime leon dore": 0, "aimé leon dore": 0,
+    "kith": 10, "fear of god": 0, "stussy": 0, "noah": 5, "filson": 10, "barbour": 10, "alo yoga": 10,
+    "alo": 10, "reigning champ": 15, "quince": 0, "skims": 5, "fjallraven": 15, "outdoor voices": 20,
+    "apple": 10, "dyson": 15, "yeti": 10, "stanley": 15, "sony": 20, "bose": 20, "samsung": 25, "lego": 15,
+}
+
+PREMIUM = {
+    "patagonia", "arc'teryx", "arcteryx", "canada goose", "moncler", "lululemon", "vuori", "on running",
+    "hoka", "birkenstock", "aime leon dore", "aimé leon dore", "kith", "fear of god", "stussy", "noah",
+    "filson", "barbour", "todd snyder", "taylor stitch", "faherty", "buck mason", "rhone", "alo yoga",
+    "alo", "everlane", "allbirds", "the north face", "north face", "cotopaxi", "thursday boots", "tecovas",
+    "rothy's", "naadam", "ugg", "dr. martens", "dr martens", "ralph lauren", "polo ralph lauren", "levi's",
+    "reigning champ", "fjallraven", "outerknown", "marine layer", "darn tough", "smartwool", "skims",
+    "new balance", "nike", "adidas", "apple", "dyson", "yeti", "sony", "bose", "lego", "quince", "uniqlo",
+    "madewell", "j.crew", "carhartt", "columbia", "ll bean", "l.l.bean", "rei", "steve madden",
+}
+
+# Clothing brands running Shopify storefronts with an open /products.json.
+# Verified working Nov 2026. Display name -> domain.
+SHOPIFY_STORES = {
+    "Todd Snyder": "toddsnyder.com", "Bonobos": "bonobos.com", "Taylor Stitch": "taylorstitch.com",
+    "Faherty": "fahertybrand.com", "Everlane": "everlane.com", "Allbirds": "allbirds.com",
+    "Cotopaxi": "cotopaxi.com", "Kith": "kith.com", "Aimé Leon Dore": "aimeleondore.com",
+    "Alo Yoga": "aloyoga.com", "Steve Madden": "stevemadden.com", "Thursday Boots": "thursdayboots.com",
+    "Rothy's": "rothys.com", "Filson": "filson.com", "Mack Weldon": "mackweldon.com", "Untuckit": "untuckit.com",
+    "Naadam": "naadam.co", "Kotn": "kotn.com", "Vessi": "vessi.com", "Nisolo": "nisolo.com", "Kizik": "kizik.com",
+    "Set Active": "setactive.co", "SAXX": "saxxunderwear.com", "Unbound Merino": "unboundmerino.com",
+    "Wool&Prince": "woolandprince.com", "Marine Layer": "marinelayer.com", "Outerknown": "outerknown.com",
+    "Chubbies": "chubbiesshorts.com", "True Classic": "trueclassictees.com", "Cuts": "cutsclothing.com",
+    "Johnnie-O": "johnnie-o.com", "Southern Tide": "southerntide.com", "Billy Reid": "billyreid.com",
+    "Frank And Oak": "frankandoak.com", "Ministry of Supply": "ministryofsupply.com",
+    "Girlfriend Collective": "girlfriend.com", "Beyond Yoga": "beyondyoga.com", "Summersalt": "summersalt.com",
+    "Birdies": "birdies.com", "Beckett Simonon": "beckettsimonon.com", "Koio": "koio.co",
+    "Oliver Cabell": "olivercabell.com", "Xero Shoes": "xeroshoes.com", "Olukai": "olukai.com",
+    "Tecovas": "tecovas.com", "Knix": "knix.com", "Tommy John": "tommyjohn.com",
+    "Negative Underwear": "negativeunderwear.com", "Universal Standard": "universalstandard.com",
+    "Naked & Famous": "nakedandfamousdenim.com", "Iron & Resin": "ironandresin.com", "Roark": "roark.com",
+    "Howler Brothers": "howlerbros.com", "Ronhill": "ronhill.com", "Janji": "janji.com",
+    "Satisfy": "satisfyrunning.com", "District Vision": "districtvision.com", "Topo Designs": "topodesigns.com",
+    "Toad&Co": "toadandco.com", "Sunday Afternoons": "sundayafternoons.com", "Jachs": "jachsny.com",
+    "Duer": "shopduer.com", "Comfrt": "comfrt.com", "Rails": "railsclothing.com", "Mott & Bow": "mottandbow.com",
+    "Taft": "taftclothing.com", "Represent": "representclo.com", "Reigning Champ": "reigningchamp.com",
+    "Outdoor Voices": "outdoorvoices.com", "Stussy": "stussy.com", "Noah": "noahny.com",
+    "Fear of God": "fearofgod.com", "Fashion Nova": "fashionnova.com", "Princess Polly": "us.princesspolly.com",
+    "Petal & Pup": "petalandpup.com", "Showpo": "showpo.com", "Cupshe": "cupshe.com", "Robert Graham": "robertgraham.us",
+    "Darn Tough": "darntough.com", "Gymshark": "gymshark.com", "Ten Thousand": "tenthousand.cc",
+}
+
+# Clothing / department stores to look up on Rakuten (matched against its store directory).
+RAKUTEN_CLOTHING = [
+    "Old Navy", "Gap", "Gap Factory", "Banana Republic", "Banana Republic Factory", "J.Crew", "J.Crew Factory",
+    "Levi's", "Nike", "adidas", "Under Armour", "The North Face", "Columbia Sportswear", "Nordstrom",
+    "Nordstrom Rack", "Macy's", "Kohl's", "JCPenney", "Saks Fifth Avenue", "Saks OFF 5TH", "Bloomingdale's",
+    "Neiman Marcus", "Express", "Abercrombie & Fitch", "Hollister", "American Eagle", "Aerie", "L.L.Bean",
+    "Lands' End", "Eddie Bauer", "UNIQLO", "H&M", "ASOS", "Zappos", "DSW", "Famous Footwear", "Foot Locker",
+    "Finish Line", "New Balance", "PUMA", "Reebok", "UGG", "Dr. Martens", "Timberland", "Sorel", "Merrell",
+    "Crocs", "Skechers", "Converse", "Vans", "HOKA", "REI", "Backcountry", "Dick's Sporting Goods", "Champion",
+    "Hanes", "Calvin Klein", "Tommy Hilfiger", "Ralph Lauren", "Brooks Brothers", "Jos. A. Bank",
+    "Men's Wearhouse", "Bonobos", "Everlane", "Todd Snyder", "Madewell", "Anthropologie", "Free People",
+    "Urban Outfitters", "Athleta", "Fabletics", "LOFT", "Ann Taylor", "Chico's", "Torrid", "Lane Bryant",
+    "Carter's", "The Children's Place", "Vineyard Vines", "Lucky Brand", "Guess", "Steve Madden", "Coach Outlet",
+    "Kate Spade", "Michael Kors", "Allbirds", "Patagonia", "Lululemon", "Quince", "Nautica", "Perry Ellis",
+    "Cole Haan", "Clarks", "Birkenstock", "Saucony", "Brooks Running", "ASICS", "Mango", "Revolve", "Shopbop",
+    "Farfetch", "SSENSE", "Mr Porter", "Net-a-Porter", "Taylor Stitch", "Faherty", "Rhone", "Vuori", "Cotopaxi",
+    "Duluth Trading", "Carhartt", "Wrangler", "Lee", "Dockers", "Spanx", "SKIMS", "Aritzia", "Zara",
+]
+
+
+def norm_brand(b: str) -> str:
+    return b.lower().replace("’", "'").strip()
+
+
+def baseline_for(brands: list[str], store: str = "", generic: bool = False) -> int:
+    cands = [norm_brand(x) for x in brands + ([store] if store else [])]
+    vals = [BASELINE[c] for c in cands if c in BASELINE]
+    if vals:
+        return min(vals)  # the rarest-discounting brand mentioned sets the bar
+    return GENERIC_BASELINE if generic else DEFAULT_BASELINE
+
+
+def is_premium(brands: list[str], store: str = "") -> bool:
+    return any(norm_brand(x) in PREMIUM for x in brands + ([store] if store else []))

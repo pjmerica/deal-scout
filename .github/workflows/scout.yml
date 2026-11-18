@@ -20,17 +20,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Logic tests
+        run: python tests/test_scoring.py
       - name: Scrape
         env:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-        run: python deal_scout.py
+        run: python deal_scout.py | tee scrape.log
+      - name: Page smoke test (every tab against the fresh data)
+        run: node tests/smoke.js site/index.html
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "### Deal Scout run"
+            echo '```'
+            sed -n '/^Kept /,$p' scrape.log | head -60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
