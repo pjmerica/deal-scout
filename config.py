@@ -125,9 +125,8 @@ CLOTHING_TERMS = {
     "Tops": ["hoodie", "hoodies", "sweatshirt", "sweatshirts", "sweater", "sweaters", "cardigan",
              "pullover", "quarter zip", "1/4 zip", "half zip", "crewneck", "t-shirt", "t-shirts", "tee",
              "tees", "polo", "polos", "henley", "flannel", "button down", "button-down", "oxford shirt",
-             "dress shirt", "shirt", "shirts", "blouse", "tank top", "turtleneck", "fleece", "cashmere",
-             "merino"],
-    "Bottoms": ["jeans", "denim", "pants", "chinos", "trousers", "joggers", "sweatpants", "leggings",
+             "dress shirt", "shirt", "shirts", "blouse", "tank top", "turtleneck", "fleece"],
+    "Bottoms": ["jeans", "pants", "chinos", "trousers", "joggers", "sweatpants", "leggings",
                 "shorts", "skirt", "cargo pants", "jogger", "legging", "sweatpant"],
     "Dresses & Sets": ["dress", "dresses", "jumpsuit", "romper", "suit", "suits", "blazer", "sport coat",
                        "pajama", "pajamas", "pjs", "loungewear", "robe", "matching set"],
@@ -143,7 +142,7 @@ CLOTHING_TERMS = {
 }
 # generic words that indicate apparel but aren't a garment category
 CLOTHING_GENERIC = ["apparel", "clothing", "clothes", "fashion", "menswear", "womenswear", "wardrobe",
-                    "outfit", "outfits", "style deals", "sitewide", "site-wide"]
+                    "outfit", "outfits", "style deals", "sitewide", "site-wide", "cashmere", "merino", "denim"]
 
 # Brands: case-insensitive whole-word match
 CLOTHING_BRANDS = [

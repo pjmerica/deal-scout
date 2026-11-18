@@ -120,7 +120,12 @@ td small{color:var(--muted)}
 .method h3{margin:0 0 4px;font-size:15px}
 .method p{margin:0;color:var(--muted);font-size:14px}
 footer{color:var(--muted);font-size:13px;padding:14px 0 40px;border-top:1px solid var(--line)}
-@media (max-width:560px){h1{font-size:23px}.item .imgbox{height:130px}.grid,.brands{grid-template-columns:1fr}.thumbs{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){
+  header{padding-top:16px}.top{flex-wrap:nowrap;gap:10px}.theme-btn{flex:none;padding:4px 8px;font-size:12px}
+  .sub{font-size:13.5px}.countdown{margin-top:6px}
+  .stats{grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}.stat{padding:7px 9px;border-radius:10px}
+  .stat b{font-size:16px}.stat small{font-size:11px;line-height:1.2;display:block}
+  h1{font-size:23px}.item .imgbox{height:130px}.grid,.brands{grid-template-columns:1fr}.thumbs{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
@@ -258,6 +263,7 @@ function itemHTML(i){
   if(i.tier&&i.kind==='deal') badges.push(`<span class="b tier">${i.tier==='Exceptional'?'★ ':''}${esc(i.tier)}</span>`);
   if(i.is_new) badges.push(`<span class="b new">NEW</span>`);
   if(i.pct_off) badges.push(`<span class="b off">${i.pct_off}% off</span>`);
+  if(i.variants>1) badges.push(`<span class="b" title="Other colours/sizes of this item are also on sale">+${i.variants-1} more colors/sizes</span>`);
   if(i.votes!=null&&i.votes!==0) badges.push(`<span class="b votes">👍 ${i.votes>0?'+':''}${i.votes}</span>`);
   if(i.is_bf) badges.push(`<span class="b bf">Black Friday</span>`);
   if(i.is_clothing) (i.clothing_tags.length?i.clothing_tags:['Clothing']).slice(0,2).forEach(t=>badges.push(`<span class="b cl">${esc(t)}</span>`));
@@ -377,7 +383,7 @@ function renderBrands(main){
     </div>
     <p class="section-note">Read straight from each brand's own store: live sale prices against the original price, in-stock items only, and the promo shown in the homepage banner. Brands are ranked by how strong the sale is compared with how often that brand usually discounts.</p>
     <div class="brands">${list.map(s=>`<div class="brand">
-      <h3>${esc(s.store)} ${s.premium?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
+      <h3>${esc(s.store)} ${s.baseline<=15?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
       ${s.promo?`<div class="promo">${esc(s.promo)}</div>`:''}
       <div class="bstats">${s.on_sale?`<span><b>${countFor(s)}</b> ${state.gender==='all'?'':esc(G_LABEL[state.gender].toLowerCase())+'\'s '}items on sale</span><span>typical <b>${s.median_pct}%</b> off</span><span>up to <b>${s.max_pct}%</b></span>`:'<span>Sale items not readable right now</span>'}</div>
       ${topFor(s).length?`<div class="thumbs">${topFor(s).slice(0,3).map(t=>`<a class="thumb" href="${esc(t.link)}" target="_blank" rel="noopener">${t.image?`<img loading="lazy" src="${esc(t.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:''}<span>${esc(t.title.slice(0,46))}</span><span><b>${money(t.price)}</b> <s>${money(t.orig)}</s> · ${t.pct}%</span></a>`).join('')}</div>`:''}

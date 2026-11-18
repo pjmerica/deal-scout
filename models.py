@@ -29,6 +29,7 @@ class Item:
     thread_id: str = ""            # Slickdeals thread id (for cross-feed signals)
     # Brand-store (Shopify) extras
     in_stock_ratio: float | None = None
+    variants: int = 1                   # brand-store colour/size variants collapsed into this item
     store_median: float | None = None   # typical discount across that store's sale items
     history_key: str = ""
     # derived

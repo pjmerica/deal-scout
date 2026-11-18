@@ -58,7 +58,7 @@ PREMIUM = {
     "rothy's", "naadam", "ugg", "dr. martens", "dr martens", "ralph lauren", "polo ralph lauren", "levi's",
     "reigning champ", "fjallraven", "outerknown", "marine layer", "darn tough", "smartwool", "skims",
     "new balance", "nike", "adidas", "apple", "dyson", "yeti", "sony", "bose", "lego", "quince", "uniqlo",
-    "madewell", "j.crew", "carhartt", "columbia", "ll bean", "l.l.bean", "rei", "steve madden",
+    "madewell", "j.crew", "carhartt", "columbia", "ll bean", "l.l.bean", "rei",
 }
 
 # Clothing brands running Shopify storefronts with an open /products.json.

@@ -214,8 +214,8 @@ def _product_item(store: str, domain: str, p: dict) -> Item | None:
     img = ""
     if p.get("images"):
         img = p["images"][0].get("src", "")
-        if img and "?" not in img:
-            img += "?width=400"
+        if img:
+            img += ("&" if "?" in img else "?") + "width=400"
     it = Item(
         title=f"{store}: {title}", link=f"https://{domain}/products/{p.get('handle', '')}",
         source=f"Brand store: {store}", kind="deal", store=store, image=img,
@@ -230,6 +230,27 @@ def _product_item(store: str, domain: str, p: dict) -> Item | None:
     it.gender = gender
     it.flags.append("retailer_verified")
     return it
+
+
+def _base_title(title: str) -> str:
+    t = title.split(": ", 1)[-1]
+    return re.split(r"\s[|–—-]\s|\s\(|,\s", t)[0].strip().lower()
+
+
+def collapse_variants(items: list[Item]) -> list[Item]:
+    """Shopify stores often list each colour/inseam as its own product. Keep the deepest
+    discount per base title and remember how many variants it stands for."""
+    groups: dict[str, Item] = {}
+    for it in sorted(items, key=lambda i: (-(i.pct_off or 0), i.price or 0)):
+        k = _base_title(it.title)
+        if k in groups:
+            groups[k].variants += 1
+            for g in it.gender:
+                if g not in groups[k].gender:
+                    groups[k].gender.append(g)
+        else:
+            groups[k] = it
+    return list(groups.values())
 
 
 def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tuple[list[Item], dict]:
@@ -253,12 +274,15 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
                 items.append(it)
                 seen.add(it.history_key)
 
+    raw_count = len(items)
+    items = collapse_variants(items)
     if promo_cache is not None and domain in promo_cache:
         promo, promo_pct, up_to = promo_cache[domain]
     else:
         promo, promo_pct, up_to = detect_promo(domain)
     pcts = [i.pct_off for i in items]
     median = statistics.median(pcts) if pcts else 0
+    on_sale_total = sum(i.variants for i in items) if items else raw_count
     for i in items:
         i.store_median = median
     items.sort(key=lambda i: (-(i.pct_off or 0), -(i.orig_price or 0)))
@@ -285,7 +309,7 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
         keep.insert(0, pi)
     summary = {
         "store": store, "domain": domain, "url": url,
-        "scanned": scanned, "on_sale": len(pcts), "median_pct": round(median), "max_pct": max(pcts) if pcts else 0,
+        "scanned": scanned, "on_sale": on_sale_total, "products": len(pcts), "median_pct": round(median), "max_pct": max(pcts) if pcts else 0,
         "promo": promo, "promo_pct": promo_pct, "promo_up_to": up_to,
         "premium": BR.is_premium([store]), "baseline": BR.baseline_for([store]),
         "audience": audience, "brand_audience": BR.audience_for([store]) or "Everyone",
