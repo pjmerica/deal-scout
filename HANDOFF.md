@@ -56,7 +56,8 @@ history.load (previous history.json from the live site)               ─┘    
 ## 4. Sources and how they break
 
 - **Slickdeals RSS** (`newsearch.php?...&rss=1`): frontpage, popular, hot deals, plus keyword searches in `config.py`.
-  The "Thumb Score" is parsed from `content:encoded`. Pagination doesn't work (page 2 = page 1). Frontpage/Popular
+  The "Thumb Score" is parsed from `content:encoded`. Pagination doesn't work (page 2 = page 1). **Multi-word queries
+  are sent quoted** (`sd_url`): unquoted, "free people" matched any post containing both words. Frontpage/Popular
   membership is applied to every copy of the thread (`cross_feed_flags`).
 - **DealNews RSS**: has `<retailer>`, `<price>`, `<staffPick>`, `<expires>`. Its category IDs are odd: **c205 is Kids' Clothes,
   not men's** (c206 returned travel deals). Summaries contain price-history phrases ("best price we could find by $X").
