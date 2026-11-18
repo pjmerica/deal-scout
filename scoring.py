@@ -354,6 +354,8 @@ def score_deal(it: Item) -> None:
     if it.kind == "article":
         s -= 6
 
+    if "Lesser-known brand" in W:
+        s *= 0.88  # part of a great deal is a product worth owning
     if it.is_clothing:
         s = s * C.CLOTHING_MULTIPLIER + C.CLOTHING_FLAT_BONUS
     it.score = round(s * decay(it.age_days, C.DEAL_HALF_LIFE_DAYS), 1)

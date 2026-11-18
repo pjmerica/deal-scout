@@ -148,8 +148,8 @@ def write_outputs(items, status, brand_sales, card_offers, rates, hist) -> Path:
     keep.sort(key=lambda x: -x.score)
     idx = {id(it): n for n, it in enumerate(keep)}
 
-    best = scoring.diversify([i for i in keep if i.kind == "deal"], 60)
-    best_clothing = scoring.diversify([i for i in keep if i.kind == "deal" and i.is_clothing], 40, per_store=2, per_brand=2)
+    best = scoring.diversify([i for i in keep if i.kind == "deal"], 60, per_store=1, per_brand=1)
+    best_clothing = scoring.diversify([i for i in keep if i.kind == "deal" and i.is_clothing], 48, per_store=1, per_brand=1)
     cats = sorted({i.category for i in keep if i.kind == "deal"})
     best_by_cat = {c: [idx[id(i)] for i in scoring.diversify([x for x in keep if x.kind == "deal" and x.category == c], 12)]
                    for c in cats}
