@@ -6,9 +6,10 @@ Order of evidence:
   1. explicit words in the title (men's / women’s / kids / unisex)
   2. garment words that imply an audience (dress, skirt set, bra -> Women's; boxer briefs, tuxedo -> Men's)
   3. product tags / type from the retailer (brand stores)
-  4. the brand's audience (Summersalt -> Women's, Todd Snyder -> Men's, Comfrt -> Everyone)
+  4. a single-audience brand (Summersalt -> Women's, Todd Snyder -> Men's); the store counts only for storewide sales
   5. the description, if it names exactly one audience (both named -> Everyone)
-  6. storewide sales with no specific garment in the title -> Everyone
+  6. a brand that sells to everyone (Nike, Comfrt, Macy's for a storewide sale) -> Everyone
+  7. storewide sales with no specific garment in the title -> Everyone
 """
 from __future__ import annotations
 
@@ -76,8 +77,10 @@ def detect(title: str, summary: str = "", brands: list[str] | None = None, store
             return ["Women's"]
         if KIDS.search(tags):
             return ["Kids"]
-    aud = BR.audience_for(brands or [], store)
-    if aud:
+    # The store's audience only speaks for storewide sales: Macy's sells to everyone, but a sweater at Macy's
+    # isn't unisex. A brand that sells to everyone is weaker evidence than a description naming one audience.
+    aud = BR.audience_for(brands or [], "" if has_garment else store)
+    if aud and aud != "Everyone":
         return [aud]
     if summary:
         s = summary[:260]
@@ -88,6 +91,8 @@ def detect(title: str, summary: str = "", brands: list[str] | None = None, store
             return ["Men's"]
         if sw:
             return ["Women's"]
+    if aud:
+        return [aud]
     if not has_garment and STOREWIDE.search(title):
         return ["Everyone"]
     return []

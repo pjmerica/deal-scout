@@ -208,7 +208,8 @@ CATEGORY_TERMS = {
     "Toys & Games": ["lego", "toy", "toys", "board game", "puzzle", "doll", "nerf", "playset", "hot wheels", "barbie",
                      "squishmallow", "stuffed animal", "kids' toys"],
     "Beauty & Health": ["skincare", "makeup", "fragrance", "perfume", "cologne", "shampoo", "razor", "trimmer",
-                        "toothbrush", "vitamin", "supplement", "lotion", "serum", "hair dryer", "beauty", "health"],
+                        "toothbrush", "vitamin", "supplement", "lotion", "serum", "hair dryer", "beauty", "health",
+                        "massager", "massage gun", "massage chair", "disinfecting wipes"],
     "Outdoor & Fitness": ["tent", "sleeping bag", "yeti", "stanley", "cooler", "bike", "e-bike", "treadmill",
                           "dumbbell", "kayak", "camping", "hiking", "fishing", "golf", "peloton", "rower", "sporting goods"],
     "Tools & Auto": ["drill", "impact driver", "tool set", "power tools", "ryobi", "dewalt", "milwaukee", "kobalt",
@@ -235,6 +236,11 @@ CLOTHING_FALSE_POSITIVE = [
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
     r"\bduvet", r"\bpillow", r"\bquilt", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
     r"\bnapkin", r"\btablecloth", r"\bplacemat", r"\bmug\b", r"\bornament", r"bath mat", r"\bdinnerware",
+    # garment words in other senses, seen on the live site 2026-11-18 (compression leg massager, thermal printer,
+    # "Golf+ ... Tee Off in VR", nylon cable tie, laser tag "no vest needed", a Joe Abercrombie ebook)
+    r"massag", r"thermal (?:printer|paper|label|camera|imag)", r"label printer", r"\btee off\b", r"\bgolf tees?\b",
+    r"\b(?:cable|zip) ties?\b", r"\bno vest\b", r"laser tag", r"\be-?books?\b", r"\bkindle edition\b", r"\bpaperback\b",
+    r"\bhardcover\b", r"\baudiobook\b", r"jump starter", r"\bheater\b",
 ]
 # Department stores / broad retailers: a mention alone is weak evidence of clothing
 WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "sierra", "nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",

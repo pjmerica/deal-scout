@@ -107,7 +107,9 @@ PROMO_BAD = re.compile(r"first (?:order|purchase)|sign ?up|subscribe|e-?mail|new
                        r"join|refer|welcome|app\b|military|student|teacher|nurse|first responder|next order|"
                        r"your next|recycl|trade-?in|shop by|discounted price|regular price|sale price|"
                        r"\b0% off|\d+% off \d+% off|in the loop|saving \$|\$\d+\.\d\d \d+% off", re.I)
-TRAILING_NAV = re.compile(r"\s+(?:shop (?:women|men|now|kids|all|the sale|early access)|terms\*?|see details)\b.*$", re.I)
+TRAILING_NAV = re.compile(r"\s+(?:shop\s*:|shop (?:women|men|now|kids|all|the sale|early access|winter|new|gifts|holiday)|"
+                          r"terms\*?|see details|info$)(?:\b|\s).*$", re.I)
+PROMO_RANGE = re.compile(r"\d{1,2}\s?%?\s*(?:-|–|to)\s*(\d{1,2})\s?%\s*off", re.I)
 
 
 LEADING_NAV = re.compile(r"^(?:(?:shop(?: all| now)?|new(?: arrivals)?|menu|home|sale)\b[\s:|-]*)+(?=\S)", re.I)
@@ -166,11 +168,16 @@ def promo_from_html(html: str) -> tuple[str, int, bool, str]:
         seen.add(snippet)
         if PROMO_BAD.search(snippet) or not PROMO_GOOD.search(snippet):
             continue
+        # A filter menu, not a promo: "20% Off Sale 30% Off Sale 40% Off Sale ... 70% Off Sale" (Faithfull, 2026-11-18).
+        # Tiered offers ("30% off $100, 40% off $200, 50% off $300") name dollar amounts and are kept.
+        if len({m.group(2) for m in PROMO_RE.finditer(snippet)}) >= 3 and "$" not in snippet:
+            continue
+        range_tops = {r.start(1) for r in PROMO_RANGE.finditer(snippet)}  # "70-80% off" is up to 80%
         for m in PROMO_RE.finditer(snippet):
             pct = int(m.group(2))
             if pct < 10:
                 continue
-            up_to = (m.group(1) or "").strip().lower() == "up to"
+            up_to = (m.group(1) or "").strip().lower() == "up to" or m.start(2) in range_tops
             sitewide = bool(re.search(r"sitewide|site-wide|site wide|everything|storewide|entire|all orders", snippet, re.I))
             event = bool(re.search(r"black friday|cyber|bfcm|early access", snippet, re.I))
             strength = pct * (0.75 if up_to else 1.0) + 15 * sitewide + 8 * event

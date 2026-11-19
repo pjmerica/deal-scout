@@ -26,7 +26,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (30 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (38 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -59,6 +59,10 @@ history.load (previous history.json from the live site)               ─┘    
   The "Thumb Score" is parsed from `content:encoded`. Pagination doesn't work (page 2 = page 1). **Multi-word queries
   are sent quoted** (`sd_url`): unquoted, "free people" matched any post containing both words. Frontpage/Popular
   membership is applied to every copy of the thread (`cross_feed_flags`).
+  **Store name** (`feeds.sd_store`, since 2026-11-18): the first outclick link carries `data-store-slug="macys"`
+  (about 88% of items), and most descriptions open "Macy's [macys.com] has…" ("X via Amazon" → Amazon). The slug wins, named
+  through `feeds.SLUG_NAMES`, or with the description's spelling when the two agree. Before this, 48% of feed deals had no
+  store (only "at Amazon" in a title was read); after, about 13% (user posts that name no store).
 - **DealNews RSS**: has `<retailer>`, `<price>`, `<staffPick>`, `<expires>`. Its category IDs are odd: **c205 is Kids' Clothes,
   not men's** (c206 returned travel deals). Summaries contain price-history phrases ("best price we could find by $X").
 - **camelcamelcamel top drops**: kept only at 20%+ drop. Titles read "down X% ($saving) to $price from $orig".
@@ -85,7 +89,10 @@ history.load (previous history.json from the live site)               ─┘    
 - **Homepage promo** (`promo_from_html`): the smallest element around each "% off" that explains itself (Black
   Friday / sitewide / everything…), excluding sign-up, next-order, filter-menu and product-grid text. A promo code is taken
   from the surrounding block **only if that block holds a single promo** (Steve Madden's bar paired a 50% promo with
-  another slide's code).
+  another slide's code). Three or more different "% off" values with no dollar amount is a **filter menu, not a promo**
+  (Faithfull's "20% Off Sale 30% Off Sale … 70% Off Sale" ranked as a 70% sitewide sale); tiered offers ("30% off $100,
+  40% off $200") name dollar amounts and are kept. "70-80% off" counts as up to 80%. `TRAILING_NAV` strips "SHOP: …" and
+  "SHOP WINTER ARRIVALS"-style navigation.
 - Stores that stopped exposing data: Buck Mason, Rhone, Vuori, Bombas, SKIMS, Spanx (404). **To add stores:** list them in
   `tools/store_candidates.txt`, run `gh workflow run probe.yml` (it checks from CI, where nothing is throttled; results are
   on the run summary), then add the open ones to `brands.SHOPIFY_STORES` with their `BASELINE`, `PREMIUM` and
@@ -109,6 +116,19 @@ history.load (previous history.json from the live site)               ─┘    
   audience (`brands.BRAND_AUDIENCE`) → description → storewide sale → Everyone.
 - **Pricing:** title first. Extras compound (50% + extra 30% = 65%). A final "$X down from $Y" price is never stacked
   again. "Extra X% off sale items" assumes a 30% base.
+- **Brand names that are ordinary words, part 2** (`brands.CONTEXT_NAMES`: Diesel, Mango, Express): still matched in
+  headlines, but counted only when the title starts with the brand or names a garment. Without it "8L Diesel" made a car jump
+  starter clothing, "Lavender + Mango" Lysol wipes, "Keurig K-Express" a coffee maker. (`AMBIGUOUS_NAMES` is the stricter
+  list: never matched in headlines at all.) Garment words in other senses are in `config.CLOTHING_FALSE_POSITIVE`
+  (compression *massager*, *thermal printer*, "Tee Off", *cable tie*, "no vest needed", ebooks). Clothing gets ×1.6 + 12, so
+  every false positive also jumps up the rankings: when you spot one on the live site, add the word and a test.
+- **Store names** (`scoring.tidy_store`): "Woot! An Amazon Company" → Woot, "Best Buy Locations" → Best Buy, "Newegg ahead of
+  Black Friday" → Newegg, "Macys.com" → Macy's; spelling variants of stores in `feeds.SLUG_NAMES` fold into one name. A store
+  matters for the per-store cap on the Best tab, the Card Scout badges and the brand baseline, so check those when you
+  change store extraction.
+- **Gender and stores:** a store's audience counts only for a storewide sale. Macy's sells to everyone, but a sweater at
+  Macy's isn't unisex, so it stays unlabeled (the page offers "+ N unlabeled"). A brand that sells to everyone (Nike) ranks
+  below a description naming one audience ("Foot Locker has the Nike Men's…" → Men's).
 
 ---
 
@@ -161,6 +181,10 @@ page uses, make sure it survives `slim()` or gets a default on load.
 - **Look at the real page** (`tools/shots.js`) after UI work. The DOM-stub smoke test can't see images, layout or
   overflow.
 - Slickdeals's "credit card" search returns wallets and microSD cards. Keyword searches need junk filters.
+- **Audit the live data, not just the tests.** Download `https://pjmerica.github.io/deal-scout/deals.json` and look at
+  clothing items with no garment tag, the `store` values, and the brand-sale promo texts. That's how the 2026-11-18
+  evening fixes were found (Lysol wipes and jump starters in Clothing, 48% of feed deals with no store, a filter menu read
+  as a 70% sale). All tests passed while those were live.
 - GitHub cron can start runs late. A manual `gh workflow run` is fine at any time.
 
 ---
@@ -170,6 +194,13 @@ page uses, make sure it survives `slim()` or gets a default on load.
 - Declined for now (§1): **size filter** (Shopify variants carry sizes and stock), **watch-list alerts** (could reuse the
   health-issue mechanism), **hourly runs Thanksgiving–Cyber Monday**, **Reddit keys** (r/frugalmalefashion and
   r/frugalfemalefashion are the best clothing sources missing).
-- More brand stores: done 2026-11-18 (55 added). Paige still returned 429 from CI; retry it with the probe.
+- More brand stores: done 2026-11-18 (55 added). Paige returned 429 from CI on two probes (the second on the evening of
+  2026-11-18), so it's left out. Don't retry it.
 - Slickdeals searches for big retailers that block scraping: done 2026-11-18 (about 40 added to `SLICKDEALS_CLOTHING_QUERIES`).
-- Page packaging: load data as a separate gzip-friendly file to shrink transfer further.
+- ~~Page packaging: load data as a separate file to shrink transfer~~ **checked 2026-11-18, not worth it:** GitHub Pages
+  already gzips `index.html` (2.4 MB raw → 497 KB transferred), so a separate data file transfers about the same, and
+  `fetch` is blocked on file:// pages, so `--open` would stop working. If phones ever feel slow to parse, embed the data
+  as `<script type="application/json">` and `JSON.parse` it (and update `tests/smoke.js`).
+- Checked 2026-11-18, left alone: a higher per-store cap on the Best tab for big retailers (Amazon, Walmart, eBay). Most
+  of their crowded-out deals are blocked by the per-brand cap anyway (Adidas, Nike, Carhartt); a cap of 3 changed about 3
+  of 60 picks, mostly by adding no-name Amazon items.

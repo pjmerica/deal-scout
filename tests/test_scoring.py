@@ -263,6 +263,114 @@ def test_baseline_lookup():
     assert BR.baseline_for([]) == BR.DEFAULT_BASELINE
 
 
+def test_ordinary_word_brands_need_context():
+    # all seen on the live Clothing tab 2026-11-18
+    for t in ["[SnS, AC] $11.61 | 4-Pk 80-Count Lysol Disinfecting Wipes (Lavender + Mango) at Amazon",
+              "GOOLOO 12V 4500A Portable Car Battery Jump Starter (up to 10L Gas or 8L Diesel) w/ Quick Charge $50",
+              "BougeRV 5KW All-in-One Portable Diesel Parking Heater w/ APP Control & Timer $139",
+              "$49.47 Keurig K-Express Essentials Single-Serve K-Cup Pod Coffee Maker",
+              "[Resale] $403.63 | Breville BES870XL Barista Express Espresso Machine",
+              "Today only: PNY's Switch 2-compatible 890MB/s Express microSD card starts at just $30"]:
+        it = mk(t)
+        assert not it.is_clothing and not ({"Diesel", "Mango", "Express"} & set(it.brands)), t
+    # the brands still count when the deal is about them
+    assert "Express" in mk("Express: Extra 50% Off Clearance + Free Shipping").brands
+    assert mk("Mango Black Friday Sale: 30% off everything").is_clothing
+    d = mk("Diesel Men's Larkee Straight Jeans $49 (reg $128)")
+    assert d.is_clothing and "Diesel" in d.brands
+
+
+def test_garment_words_in_other_senses():
+    for t in ["CINCOM Heat & Compression Leg Massager CM-102A (Red) $64.99 + Free Shipping",
+              "[Prime] NDYIN N80 Portable Wireless Bluetooth Thermal Printer $27.92 + Free Shipping",
+              "[AC] $297.99 | Meta Quest 3S 128GB | VR Headset — Golf+ Included — Tee Off in VR at Amazon",
+              "Calterm UV Black 100 Pack 7 in. Nylon Cable Tie - down 47.36% ($3.14) to $3.49 from $6.63",
+              "Rechargeable Laser Tag Set 4 Pack, No Vest Needed, Kids Adults Game $90",
+              "$1.99 | The Blade Itself by Joe Abercrombie (Kindle ebook)"]:
+        assert not mk(t).is_clothing, t
+    for t in ["Under Armour Men's HeatGear Compression T-Shirt $20", "Men's Heated Puffer Vest w/ Battery Pack $35.99",
+              "Smartwool Men's Classic Thermal Merino Base Layer Crew $60 (reg $100)"]:
+        assert mk(t).is_clothing, t
+
+
+def test_slickdeals_store_names():
+    from feeds import sd_store
+    slug = lambda s: f'<a href="https://slickdeals.net/click?trd=x" data-store-slug="{s}">x</a>'
+    assert sd_store(slug("amazon"), "ShuYang US via Amazon [amazon.com] has for Prime Members: ...") == "Amazon"
+    assert sd_store(slug("dicks-sporting-goods"), "Dick's Sporting Goods [dickssportinggoods.com] has ...") == \
+        "Dick's Sporting Goods"
+    assert sd_store(slug("macys"), "Macy's has select ...") == "Macy's"
+    assert sd_store(slug("nike-store"), "Nike [nike.com] has ...") == "Nike"
+    assert sd_store(slug("finish-line"), "Finishline.com has ...") == "Finish Line"
+    assert sd_store(slug("nordstrom-rack"), "Nordstrom Rack has ...") == "Nordstrom Rack"
+    assert sd_store(slug("jos-a-bank"), "Jos. A. Bank [josbank.com] has ...") == "Jos. A. Bank"  # description's spelling
+    assert sd_store(slug("kemimoto"), "") == "Kemimoto"
+    assert sd_store("", "Best Buy has the HP OmniBook X Flip 14 inch laptop") == "Best Buy"
+    assert sd_store("", "Woot! has ...") == "Woot"
+    assert sd_store("", "Black Friday has arrived early") == ""
+    assert sd_store("", "Use promocode SNL3LS64 at checkout") == ""
+
+
+def test_slickdeals_store_from_feed():
+    from feeds import parse_feed
+    xml = ('<?xml version="1.0"?><rss xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><item>'
+           '<title>Nike Air Max 95 $109.99</title><link>https://slickdeals.net/f/20330001-nike-air-max-95</link>'
+           '<description><![CDATA[Foot Locker [footlocker.com] has Nike Men\'s Air Max 95 for $109.99.]]></description>'
+           '<content:encoded><![CDATA[<div>Thumb Score: +12 </div><a href="https://slickdeals.net/click?trd=Foot%20Locker" '
+           'data-store-slug="foot-locker">Foot Locker</a>]]></content:encoded>'
+           '<pubDate>Thu, 19 Nov 2026 02:47:19 +0000</pubDate></item></channel></rss>').encode()
+    it = parse_feed(xml, "Slickdeals Frontpage", "deal", 10)[0]
+    assert it.store == "Foot Locker" and it.votes == 12 and it.thread_id == "20330001"
+
+
+def test_store_name_cleanup():
+    assert scoring.tidy_store("Woot! An Amazon Company") == "Woot"
+    assert scoring.tidy_store("Best Buy Locations") == "Best Buy"
+    assert scoring.tidy_store("Newegg ahead of Black Friday") == "Newegg"
+    assert scoring.tidy_store("adidas") == "adidas" and scoring.tidy_store("Bed Bath and Beyond") == "Bed Bath and Beyond"
+    assert mk("Men's Macrolux Heavy Puffer Jacket (3 Colors) $24.99 at 32 Degrees").store == "32 Degrees"
+    # the words before "[amazon.com]" aren't always the store
+    assert mk("Arc'teryx Beta SV Jacket Women's $568.01", "Color: Black, Small [amazon.com] has it").store == "Amazon"
+    # Hip2Save "on Amazon" / "on Macys.com"; spelling variants fold together
+    assert mk("Cozy Washable Slippers Only $9.34 on Amazon (Reg. $26)").store == "Amazon"
+    assert mk("Electric Towel Warmer Just $44.99 Shipped on Macys.com (Reg. $149)").store == "Macy's"
+    assert mk("Jacket $40 on Sale for Members").store == ""
+    assert scoring.tidy_store("Joes New Balance Outlet") == scoring.tidy_store("Joe's New Balance Outlet")
+
+
+def test_brand_display_names_and_baseline_reason():
+    assert mk("Levi's 501 Jeans $30 (reg $70)").brands == ["Levi's"]  # str.title() gave "Levi'S"
+    assert scoring.brand_title("j.crew") == "J.Crew" and scoring.brand_title("h&m") == "H&M"
+    assert scoring.brand_title("rei") == "REI" and scoring.brand_title("dick's sporting goods") == "Dick's Sporting Goods"
+    # the no-name baseline isn't Amazon's usual sale
+    it = mk("ZITY Men's Plaid Flannel Hoodie Shirt Jacket $14.99 (reg $29.99)", store="Amazon")
+    assert not any("Amazon's usual" in r for r in it.reasons) and it.pct_off == 50
+    assert any("Old Navy's usual" in r for r in mk("Old Navy Puffer Jacket 80% off").reasons)
+
+
+def test_department_store_does_not_make_items_unisex():
+    import gender as G
+    assert G.detect("Charter Club Cashmere Sweater $40", store="Macy's") == []
+    assert G.detect("Macy's Black Friday Sale: 50% off", store="Macy's", has_garment=False) == ["Everyone"]
+    # a brand that sells to everyone is weaker than a description naming one audience
+    assert G.detect("Nike Air Max 95 $109.99", "Foot Locker has the Nike Men's Air Max 95", brands=["Nike"]) == ["Men's"]
+    assert G.detect("Nike Air Max 95 $109.99", brands=["Nike"]) == ["Everyone"]
+
+
+def test_promo_menus_ranges_and_nav():
+    menu = ('<ul class="filters"><li><a>20% Off Sale 30% Off Sale 40% Off Sale 50% Off Sale 60% Off Sale '
+            '70% Off Sale</a></li></ul>')
+    assert shopify.promo_from_html(menu)[1] == 0  # a filter menu is not a 70% sale (Faithfull, 2026-11-18)
+    tiered = '<div class="bar"><p>Black Friday: 30% off $100, 40% off $200, 50% off $300</p></div>'
+    assert shopify.promo_from_html(tiered)[1] == 50
+    snippet, pct, up_to, _ = shopify.promo_from_html('<div class="bar"><p>70-80% Off Items Online Warehouse Sale</p></div>')
+    assert pct == 80 and up_to
+    assert shopify._tidy("UP TO 80% OFF Our biggest Black Friday ever No code needed. SHOP: ALL SWIM SHOP: APPAREL") == \
+        "UP TO 80% OFF Our biggest Black Friday ever No code needed"
+    assert shopify._tidy("BLACK FRIDAY 30% OFF SITEWIDE Early holiday shopping starts now. SHOP WINTER ARRIVALS") == \
+        "BLACK FRIDAY 30% OFF SITEWIDE Early holiday shopping starts now"
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

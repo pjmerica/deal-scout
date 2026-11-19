@@ -114,6 +114,55 @@ def _child_text(node, *names) -> str:
 
 SD_THREAD = re.compile(r"slickdeals\.net/f/(\d+)")
 
+# Slickdeals store names. The RSS carries a store slug on the first outclick link
+# (data-store-slug="dicks-sporting-goods") and most descriptions open with "Macy's [macys.com] has ...".
+SD_SLUG = re.compile(r'data-store-slug="([a-z0-9-]+)"')
+SD_HAS = re.compile(r"^\s*([A-Z0-9][\w&'’.!\-]*(?:\s+(?:via\s+|&\s+)?[A-Z0-9][\w&'’.!\-]*){0,4})\s+(?:\[[^\]]+\]\s+)?has\b")
+SLUG_NAMES = {
+    "amazon": "Amazon", "macys": "Macy's", "nike-store": "Nike", "nike": "Nike", "rei": "REI", "ebay": "eBay",
+    "dicks-sporting-goods": "Dick's Sporting Goods", "best-buy": "Best Buy", "aliexpress": "AliExpress",
+    "costco-wholesale": "Costco", "costco": "Costco", "sams-club": "Sam's Club", "the-home-depot": "Home Depot",
+    "home-depot": "Home Depot", "jc-penney": "JCPenney", "jcpenney": "JCPenney", "kohls": "Kohl's",
+    "columbia-sportswear": "Columbia", "lowes": "Lowe's", "bjs-wholesale-club": "BJ's", "bjs": "BJ's",
+    "levis": "Levi's", "lands-end": "Lands' End", "ll-bean": "L.L.Bean", "j-crew": "J.Crew",
+    "j-crew-factory": "J.Crew Factory", "b-h-photo-video": "B&H Photo", "bh-photo-video": "B&H Photo",
+    "adidas": "adidas", "saks-off-5th": "Saks OFF 5TH", "hm": "H&M", "dsw": "DSW", "qvc": "QVC", "hsn": "HSN",
+    "ulta": "Ulta", "carters": "Carter's", "the-childrens-place": "The Children's Place", "bloomingdales": "Bloomingdale's",
+    "dillards": "Dillard's", "belk": "Belk", "uniqlo": "Uniqlo", "6pm": "6pm", "woot": "Woot",
+    "joes-new-balance-outlet": "Joe's New Balance Outlet", "american-eagle-outfitters": "American Eagle",
+    "simon": "ShopSimon", "shopsimon": "ShopSimon", "playstation-vue": "PlayStation Store", "walmart": "Walmart",
+    "target": "Target", "nordstrom": "Nordstrom", "nordstrom-rack": "Nordstrom Rack", "zappos": "Zappos",
+}
+SD_HAS_STOP = {"black friday", "cyber monday", "this", "this deal", "price", "everyone", "it", "the", "nobody", "today"}
+
+
+def _alnum(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", s.lower().replace("&", "and"))
+
+
+def _tidy_store_name(s: str) -> str:
+    s = re.sub(r"^.*\bvia\s+", "", s.strip())          # "AnkerDirect via Amazon" -> the platform
+    s = re.sub(r"(?i)\.com$|!$", "", s).strip(" .")      # "Merrell.com", "Woot!"
+    return s
+
+
+def sd_store(encoded: str, desc: str) -> str:
+    """Store for a Slickdeals item: the outclick store slug, named as the description names it when the two agree."""
+    m = SD_SLUG.search(encoded or "")
+    slug = m.group(1) if m else ""
+    h = SD_HAS.match(html.unescape(desc or ""))
+    named = _tidy_store_name(h.group(1)) if h else ""
+    if named.lower() in SD_HAS_STOP:
+        named = ""
+    if slug:
+        if slug in SLUG_NAMES:
+            return SLUG_NAMES[slug]
+        agrees = named and (_alnum(named) == _alnum(slug) or _alnum(slug).startswith(_alnum(named)))
+        if agrees and (" " in named or "-" not in slug):
+            return named  # the description's spelling ("Dick's Sporting Goods", "Nordstrom Rack")
+        return slug.replace("-", " ").title()  # "finish-line" -> "Finish Line", "32-degrees" -> "32 Degrees"
+    return named
+
 
 def parse_feed(content: bytes, source: str, kind: str, boost: float) -> list[Item]:
     soup = BeautifulSoup(content, "xml")
@@ -164,6 +213,8 @@ def parse_feed(content: bytes, source: str, kind: str, boost: float) -> list[Ite
         r_el = e.find("retailer")
         if r_el is not None:
             it.store = r_el.get_text(strip=True)
+        if not it.store and it.thread_id:
+            it.store = sd_store(encoded, clean_text(desc_raw, 200))
         p_el = e.find("price")
         if p_el is not None:
             try:

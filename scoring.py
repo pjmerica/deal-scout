@@ -26,7 +26,7 @@ import brands as BR
 import config as C
 import codes as CODES
 import gender as G
-from feeds import normalize_link, parse_date
+from feeds import SLUG_NAMES, normalize_link, parse_date
 from models import NOW, Item
 
 
@@ -58,7 +58,10 @@ REG_RE = re.compile(r"(?:reg\.?|regularly|was|list(?: price)?|orig(?:inal(?:ly)?
                     r"down from|normally)\s*:?\s*\$\s?(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 TO_FROM_RE = re.compile(r"(?:to|for|is|at)\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)\s*,?\s*(?:down\s+)?from\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 DOLLARS_OFF_RE = re.compile(r"(?:save|\bget)\s+\$(\d{2,4})|\$(\d{2,4})\s+off\b", re.I)
-STORE_FROM_TITLE = re.compile(r"(?:\bat|@|\bvia|\bfrom)\s+([A-Z][\w'&.\- ]{1,30}?(?:\.com)?)(?:\s*(?:\(|\+|$|,| -|\|))")
+STORE_FROM_TITLE = re.compile(r"(?:\bat|@|\bvia|\bfrom)\s+((?:\d+ )?[A-Z][\w'&.\- ]{1,30}?(?:\.com)?)(?:\s*(?:\(|\+|$|,| -|\|))")
+# Hip2Save-style "Only $9.34 on Amazon (Reg. $26)", "on Macys.com": "on" is too common a word, so only a .com
+# name or a big marketplace counts
+STORE_ON_RE = re.compile(r"\bon\s+([A-Z][\w'&\-]+\.com|Amazon|Walmart|Target|eBay|Etsy|Woot)\b")
 
 HISTORY_PATTERNS = [
     (re.compile(r"price (?:mistake|error)|pricing error|glitch", re.I), 18, "Possible price mistake"),
@@ -114,6 +117,12 @@ def classify(it: Item) -> None:
             if exc and re.search(exc, text):
                 continue
             brands.add(b.lower())
+    if brands & BR.CONTEXT_NAMES:
+        # Brand names that are ordinary words ("8L Diesel", "Lavender + Mango", "Keurig K-Express") count only
+        # when the deal is about the brand (title starts with it) or the title names a garment.
+        apparel = any(rx.search(title) for rx in CLOTHING_CAT_RES.values()) or bool(CLOTHING_GENERIC_RE.search(title))
+        lead = re.sub(r"^(?:\s*\[[^\]]*\]|\s*today only:?)*\s*", "", title, flags=re.I).lower()
+        brands = {b for b in brands if b not in BR.CONTEXT_NAMES or apparel or lead.startswith(b)}
     strong = {b for b in brands if b not in WEAK}
     if strong:
         score += 3 if any(b in title.lower() for b in strong) else 1
@@ -130,9 +139,9 @@ def classify(it: Item) -> None:
         score -= 6
     it.is_clothing = brand_store and not FALSE_POS_RE.search(title) or score >= 3
     it.clothing_tags = tags
-    other = {m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)}
+    other = {m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:
-        it.brands = sorted({b.title() for b in brands | other})[:6]
+        it.brands = sorted({brand_title(b) for b in brands | other})[:6]
     if not it.gender:
         if it.is_clothing:
             it.gender = G.detect(title, it.summary, it.brands, it.store, has_garment=bool(tags))
@@ -149,6 +158,16 @@ def classify(it: Item) -> None:
     it.is_bf = bool(BF_RE.search(f"{it.title} {it.summary[:200]}"))
     if not it.codes:
         it.codes = CODES.extract(f"{it.title} {it.summary[:400]}")
+
+
+BRAND_DISPLAY = {"rei": "REI", "ugg": "UGG", "asos": "ASOS", "lego": "LEGO", "jcpenney": "JCPenney", "dsw": "DSW",
+                 "saxx": "SAXX", "ugg australia": "UGG Australia", "ssense": "SSENSE"}
+
+
+def brand_title(b: str) -> str:
+    """'levi's' -> "Levi's" (str.title() gave "Levi'S"), 'j.crew' -> 'J.Crew', 'h&m' -> 'H&M', 'rei' -> 'REI'."""
+    b = b.lower()
+    return BRAND_DISPLAY.get(b) or re.sub(r"(?<![\w'’])\w", lambda m: m.group(0).upper(), b)
 
 
 def _promo_discount(text: str) -> tuple[float, list[int]]:
@@ -228,13 +247,40 @@ def extract_pricing(it: Item) -> None:
     if extras and base and not assumed and not price_pct and it.pct_off:
         it.reasons.append(f"Stacked discount ≈ {it.pct_off}% off")
     if not it.store:
-        m = STORE_FROM_TITLE.search(it.title)
+        m = STORE_FROM_TITLE.search(it.title) or STORE_ON_RE.search(it.title)
         if m:
             it.store = m.group(1).strip(" .-")
         else:
-            m = re.search(r"\b([A-Z][\w&'\-]+(?:\s[A-Z][\w&'\-]+){0,2})\s*\[\w[\w.\-]+\.\w+\]", it.summary)
+            m = re.search(r"\b([A-Z][\w&'\-]+(?:\s[A-Z][\w&'\-]+){0,2})\s*\[(?:www\.)?([\w\-]+)\.[\w.]+\]", it.summary)
             if m:
-                it.store = m.group(1)
+                name, label = m.group(1), m.group(2).lower()
+                # "Black, Small [amazon.com]": the words before the link aren't always the store
+                it.store = name if _alnum(name)[:4] == label[:4] else label.title()
+    it.store = tidy_store(it.store)
+
+
+def _alnum(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", s.lower())
+
+
+def tidy_store(s: str) -> str:
+    """'Woot! An Amazon Company' -> 'Woot', 'Best Buy Locations' -> 'Best Buy', 'Newegg ahead of Black Friday' -> 'Newegg',
+    'Macys.com' -> "Macy's"; spelling variants of a known store fold into one name (per-store limits, badges)."""
+    if not s:
+        return ""
+    s = re.sub(r"!?\s*An Amazon Company$", "", s.strip())
+    s = re.sub(r"\s+(?:Locations|Stores)$", "", s)
+    s = re.sub(r"(?i)\.com$", "", s)
+    words = s.split()
+    for n, w in enumerate(words[1:], 1):  # a lowercase word after the first ends the name ("adidas" alone is fine)
+        if w[:1].islower() and w not in ("and", "of", "the", "&"):
+            s = " ".join(words[:n])
+            break
+    s = s.strip(" .-!")
+    return STORE_CANON.get(_alnum(s), s)
+
+
+STORE_CANON = {_alnum(k): v for k, v in SLUG_NAMES.items()} | {_alnum(v): v for v in SLUG_NAMES.values()}
 
 
 # --- deal score -------------------------------------------------------------
@@ -251,8 +297,10 @@ def score_deal(it: Item) -> None:
     s += 0.45 * eff + 0.35 * excess
     if eff >= 20:
         R.insert(0, f"{eff}% off")
-    if excess >= 15 and (it.brands or it.store):
-        who = (it.brands[0] if it.brands else it.store)
+    # name the brand or store whose usual sale set the bar; the no-name / unknown-brand defaults belong to nobody
+    # ("15 pts deeper than Amazon's usual ~35% sale" was the generic baseline, not Amazon's)
+    who = next((x for x in it.brands + [it.store] if x and BR.BASELINE.get(BR.norm_brand(x)) == baseline), "")
+    if excess >= 15 and who:
         R.append(f"{excess} pts deeper than {who}'s usual ~{baseline}% sale")
     if not it.brands and not it.source.startswith("Brand store") and it.kind == "deal":
         s -= 18

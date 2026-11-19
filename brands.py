@@ -134,6 +134,11 @@ AMBIGUOUS_NAMES = {
     "express", "coach", "guess", "champion", "loft", "theory", "vince", "cos", "boss",
 }
 
+# Brand names that are also ordinary words, still matched in headlines but only counted when the title starts with
+# the brand ("Express: 50% off everything") or names a garment ("Diesel men's jeans"). Without this, "8L Diesel"
+# made a car jump starter clothing, "Lavender + Mango" Lysol wipes, and "Keurig K-Express" a coffee maker (2026-11-18).
+CONTEXT_NAMES = {"diesel", "mango", "express"}
+
 
 # Who a brand mainly sells to (used when a product title doesn't say).
 BRAND_AUDIENCE = {
