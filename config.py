@@ -181,11 +181,11 @@ CLOTHING_TERMS = {
     "Dresses & Sets": ["dress", "dresses", "jumpsuit", "romper", "suit", "suits", "blazer", "sport coat",
                        "pajama", "pajamas", "pjs", "loungewear", "robe", "matching set",
                        "gown", "gowns", "shirtdress", "kaftan", "caftan", "jumpsuits", "rompers", "onesie", "onesies",
-                       "coverall", "coveralls"],
+                       "coverall", "coveralls", "nightgown", "nightgowns", "nightshirt", "sleep shirt", "sleepwear"],
     "Footwear": ["boots", "boot", "sneakers", "sneaker", "shoes", "shoe", "loafers", "sandals", "slippers",
                  "clogs", "heels", "flats", "footwear", "running shoe", "trail runner", "chelsea boot",
                  "mules", "slides", "slipper", "clog", "sandal", "loafer", "trainers", "cleats",
-                 "booties", "espadrilles", "mary janes", "duck boots", "duckboots"],
+                 "booties", "bootie", "espadrilles", "mary janes", "duck boots", "duckboots"],
     "Activewear": ["activewear", "athleisure", "base layer", "baselayer", "thermal", "sports bra",
                    "compression", "running tights", "workout"],
     # "bikini" alone is not here: "bikini trimmer" is a razor. The fallback below tags brand-store bikinis.
@@ -210,14 +210,15 @@ CLOTHING_TAG_FALLBACK = [
                  r"\bslingbacks?\b|\bwedges?\b|\bheels?\b|\bpumps?\b|\b(?:plain|cap|wing)[- ]?toe\b|\bwingtips?\b|"
                  r"\bbrogues?\b|\b(?:oxford|derby) (?:dress )?shoes?\b"),  # not "Oxford" alone: an oxford-cloth shirt
     ("Bottoms", r"\bshorts?\b(?![\s-]*sleeve)|\bjeans?\b|\btights?\b|\b5-pocket\b|\bpalazzo\b|\bbootcut\b|"
-                r"\bflares?\b|\bwide[- ]leg\b|\bstraight\b"),
+                r"\bflares?\b|\bwide[- ]leg\b|\bstraight\b|\bbibs?\b"),  # ski bibs; baby bibs are false positives
     ("Basics & Underwear", r"\bbriefs?\b|\btrunks?\b|\bcheek(?:y|ini)\b|\bthongs?\b(?! sandal)|\bno[- ]show\b"),
     ("Dresses & Sets", r"\bfooties?\b|\bzippy\b|\bsleepers?\b"),
     ("Tops", r"\btops?\b(?![\s-]*(?:\d|rated|picks?|deals?|sellers?|brands?|stores?)\b)|\btanks?\b|\bcamis?\b|\bv-neck\b|\b(?:scoop|mock|crew|boat|cowl) neck\b|\bbutton[- ]up\b|"
              r"\brugby\b|\b(?:long|short)[- ]?sleeves?\b|\bjersey\b|\bjumper\b|\bcamp collar\b|\braglan\b|\bringer\b"),
     ("Outerwear", r"\bfull[- ]zip\b|\bzip[- ]up\b|\bbomber\b|\bshells?\b"),
     ("Accessories", r"\bbags?\b|\bbackpacks?\b|\bcrossbody\b|\bwallets?\b|\bpouch\b|\bcard ?holder\b|\bbows?\b|"
-                    r"\bscrunchies?\b|\bheadbands?\b|\bcloche\b|\bvisors?\b|\beye mask\b"),
+                    r"\bscrunchies?\b|\bheadbands?\b|\bcloche\b|\bvisors?\b|\beye mask\b|\bhair clips?\b|"
+                    r"\bnecklaces?\b|\bearrings?\b|\bbracelets?\b|\brings?\b|\bpendants?\b"),
 ]
 # Last resort for brand-store items still untagged: stores that sell essentially one garment type and name
 # products by model ("Kizik: Men's London", "Sarah Flint: Perfect Marta 85", "Stance: SHELTER WOMENS CREW").
@@ -320,7 +321,7 @@ CLOTHING_FALSE_POSITIVE = [
     r"primer coat", r"top coat", r"\bcruises?\b", r"vacation", r"packing cubes?",
     r"\bflights?\b(?!\s+(?:jacket|hoodie|bomber|suit|jumpsuit|pant|short|tee|crew|sweatshirt|boot|sneaker|shoe|vest)s?\b)",
     r"hotel", r"candle", r"fragrance", r"parfum", r"cologne", r"perfume",
-    r"eau de", r"blanket", r"comforter", r"duffel", r"luggage", r"suitcase", r"water bottle", r"tumbler",
+    r"eau de", r"\bblankets?\b(?! (?:stripe|scarf|coat|hoodie|jacket|shirt|plaid|check))", r"comforter", r"duffel", r"luggage", r"suitcase", r"water bottle", r"tumbler",
     r"weighted vest", r"skincare", r"lotion", r"makeup", r"bedding", r"towel", r"sheet set", r"\btent\b",
     r"sleeping bag", r"cooler", r"lego", r"\btoys?\b", r"gift card", r"\begc\b", r"giveaway", r"sweepstakes",
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
@@ -333,6 +334,10 @@ CLOTHING_FALSE_POSITIVE = [
     r"\bhardcover\b", r"\baudiobook\b", r"jump starter", r"\bheater\b",
     # "Puppy Socks Jigsaw Puzzle" (2026-11-25). Not "puzzle" alone: Steve Madden has a shoe called PUZZLE.
     r"\bjigsaw\b", r"\bboard games?\b",
+    # baby gear from kids' brands (a feeding bib is not a ski bib)
+    r"\b(?:baby|bandana|silicone|feeding|drool|magnetic) bibs?\b", r"\bbibs? \d+-pack", r"\bburp cloths?\b",
+    r"\bswaddles?\b", r"\bteethers?\b", r"\brattles?\b", r"\bloveys?\b",
+    r"\bcrib (?:sheets?|bumpers?|mattress|mobile|skirt)",  # not "crib shoes" (soft baby shoes)
 ]
 # Department stores / broad retailers: a mention alone is weak evidence of clothing
 WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "sierra", "nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",

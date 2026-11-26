@@ -360,6 +360,28 @@ def test_off_season_collections_lose_to_black_friday():
         assert shopify._handle_score(h, 2026, 11) < 0, h
 
 
+def test_store_name_is_not_the_product():
+    # "Kickee Pants: Knot Headband" was tagged Bottoms, "Monday Swimwear: Cayman Necklace" Swimwear (2026-11-25)
+    assert store_item("Knot Headband in Tamarin", "Kickee Pants").clothing_tags == ["Accessories"]
+    assert store_item("Cayman Necklace - Silver", "Monday Swimwear").clothing_tags == ["Accessories"]
+    assert store_item("Print Twist Nightgown in Navy Dragonfly", "Kickee Pants").clothing_tags != ["Bottoms"]
+    it = Item(title="Kickee Pants sitewide: 30% off everything", link="x/kp", source="Brand store: Kickee Pants",
+              kind="deal", store="Kickee Pants")
+    scoring.classify(it)
+    assert it.clothing_tags == []
+    # a dress sock is a sock
+    assert store_item("MENS ALL OVER BUNNY DRESS SOCK - MO2200022", "Psycho Bunny").clothing_tags == ["Basics & Underwear"]
+    assert "Footwear" in mk("Cole Haan Men's Dress Shoes $60").clothing_tags
+    assert mk("Cole Haan Men's Dress Shoes $60").clothing_tags == ["Footwear"]
+    # ski bibs are pants, baby bibs aren't clothing; a blanket-stripe shirt is a shirt
+    assert store_item("M Steibis Bib", "Obermeyer").clothing_tags == ["Bottoms"]
+    assert not store_item("Magnetic Bib 3-Pack - re-loved", "Magnetic Me").is_clothing
+    assert not store_item("Bamboo Swaddle - Moonlight", "Posh Peanut").is_clothing
+    assert store_item("Leather Crib Shoes", "Posh Peanut").is_clothing
+    assert store_item("Altered Threads Overshirt - Multi Blanket Stripe", "Brixton").is_clothing
+    assert not store_item("Sherpa Throw Blanket", "Barefoot Dreams").is_clothing
+
+
 def test_page_slots_keep_feed_deals():
     # 205 brand stores' markdowns outscored everything and pushed feed and non-clothing deals off the page (2026-11-25)
     def item(n, source, store, score):

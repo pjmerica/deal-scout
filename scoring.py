@@ -37,6 +37,8 @@ def _wordre(terms):
 
 CLOTHING_CAT_RES = {cat: _wordre(terms) for cat, terms in C.CLOTHING_TERMS.items()}
 TAG_FALLBACK_RES = [(cat, re.compile(rx, re.I)) for cat, rx in C.CLOTHING_TAG_FALLBACK]
+# "dress" in "dress socks / shirt / shoes / pants" is not a dress (Psycho Bunny's dress socks were tagged Dresses)
+DRESS_ITEM_RE = re.compile(r"\bdress(?=\s+(?:shirts?|shoes?|socks?|pants?|boots?|slacks|sneakers?)\b)", re.I)
 CLOTHING_GENERIC_RE = _wordre(C.CLOTHING_GENERIC)
 # Store names that are ordinary words are not matched in headlines ("price cuts" is not the brand Cuts)
 BRAND_RE = _wordre([b for b in C.CLOTHING_BRANDS + list(BR.SHOPIFY_STORES) if b.lower() not in BR.AMBIGUOUS_NAMES])
@@ -104,9 +106,17 @@ def classify(it: Item) -> None:
     text = f"{it.title} {it.summary[:180]}"
     title = it.title
     brand_store = it.source.startswith("Brand store")
+    # What the title says about the product, without the store's name: "Kickee Pants: Knot Headband" is not pants,
+    # "Monday Swimwear: Cayman Necklace" not swimwear (2026-11-25). And a dress sock / shirt / shoe is not a dress.
+    product = title
+    if brand_store:
+        for prefix in (f"{it.store}: ", f"{it.store} sitewide: "):
+            if it.store and title.startswith(prefix):
+                product = title[len(prefix):]
+    product = DRESS_ITEM_RE.sub("", product)
     score, tags = 0, []
     for cat, rx in CLOTHING_CAT_RES.items():
-        if rx.search(title) or (brand_store and rx.search(" ".join(it.feed_tags[:1]))):
+        if rx.search(product) or (brand_store and rx.search(" ".join(it.feed_tags[:1]))):
             tags.append(cat)
             score += 3
         elif rx.search(text):
@@ -136,13 +146,13 @@ def classify(it: Item) -> None:
         score += 2
     elif re.search(r"\b(?:wo)?mens\b|accessories", ft):
         score += 1
-    if FALSE_POS_RE.search(title):
+    if FALSE_POS_RE.search(product):
         score -= 6
-    it.is_clothing = brand_store and not FALSE_POS_RE.search(title) or score >= 3
+    it.is_clothing = brand_store and not FALSE_POS_RE.search(product) or score >= 3
     # Storewide sales have no garment type: "Walmart Black Friday Top 100 Fashion Deals" is not a top
     storewide = f"{it.store} sitewide: " in title if brand_store else bool(G.STOREWIDE.search(title))
     if it.is_clothing and not tags and not storewide:
-        tags = fallback_tags(title, it.store if brand_store else "")
+        tags = fallback_tags(product, it.store if brand_store else "")
     it.clothing_tags = tags
     other = {m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:

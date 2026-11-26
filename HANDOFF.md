@@ -26,7 +26,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (43 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (44 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -133,6 +133,9 @@ history.load (previous history.json from the live site)               ─┘    
   at all. Unanchored, "cruise" hid Allbirds', Rothy's and Filson's Cruiser line, "paint" a "Painted Floral" dress, "quilt"
   quilted vests and hoodies, "flight" a "Flight Hoodie", "tire" every "entire"/"attire", "cat " Target's Cat & Jack (fixed
   2026-11-25). Run any new word against `deals.json` titles before adding it.
+- **Brand-store titles start with the store's name** ("Kickee Pants: Knot Headband"). Garment words and false-positive
+  words are matched on the product part only (`product` in `scoring.classify`): before 2026-11-25 every Kickee Pants item
+  was Bottoms and "Monday Swimwear: Cayman Necklace" Swimwear. "Dress" before sock/shirt/shoe/pants is not a dress.
 - **Garment type (the chips on the Clothing tab).** `CLOTHING_TERMS` decides both *whether* an item is clothing and its type,
   so it holds only unambiguous words. Ambiguous ones ("top", "short", "tank", "trunk", "jean", "bikini", "bag") are in
   `config.CLOTHING_TAG_FALLBACK` and only fill in a missing type on an item that is **already** clothing, first match wins
