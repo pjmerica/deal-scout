@@ -1,148 +1,35 @@
 # Candidate Shopify clothing stores: "Display Name | domain | audience (Men's / Women's / Kids / Everyone)"
 # Check them from CI (fresh IP, no throttling):  gh workflow run probe.yml   (results in the run's summary)
 # Stores that pass go into brands.SHOPIFY_STORES (+ BRAND_AUDIENCE, and BASELINE / PREMIUM if known).
-# The 2026-11-18 batch (55 stores, women's / shoes / kids / outdoor) is in brands.SHOPIFY_STORES.
-# Known closed, don't re-probe: Buck Mason, Rhone, Vuori, Bombas, SKIMS, Spanx (404), Paige (429 twice from CI).
 #
-# 2026-11-25 batch
-# men's
-Mizzen+Main | mizzenandmain.com | Men's
-Public Rec | publicrec.com | Men's
-Olivers Apparel | oliversapparel.com | Men's
-Western Rise | westernrise.com | Men's
-State and Liberty | stateandliberty.com | Men's
-Ash & Erie | ashanderie.com | Men's
+# Already probed, don't re-probe:
+#   2026-11-18 batch: 55 stores added (women's, shoes, kids, outdoor). Closed: Buck Mason, Rhone, Vuori, Bombas,
+#     SKIMS, Spanx (404); Paige (429 twice from CI).
+#   2026-11-25 batch (140 candidates, probe run 45730981161): 69 added. Closed or blocked: Mizzen+Main (429),
+#     Public Rec, Banks Journal, Sid Mashburn, Tuckernuck, Woolrich (HTML, not JSON), Western Rise, Cariuma (401),
+#     Wellen, Atoms, Vivaia, Seychelles, Rylee + Cru, Quincy Mae (403), Hey Dude (410), Rhode (402), Cuup (433),
+#     Petite Plume (530), Olivers Apparel, Wolven, Koral (SSL), Amberjack, Common Projects, Lively, Polarn O. Pyret
+#     (no answer), BYLT, Rhoback, Florence, Good Man Brand, Outlier, Rag & Bone, Topo Athletic, Hello Molly, La Ligne,
+#     Johnny Was, Dudley Stephens, Baggu, Blackbough, Tracksmith, Injinji (404); Pistol Lake, Chinese Laundry, Kule
+#     (empty). Open but left out on purpose (bags first): Herschel, Dagne Dover, Mission Workshop.
+#
+# Open on 2026-11-25 but with nothing (or almost nothing) on sale. Re-probe these later in the season:
 Holderness & Bourne | holdernessandbourne.com | Men's
-BYLT | byltbasics.com | Men's
-Fresh Clean Threads | freshcleanthreads.com | Men's
-Psycho Bunny | psychobunny.com | Men's
-Banks Journal | banksjournal.com | Men's
-Brixton | brixton.com | Everyone
-HUF | hufworldwide.com | Men's
-Madhappy | madhappy.com | Everyone
-Billionaire Boys Club | bbcicecream.com | Men's
-Fair Harbor | fairharborclothing.com | Men's
-Rhoback | rhoback.com | Men's
-Greyson | greysonclothiers.com | Men's
 Criquet | criquetshirts.com | Men's
-Vissla | vissla.com | Men's
-Seager | seagerco.com | Men's
-Florence | florence.com | Men's
-Good Man Brand | goodmanbrand.com | Men's
-Pistol Lake | pistollake.com | Men's
-YoungLA | youngla.com | Men's
-Gymreapers | gymreapers.com | Men's
-Freenote Cloth | freenotecloth.com | Men's
-3sixteen | 3sixteen.com | Men's
-Rogue Territory | rogueterritory.com | Men's
-Sid Mashburn | sidmashburn.com | Men's
 Drake's | drakes.com | Men's
-Corridor | corridornyc.com | Men's
 Alex Mill | alexmill.com | Everyone
-Outlier | outlier.nyc | Everyone
-Schott NYC | schottnyc.com | Everyone
-Rag & Bone | rag-bone.com | Everyone
-TravisMathew | travismathew.com | Men's
-Wellen | wellensurf.com | Men's
 Arvin Goods | arvingoods.com | Everyone
-# shoes
-Wolf & Shepherd | wolfandshepherd.com | Men's
-Atoms | atoms.com | Everyone
-Cariuma | cariuma.com | Everyone
-Hey Dude | heydude.com | Everyone
-Amberjack | amberjackshoes.com | Everyone
-Clae | clae.com | Everyone
-Grant Stone | grantstoneshoes.com | Men's
-Ace Marks | acemarks.com | Men's
-Velasca | velasca.com | Men's
-Common Projects | commonprojects.com | Everyone
-Larroude | larroude.com | Women's
-Vivaia | vivaia.com | Women's
-M.Gemi | mgemi.com | Women's
-Schutz | schutz-shoes.com | Women's
-Dolce Vita | dolcevita.com | Women's
-Seychelles | shopseychelles.com | Women's
-Matisse | matissefootwear.com | Women's
-Chinese Laundry | chineselaundry.com | Women's
-Topo Athletic | topoathletic.com | Everyone
-Glerups | glerups.com | Everyone
-# women's
-Doen | shopdoen.com | Women's
-Tuckernuck | tuckernuck.com | Women's
-Spiritual Gangster | spiritualgangster.com | Women's
-Parade | yourparade.com | Women's
-Cuup | shopcuup.com | Women's
-Kule | kule.com | Women's
-Clare V. | clarev.com | Women's
-Lisa Says Gah | lisasaysgah.com | Women's
-Show Me Your Mumu | showmeyourmumu.com | Women's
-Hello Molly | hellomolly.com | Women's
-Selkie | selkiecollection.com | Women's
-Favorite Daughter | favoritedaughter.com | Women's
-Good American | goodamerican.com | Women's
-Varley | varley.com | Women's
-Wolven | wolven.com | Women's
-Alice + Olivia | aliceandolivia.com | Women's
-Ulla Johnson | ullajohnson.com | Women's
-Mara Hoffman | marahoffman.com | Women's
-Rhode | rhoderesort.com | Women's
-Sanctuary | sanctuaryclothing.com | Women's
-Daze Denim | dazedenim.com | Women's
-Pistola | pistoladenim.com | Women's
-Hudson Jeans | hudsonjeans.com | Everyone
-Joe's Jeans | joesjeans.com | Everyone
-Koral | koral.com | Women's
-Cleobella | cleobella.com | Women's
-Anine Bing | aninebing.com | Women's
-Nili Lotan | nililotan.com | Women's
-La Ligne | lalignenyc.com | Women's
-Lively | wearlively.com | Women's
-Pepper | wearpepper.com | Women's
-Petite Studio | petitestudionyc.com | Women's
-Tiger Mist | tigermist.com | Women's
-ASTR the Label | astrthelabel.com | Women's
-Johnny Was | johnnywas.com | Women's
-Dudley Stephens | dudleystephens.com | Women's
-Halfdays | halfdays.com | Women's
-Oiselle | oiselle.com | Women's
-Dagne Dover | dagnedover.com | Women's
-Baggu | baggu.com | Everyone
-# swim
-Monday Swimwear | mondayswimwear.com | Women's
-Frankies Bikinis | frankiesbikinis.com | Women's
-Beach Riot | beachriot.com | Women's
-L*Space | lspace.com | Women's
-Kortni Jeane | kortnijeane.com | Women's
-Blackbough | blackboughswim.com | Women's
-# kids
-Rylee + Cru | ryleeandcru.com | Kids
-Quincy Mae | quincymae.com | Kids
-Posh Peanut | poshpeanut.com | Kids
-Kickee Pants | kickeepants.com | Kids
-Monica + Andy | monicaandandy.com | Kids
-Burt's Bees Baby | burtsbeesbaby.com | Kids
-Bellabu Bear | bellabubear.com | Kids
-Polarn O. Pyret | polarnopyretusa.com | Kids
-Magnetic Me | magneticme.com | Kids
-Petite Plume | petiteplume.com | Everyone
-# outdoor / active
-Tracksmith | tracksmith.com | Everyone
 Bandit Running | banditrunning.com | Everyone
-Ciele | cieleathletics.com | Everyone
-Rabbit | runinrabbit.com | Everyone
-Path Projects | pathprojects.com | Men's
-Free Fly | freeflyapparel.com | Everyone
-Alphalete | alphaleteathletics.com | Everyone
-Nobull | nobullproject.com | Everyone
-Mission Workshop | missionworkshop.com | Everyone
-Voormi | voormi.com | Everyone
-Ridge Merino | ridgemerino.com | Everyone
-Minus33 | minus33.com | Everyone
-Flylow | flylowgear.com | Everyone
-Obermeyer | obermeyer.com | Everyone
-Nobis | nobis.com | Everyone
-Woolrich | woolrich.com | Everyone
-Swiftwick | swiftwick.com | Everyone
-Injinji | injinji.com | Everyone
+Billionaire Boys Club | bbcicecream.com | Men's
+Vissla | vissla.com | Men's
+YoungLA | youngla.com | Men's
+M.Gemi | mgemi.com | Women's
+Glerups | glerups.com | Everyone
+Clare V. | clarev.com | Women's
+Oiselle | oiselle.com | Women's
+L*Space | lspace.com | Women's
+Madhappy | madhappy.com | Everyone
+Greyson | greysonclothiers.com | Men's
 Rains | rains.com | Everyone
-Herschel | herschel.com | Everyone
+Minus33 | minus33.com | Everyone
+3sixteen | 3sixteen.com | Men's

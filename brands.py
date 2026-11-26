@@ -59,6 +59,12 @@ BASELINE = {
     "native shoes": 30, "primary": 30, "kyte baby": 10, "little sleepies": 15, "tea collection": 40, "pangaia": 25,
     "tentree": 30, "peter manning": 20, "stio": 15, "duckworth": 15, "bearbottom": 30, "linksoul": 20, "ibex": 15,
     "outdoor research": 20,
+    # added 2026-11-25 with the new brand stores (rough; unlisted ones use DEFAULT_BASELINE, and the page also
+    # compares each item with that store's own typical markdown)
+    "ulla johnson": 15, "anine bing": 15, "nili lotan": 10, "doen": 15, "rogue territory": 5, "freenote cloth": 10,
+    "grant stone": 10, "velasca": 15, "schott nyc": 15, "nobis": 15, "voormi": 15, "mara hoffman": 20,
+    "joe's jeans": 40, "hudson jeans": 35, "sanctuary": 35, "burt's bees baby": 40, "tiger mist": 35,
+    "show me your mumu": 30, "psycho bunny": 30, "travismathew": 25, "good american": 25, "alice + olivia": 25,
 }
 
 PREMIUM = {
@@ -72,6 +78,7 @@ PREMIUM = {
     "agolde", "mother", "frame", "citizens of humanity", "staud", "loveshackfancy", "jenni kayne", "cuyana",
     "christy dawn", "hill house home", "sarah flint", "margaux", "stio", "ibex", "naked cashmere", "barefoot dreams",
     "cozy earth", "outdoor research",
+    "ulla johnson", "anine bing", "nili lotan", "doen", "rogue territory", "freenote cloth", "grant stone", "schott nyc",
     "madewell", "j.crew", "carhartt", "columbia", "ll bean", "l.l.bean", "rei",
 }
 
@@ -123,6 +130,30 @@ SHOPIFY_STORES = {
     "Peter Manning": "petermanningnyc.com", "Stio": "stio.com", "Duckworth": "duckworthco.com",
     "Bearbottom": "bearbottomclothing.com", "Linksoul": "linksoul.com", "Ibex": "ibex.com",
     "Outdoor Research": "outdoorresearch.com",
+    # added 2026-11-25 after a CI probe (91 of 140 candidates open; these have items on sale; bag-first brands left out)
+    "Velasca": "velasca.com", "Kickee Pants": "kickeepants.com", "Ulla Johnson": "ullajohnson.com",
+    "Cleobella": "cleobella.com", "Alphalete": "alphaleteathletics.com", "Tiger Mist": "tigermist.com",
+    "Bellabu Bear": "bellabubear.com", "Burt's Bees Baby": "burtsbeesbaby.com", "Sanctuary": "sanctuaryclothing.com",
+    "Free Fly": "freeflyapparel.com", "Posh Peanut": "poshpeanut.com", "Spiritual Gangster": "spiritualgangster.com",
+    "Swiftwick": "swiftwick.com", "Frankies Bikinis": "frankiesbikinis.com", "Magnetic Me": "magneticme.com",
+    "Obermeyer": "obermeyer.com", "Anine Bing": "aninebing.com", "TravisMathew": "travismathew.com",
+    "Halfdays": "halfdays.com", "Joe's Jeans": "joesjeans.com", "Dolce Vita": "dolcevita.com",
+    "Corridor": "corridornyc.com", "Fresh Clean Threads": "freshcleanthreads.com", "Larroude": "larroude.com",
+    "Hudson Jeans": "hudsonjeans.com", "Selkie": "selkiecollection.com", "Lisa Says Gah": "lisasaysgah.com",
+    "Rabbit": "runinrabbit.com", "Nobis": "nobis.com", "Fair Harbor": "fairharborclothing.com",
+    "Daze Denim": "dazedenim.com", "Pistola": "pistoladenim.com", "Pepper": "wearpepper.com", "Ace Marks": "acemarks.com",
+    "Flylow": "flylowgear.com", "Mara Hoffman": "marahoffman.com", "Ciele": "cieleathletics.com",
+    "Wolf & Shepherd": "wolfandshepherd.com", "Seager": "seagerco.com", "Clae": "clae.com", "Schutz": "schutz-shoes.com",
+    "Path Projects": "pathprojects.com", "Beach Riot": "beachriot.com", "Schott NYC": "schottnyc.com",
+    "HUF": "hufworldwide.com", "Parade": "yourparade.com", "Ridge Merino": "ridgemerino.com",
+    "Nobull": "nobullproject.com", "Grant Stone": "grantstoneshoes.com", "Show Me Your Mumu": "showmeyourmumu.com",
+    "Rogue Territory": "rogueterritory.com", "Voormi": "voormi.com", "Nili Lotan": "nililotan.com",
+    "Ash & Erie": "ashanderie.com", "Petite Studio": "petitestudionyc.com", "State and Liberty": "stateandliberty.com",
+    "Matisse": "matissefootwear.com", "Doen": "shopdoen.com", "Freenote Cloth": "freenotecloth.com",
+    "Psycho Bunny": "psychobunny.com", "Monday Swimwear": "mondayswimwear.com", "Kortni Jeane": "kortnijeane.com",
+    "Gymreapers": "gymreapers.com", "Varley": "varley.com", "ASTR the Label": "astrthelabel.com",
+    "Favorite Daughter": "favoritedaughter.com", "Alice + Olivia": "aliceandolivia.com",
+    "Good American": "goodamerican.com", "Brixton": "brixton.com",
 }
 
 # Store names that are ordinary words ("price cuts", "bed frame", "Mother's Day", "primary care").
@@ -132,12 +163,17 @@ AMBIGUOUS_NAMES = {
     "koio", "birdies", "frame", "mother", "primary", "greats", "stance", "toms", "andie", "montce", "native shoes",
     "ibex", "stio", "duckworth", "margaux", "edikted", "meshki", "wildfang", "on", "alo", "boss", "lee", "keen", "vans",
     "express", "coach", "guess", "champion", "loft", "theory", "vince", "cos", "boss",
+    # 2026-11-25 stores: "Dr Pepper", "Rabbit R1", "Macy's Parade", "a good American", "state and liberty"
+    "pepper", "rabbit", "parade", "corridor", "sanctuary", "matisse", "brixton", "free fly", "path projects",
+    "good american", "state and liberty", "petite studio", "magnetic me", "fair harbor", "selkie", "nobis",
 }
 
 # Brand names that are also ordinary words, still matched in headlines but only counted when the title starts with
 # the brand ("Express: 50% off everything") or names a garment ("Diesel men's jeans"). Without this, "8L Diesel"
 # made a car jump starter clothing, "Lavender + Mango" Lysol wipes, and "Keurig K-Express" a coffee maker (2026-11-18).
-CONTEXT_NAMES = {"diesel", "mango", "express"}
+# "wrangler" added 2026-11-25 with its Slickdeals search ("Jeep Wrangler" floor mats). Guess, Champion and Keen are
+# stricter: AMBIGUOUS_NAMES, never matched in headlines.
+CONTEXT_NAMES = {"diesel", "mango", "express", "wrangler"}
 
 
 # Who a brand mainly sells to (used when a product title doesn't say).
@@ -152,6 +188,11 @@ BRAND_AUDIENCE = {
         "montce", "splits59", "year of ours", "naked cashmere", "white + warren", "jenni kayne", "motel rocks",
         "loveshackfancy", "agolde", "mother", "staud", "solid & striped", "edikted", "re/done", "cuyana",
         "m.m.lafleur", "rebecca minkoff", "freda salvador", "loeffler randall", "sarah flint", "margaux", "taos footwear",
+        "ulla johnson", "cleobella", "tiger mist", "sanctuary", "spiritual gangster", "frankies bikinis", "anine bing",
+        "halfdays", "dolce vita", "larroude", "selkie", "lisa says gah", "daze denim", "pistola", "pepper",
+        "mara hoffman", "schutz", "beach riot", "show me your mumu", "nili lotan", "petite studio", "matisse", "doen",
+        "monday swimwear", "kortni jeane", "varley", "astr the label", "favorite daughter", "alice + olivia",
+        "good american",
     ],
     "Men's": [
         "todd snyder", "bonobos", "mack weldon", "untuckit", "saxx", "true classic", "cuts", "chubbies", "johnnie-o",
@@ -160,6 +201,9 @@ BRAND_AUDIENCE = {
         "buck mason", "peter millar", "rhone", "mizzen+main", "proper cloth", "suitsupply", "indochino",
         "billy reid", "roark", "wool&prince", "aimé leon dore", "aime leon dore", "huckberry", "duluth trading",
         "peter manning", "bearbottom", "linksoul",
+        "velasca", "travismathew", "corridor", "fresh clean threads", "ace marks", "seager", "path projects", "huf",
+        "grant stone", "rogue territory", "ash & erie", "state and liberty", "freenote cloth", "psycho bunny",
+        "gymreapers",
     ],
     "Everyone": [
         "comfrt", "noah", "alo yoga", "alo", "kith", "stussy", "fear of god", "represent", "gymshark", "allbirds",
@@ -175,10 +219,15 @@ BRAND_AUDIENCE = {
         "lake pajamas", "cozy earth", "barefoot dreams", "frame", "dl1961", "citizens of humanity", "thousand fell",
         "greats", "feetures", "stance", "toms", "native shoes", "pangaia", "tentree", "stio", "duckworth", "ibex",
         "outdoor research",
+        "alphalete", "free fly", "swiftwick", "obermeyer", "joe's jeans", "hudson jeans", "rabbit", "nobis",
+        "fair harbor", "flylow", "ciele", "wolf & shepherd", "clae", "schott nyc", "parade", "ridge merino", "nobull",
+        "voormi", "brixton", "southern tide",
     ],
 }
 BRAND_AUDIENCE["Kids"] = ["primary", "kyte baby", "little sleepies", "tea collection", "carter's",
-                          "the children's place", "hanna andersson", "janie and jack", "gymboree"]
+                          "the children's place", "hanna andersson", "janie and jack", "gymboree",
+                          "kickee pants", "bellabu bear", "burt's bees baby", "posh peanut", "magnetic me", "oshkosh",
+                          "oshkosh b'gosh"]
 _AUDIENCE = {b: aud for aud, names in BRAND_AUDIENCE.items() for b in names}
 
 

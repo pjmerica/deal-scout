@@ -351,6 +351,20 @@ def test_off_season_collections_lose_to_black_friday():
     assert nov["30-off-mens-bfcm"] > 20
     assert all(nov[h] < 20 for h in ["july-sale", "labor-day-sale-2026", "mens-memorial-sale-10-off", "summer-sale"]), nov
     assert shopify._handle_score("summer-sale", 2026, 7) > 20  # in season it's the sale
+    # collections whose names say "not on sale" (Free Fly, Ridge Merino probe, 2026-11-25)
+    for h in ["non-markdown-products-with-compare-at-price", "all-products-minus-sale-items"]:
+        assert shopify._handle_score(h, 2026, 11) < 0, h
+
+
+def test_ordinary_words_are_not_brands():
+    # brand names that are ordinary words, from the 2026-11-25 searches and stores
+    for t in ["Guess Who? Classic Board Game $9", "Champion Spark Plugs 4-Pack $12",
+              "Jeep Wrangler All-Weather Floor Mats $80", "Loft Bed with Desk and Storage $199",
+              "Dr Pepper 12-Pack $5", "Orvis Clearwater Fly Rod $199"]:
+        assert not mk(t).is_clothing, t
+    for t in ["Champion Men's Reverse Weave Hoodie $25", "Wrangler Men's Relaxed Fit Jeans $13",
+              "GUESS Women's Puffer Jacket $60", "LOFT 50% off everything", "Orvis Men's Flannel Shirt $40"]:
+        assert mk(t).is_clothing, t
 
 
 def test_baseline_lookup():

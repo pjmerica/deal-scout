@@ -16,7 +16,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 🏷 Brand sales | 136 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
+| 🏷 Brand sales | 205 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |
 | 📰 Sale roundups | Editors' sale roundups (fashion and tech) |
@@ -30,9 +30,9 @@ Non-clothing deals are never hidden by it.
 
 | Layer | Sources |
 |---|---|
-| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 145 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, shoes, women's, kids, electronics, computers, home), Hip2Save, Krazy Coupon Lady, Ben's Bargains, 9to5Toys, DealCatcher, camelcamelcamel top price drops |
-| Brand stores (direct) | **136 clothing brands' Shopify storefronts**: menswear (Todd Snyder, Taylor Stitch, Faherty, Kith, Aimé Leon Dore…), women's (Sarah Flint, LoveShackFancy, Christy Dawn, STAUD, AGOLDE, MOTHER, Faithfull, Montce…), shoes (Allbirds, Thursday Boots, Rothy's, Thousand Fell, TOMS…), kids (Primary, Tea Collection, Little Sleepies) and outdoor (Cotopaxi, Outdoor Research, Stio, Ibex…). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
-| Editors | GQ, Esquire, Men's Health, Glamour, Harper's Bazaar, Who What Wear, Refinery29, PopSugar, Fashionista, Hypebeast, Highsnobiety, Good Housekeeping, CNET, ZDNet, The Verge, Tom's Guide, TechRadar, Lifehacker, RetailMeNot, Offers.com |
+| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 210 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, men's, women's, shoes, coats, jeans, hoodies, activewear, kids' clothes and shoes, electronics, computers, home), Dappered, Hip2Save, Krazy Coupon Lady, Ben's Bargains, 9to5Toys, TechBargains, DealCatcher, camelcamelcamel top price drops |
+| Brand stores (direct) | **205 clothing brands' Shopify storefronts**: menswear (Todd Snyder, Taylor Stitch, Faherty, Kith, Aimé Leon Dore…), women's (Sarah Flint, LoveShackFancy, Christy Dawn, STAUD, AGOLDE, MOTHER, Faithfull, Montce…), shoes (Allbirds, Thursday Boots, Rothy's, Thousand Fell, TOMS…), kids (Primary, Tea Collection, Little Sleepies) and outdoor (Cotopaxi, Outdoor Research, Stio, Ibex…). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
+| Editors | GQ, Esquire, Men's Health, Gear Patrol, The Strategist, Glamour, Marie Claire, Elle, Vogue, Harper's Bazaar, Who What Wear, Refinery29, PopSugar, Fashionista, Hypebeast, Highsnobiety, Good Housekeeping, CNET, ZDNet, The Verge, Tom's Guide, TechRadar, Lifehacker, RetailMeNot, Offers.com |
 | Optional | Reddit (r/frugalmalefashion, r/frugalfemalefashion, r/sneakerdeals, …). Needs free API keys, see below |
 
 ## The Deal Quality Score

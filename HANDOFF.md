@@ -41,7 +41,7 @@ Nothing generated is committed (`site/` is gitignored). Pages source is "GitHub 
 
 ```
 feeds.py (RSS: Slickdeals ×~90 searches, DealNews, Hip2Save, editors…) ─┐
-shopify.py (136 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
+shopify.py (205 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
                                                                         │     pricing, codes)
 history.load (previous history.json from the live site)               ─┘          │
                                                     history.apply (NEW, price drop, fake-sale) 
@@ -64,7 +64,16 @@ history.load (previous history.json from the live site)               ─┘    
   through `feeds.SLUG_NAMES`, or with the description's spelling when the two agree. Before this, 48% of feed deals had no
   store (only "at Amazon" in a title was read); after, about 13% (user posts that name no store).
 - **DealNews RSS**: has `<retailer>`, `<price>`, `<staffPick>`, `<expires>`. Its category IDs are odd: **c205 is Kids' Clothes,
-  not men's** (c206 returned travel deals). Summaries contain price-history phrases ("best price we could find by $X").
+  not men's**, and c206, c207 and c208 return **travel** deals (until 2026-11-25 the "Women's" and "Shoes" feeds were c207/c208,
+  so they never had a clothing item). Men's and Women's are filters on c202 (`/c202/Clothing-Accessories/f1/Mens/`,
+  `f2/Womens/`); shoes are c280, coats c489, jeans c515, hoodies c866, activewear c487, kids' shoes c559. The category
+  page's links list the rest. **Check a new DealNews feed's titles before adding it.** Summaries contain price-history
+  phrases ("best price we could find by $X").
+- **Dappered** (menswear deal blog) and **TechBargains** (general deals) were added 2026-11-25, plus Gear Patrol, The
+  Strategist (its feedburner address; `nymag.com/strategist/rss/` is dead), Marie Claire, Elle and Vogue as roundup feeds.
+  Checked and left out: Kicks Deals, Fat Kid Deals, DealsOfAmerica, DealSea, Mashable deals, InStyle, Real Simple, Today
+  (no feed or blocked); Put This On, BuzzFeed Shopping, Sneaker News, Primer (not sale posts).
+- **Hypebeast** answers from a home connection but not from GitHub's runners, so it shows "unavailable" in CI. Not broken.
 - **camelcamelcamel top drops**: kept only at 20%+ drop. Titles read "down X% ($saving) to $price from $orig".
 - **Blocked or useless, don't retry:** Reddit (403/429 without OAuth keys), Dealmoon, Wirecutter, Uniqlo, J.Crew,
   TopCashback, cashbackmonitor, camelcamelcamel popular (Cloudflare), Brad's Deals and blackfriday.com (no feeds).
@@ -75,7 +84,7 @@ history.load (previous history.json from the live site)               ─┘    
 ## 5. Brand stores (`shopify.py`): the fragile part
 
 - **Shopify rate-limits by IP across all its stores** (429, `Retry-After: 60`). After a few dozen requests from your PC,
-  *every* Shopify store returns 429 for a while, including stores you never touched. **So local runs scan only ~20 of 136
+  *every* Shopify store returns 429 for a while, including stores you never touched. **So local runs scan only ~20 of 205
   stores. Judge brand-store health from the cloud run, never from a local run.** A 429 when probing a new store means
   "Shopify store, throttled" (probably fine from CI); a 404 means it doesn't expose `/products.json`.
 - Per store, about 3–4 requests: `/collections.json` → pick up to 2 sale handles by score (`_handle_score`: exact
@@ -96,7 +105,17 @@ history.load (previous history.json from the live site)               ─┘    
 - Stores that stopped exposing data: Buck Mason, Rhone, Vuori, Bombas, SKIMS, Spanx (404). **To add stores:** list them in
   `tools/store_candidates.txt`, run `gh workflow run probe.yml` (it checks from CI, where nothing is throttled; results are
   on the run summary), then add the open ones to `brands.SHOPIFY_STORES` with their `BASELINE`, `PREMIUM` and
-  `BRAND_AUDIENCE` entries. 55 stores (women's, shoes, kids, outdoor) were added this way on 2026-11-18, for 136 total.
+  `BRAND_AUDIENCE` entries. 55 stores (women's, shoes, kids, outdoor) were added this way on 2026-11-18, for 136 total,
+  and 69 more on 2026-11-25, for 205. `store_candidates.txt` lists every store already probed and why it was left out,
+  plus the open ones with nothing on sale yet, to re-probe later. Bag-first brands (Herschel, Dagne Dover,
+  Mission Workshop) were left out on purpose: bags count as clothing accessories and would crowd the clothing.
+- **Stores with a sitewide promo but 0 items on sale** (Toad&Co, Jenni Kayne, Ten Thousand, Cuyana, Rails): they take the
+  discount at checkout, so `compare_at_price` is empty or equal to the price. Their promo still shows as a store-sale card.
+  Not a scanner fault.
+- **Collection choice** (`_handle_score`): Black Friday words count anywhere in a collection name ("30-off-mens-bfcm"), and
+  collections named for another season lose 70 points ("july-sale", "labor-day-sale-2026" in November: Oliver Cabell's
+  scan picked those until 2026-11-25). Names that say "not on sale" ("non-markdown-…", "all-products-minus-sale-items")
+  are rejected.
 - **Store names that are ordinary words** (Cuts, FRAME, MOTHER, Primary, Stance, Represent…) go in
   `brands.AMBIGUOUS_NAMES`. They are never matched in deal-site headlines ("price cuts" once tagged a TV deal as the brand
   Cuts). Their brand-store items still know their brand.

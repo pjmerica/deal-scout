@@ -38,6 +38,16 @@ SLICKDEALS_CLOTHING_QUERIES = [
     "birkenstock", "crocs", "vans", "converse", "salomon", "brooks running", "asics", "on running", "free people",
     "anthropologie", "urban outfitters", "athleta", "fabletics", "alo yoga", "gymshark", "rei outlet",
     "steep and cheap", "sierra trading", "canada goose", "skims", "reformation", "sorel", "ugg boots",
+    # added 2026-11-25: more retailers and brands, and winter garments people search for
+    "lands' end", "duluth trading", "orvis", "talbots", "ann taylor", "j.jill", "torrid", "lane bryant",
+    "kate spade", "coach outlet", "michael kors", "tory burch", "sam edelman", "steve madden", "cole haan", "clarks",
+    "sperry", "keen", "merrell", "teva", "hey dude", "skechers", "puma", "reebok", "champion", "hanes",
+    "carter's", "oshkosh", "children's place", "gap factory", "j.crew factory", "banana republic factory",
+    "brooks brothers", "jos a bank", "vineyard vines", "lacoste", "hugo boss", "wrangler", "dockers",
+    "amazon essentials", "goodthreads", "marmot", "helly hansen", "mountain hardwear", "outdoor research", "prana",
+    "kuhl", "fjallraven", "rain jacket", "snow boots", "winter boots", "hiking boots", "work boots",
+    "chelsea boots", "duck boots", "women's boots", "dress shirt", "blazer", "loafers", "robe", "sherpa",
+    "kids clothing", "kids shoes", "baby clothes",
 ]
 SLICKDEALS_GENERAL_QUERIES = [
     "black friday", "cyber monday", "early black friday", "price mistake", "all time low", "lowest price",
@@ -69,15 +79,32 @@ FEEDS = [
     {"name": "DealNews Clothing", "kind": "deal", "boost": 0,
      "url": "https://www.dealnews.com/c202/Clothing-Accessories/?rss=1"},
     {"name": "DealNews Shoes", "kind": "deal", "boost": 0,
-     "url": "https://www.dealnews.com/c208/Clothing-Accessories/Shoes/?rss=1"},
+     "url": "https://www.dealnews.com/c280/Clothing-Accessories/Shoes/?rss=1"},
+    # c207 and c208 (the old "Women's" and "Shoes" feeds) return TRAVEL deals; Men's and Women's are filters on
+    # c202 (f1 / f2). Checked 2026-11-25: each of these is 80-100% clothing.
     {"name": "DealNews Women's", "kind": "deal", "boost": 0,
-     "url": "https://www.dealnews.com/c207/Clothing-Accessories/Womens-Clothing/?rss=1"},
+     "url": "https://www.dealnews.com/c202/Clothing-Accessories/f2/Womens/?rss=1"},
+    {"name": "DealNews Men's", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c202/Clothing-Accessories/f1/Mens/?rss=1"},
+    {"name": "DealNews Coats", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c489/Clothing-Accessories/Coats/?rss=1"},
+    {"name": "DealNews Jeans", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c515/Clothing-Accessories/Jeans/?rss=1"},
+    {"name": "DealNews Hoodies", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c866/Clothing-Accessories/Sweatshirts-Hoodies/?rss=1"},
+    {"name": "DealNews Activewear", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c487/Clothing-Accessories/Activewear/?rss=1"},
+    {"name": "DealNews Kids' Shoes", "kind": "deal", "boost": 0,
+     "url": "https://www.dealnews.com/c559/Clothing-Accessories/Shoes/Kids-Shoes/?rss=1"},
     {"name": "Hip2Save", "kind": "deal", "boost": 0, "url": "https://hip2save.com/feed/"},
     {"name": "Krazy Coupon Lady", "kind": "deal", "boost": 0, "url": "https://www.thekrazycouponlady.com/rss"},
     {"name": "Ben's Bargains", "kind": "deal", "boost": 0, "url": "https://www.bensbargains.com/rss/"},
     {"name": "9to5Toys", "kind": "deal", "boost": 0, "url": "https://9to5toys.com/feed/"},
     {"name": "DealNews Kids' Clothes", "kind": "deal", "boost": 0,
-     "url": "https://www.dealnews.com/c205/Clothing-Accessories/Mens-Clothing/?rss=1"},
+     "url": "https://www.dealnews.com/c205/Clothing-Accessories/Kids-Clothes/?rss=1"},
+    # menswear deal blog (sitewide sales, curated picks) and a general deal site (added 2026-11-25)
+    {"name": "Dappered", "kind": "deal", "boost": 2, "url": "https://dappered.com/feed/"},
+    {"name": "TechBargains", "kind": "deal", "boost": 0, "url": "https://www.techbargains.com/rss.xml"},
     {"name": "DealNews Electronics", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c142/Electronics/?rss=1"},
     {"name": "DealNews Computers", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c39/Computers/?rss=1"},
     {"name": "DealNews Home", "kind": "deal", "boost": 0, "url": "https://www.dealnews.com/c196/Home-Garden/?rss=1"},
@@ -107,6 +134,12 @@ FEEDS = [
     {"name": "Hypebeast", "kind": "article", "boost": 0, "url": "https://hypebeast.com/feed"},
     {"name": "Highsnobiety", "kind": "article", "boost": 0, "url": "https://www.highsnobiety.com/feed/"},
     {"name": "Good Housekeeping", "kind": "article", "boost": 0, "url": "https://www.goodhousekeeping.com/rss/all.xml/"},
+    # added 2026-11-25 (all checked: they post Black Friday fashion sale roundups)
+    {"name": "Gear Patrol", "kind": "article", "boost": 0, "url": "https://www.gearpatrol.com/feed/"},
+    {"name": "The Strategist", "kind": "article", "boost": 0, "url": "https://feeds.feedburner.com/nymag/strategist"},
+    {"name": "Marie Claire", "kind": "article", "boost": 0, "url": "https://www.marieclaire.com/feeds/all"},
+    {"name": "Elle", "kind": "article", "boost": 0, "url": "https://www.elle.com/rss/all.xml/"},
+    {"name": "Vogue", "kind": "article", "boost": 0, "url": "https://www.vogue.com/feed/rss"},
 
 ]
 
@@ -217,12 +250,16 @@ CLOTHING_BRANDS = [
     "girlfriend collective", "skims", "uniqlo u", "cos", "& other stories", "arket", "theory", "vince",
     "rag & bone", "club monaco", "j.jill", "loft", "ann taylor", "white house black market", "chico's",
     "torrid", "lane bryant", "eloquii", "universal standard", "hoka one one", "on cloud", "ugg australia",
+    # added 2026-11-25 with their Slickdeals searches
+    "orvis", "talbots", "teva", "hey dude", "oshkosh", "oshkosh b'gosh", "the children's place", "amazon essentials",
+    "goodthreads", "helly hansen", "chaco",
 ]
 # Ambiguous brands: matched case-sensitively, with exclusions
 CLOTHING_BRANDS_CASE_SENSITIVE = ["Gap", "GAP", "Coach", "Express", "Lands' End", "Gymshark", "Loft", "LOFT",
                                   "TOMS", "AGOLDE", "STAUD", "FRAME Denim", "MOTHER Denim", "Stance socks"]
 CASE_SENSITIVE_EXCLUDE = {"Express": r"American Express|ExpressVPN|Express Scripts|Express Shipping|Prime Express",
-                          "Coach": r"Coach (?:seat|class|flight|ticket)"}
+                          "Coach": r"Coach (?:seat|class|flight|ticket)",
+                          "Loft": r"\bLoft (?:Bed|Ladder|Desk|Bunk)", "LOFT": r"\bLOFT (?:BED|LADDER)"}
 
 GENDER_TERMS = {
     "Men's": [r"\bmen['’]?s\b", r"\bmens\b", r"\bmenswear\b", r"\bfor men\b"],
@@ -291,7 +328,8 @@ CLOTHING_FALSE_POSITIVE = [
 WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "sierra", "nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",
                   "saks", "saks off 5th", "neiman marcus", "bloomingdale's", "bloomingdales", "rei",
                   "target clothing", "eddie bauer", "ll bean", "l.l.bean", "l.l. bean", "tommy hilfiger",
-                  "calvin klein", "under armour", "columbia", "carhartt", "patagonia", "the north face", "north face"]
+                  "calvin klein", "under armour", "columbia", "carhartt", "patagonia", "the north face", "north face",
+                  "orvis", "duluth trading"]  # both also sell fishing gear, tools and home goods
 
 # ---------------------------------------------------------------------------
 # Event / sale terms
