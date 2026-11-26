@@ -36,6 +36,7 @@ def _wordre(terms):
 
 
 CLOTHING_CAT_RES = {cat: _wordre(terms) for cat, terms in C.CLOTHING_TERMS.items()}
+TAG_FALLBACK_RES = [(cat, re.compile(rx, re.I)) for cat, rx in C.CLOTHING_TAG_FALLBACK]
 CLOTHING_GENERIC_RE = _wordre(C.CLOTHING_GENERIC)
 # Store names that are ordinary words are not matched in headlines ("price cuts" is not the brand Cuts)
 BRAND_RE = _wordre([b for b in C.CLOTHING_BRANDS + list(BR.SHOPIFY_STORES) if b.lower() not in BR.AMBIGUOUS_NAMES])
@@ -138,6 +139,10 @@ def classify(it: Item) -> None:
     if FALSE_POS_RE.search(title):
         score -= 6
     it.is_clothing = brand_store and not FALSE_POS_RE.search(title) or score >= 3
+    # Storewide sales have no garment type: "Walmart Black Friday Top 100 Fashion Deals" is not a top
+    storewide = f"{it.store} sitewide: " in title if brand_store else bool(G.STOREWIDE.search(title))
+    if it.is_clothing and not tags and not storewide:
+        tags = fallback_tags(title, it.store if brand_store else "")
     it.clothing_tags = tags
     other = {m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:
@@ -158,6 +163,18 @@ def classify(it: Item) -> None:
     it.is_bf = bool(BF_RE.search(f"{it.title} {it.summary[:200]}"))
     if not it.codes:
         it.codes = CODES.extract(f"{it.title} {it.summary[:400]}")
+
+
+def fallback_tags(title: str, store: str = "") -> list[str]:
+    """Garment type from the ambiguous words in config.CLOTHING_TAG_FALLBACK, for an item already known to be
+    clothing. The brand-store prefix is left out so a store's name can't supply the garment."""
+    if store and title.startswith(f"{store}: "):
+        title = title[len(store) + 2:]
+    for cat, rx in TAG_FALLBACK_RES:
+        if rx.search(title):
+            return [cat]
+    cat = C.CLOTHING_TAG_BRAND.get(BR.norm_brand(store)) if store else None
+    return [cat] if cat else []
 
 
 BRAND_DISPLAY = {"rei": "REI", "ugg": "UGG", "asos": "ASOS", "lego": "LEGO", "jcpenney": "JCPenney", "dsw": "DSW",

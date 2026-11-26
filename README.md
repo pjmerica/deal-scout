@@ -55,7 +55,8 @@ Every component adds a readable reason (shown under each deal) or a warning (sho
 
 Tiers are percentiles (Exceptional is the top 3%, Great 12%, Good 35%).
 
-**Gender** (`gender.py`), in order of evidence: title words (including curly apostrophes and "unisex"), garment hints
+**Gender** (`gender.py`), in order of evidence: title words (including curly apostrophes and "unisex"), a kids' brand
+(Kids unless the item is marked adult), garment hints
 (dress, skirt set, bra → Women's; boxer briefs, tuxedo → Men's), retailer product tags, a single-audience brand
 (`brands.BRAND_AUDIENCE`), the description, a brand that sells to everyone, then storewide sales → Everyone. A store's
 audience counts only for storewide sales: a sweater at Macy's isn't unisex.

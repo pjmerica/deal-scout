@@ -26,7 +26,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (38 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (40 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -110,7 +110,20 @@ history.load (previous history.json from the live site)               ─┘    
 - **Clothing:** `scoring.classify`, with terms in `config.CLOTHING_TERMS`. Brand-store items are clothing unless false-positive
   words appear. Materials (cashmere, merino, denim) count as clothing but **not** as a garment category. Department
   stores count only weakly (`WEAK_RETAILERS`), so Macy's fragrance isn't clothing.
+- **False-positive words must be anchored** (`\bcruises?\b`, not `cruise`). A brand-store item that matches one is not clothing
+  at all. Unanchored, "cruise" hid Allbirds', Rothy's and Filson's Cruiser line, "paint" a "Painted Floral" dress, "quilt"
+  quilted vests and hoodies, "flight" a "Flight Hoodie", "tire" every "entire"/"attire", "cat " Target's Cat & Jack (fixed
+  2026-11-25). Run any new word against `deals.json` titles before adding it.
+- **Garment type (the chips on the Clothing tab).** `CLOTHING_TERMS` decides both *whether* an item is clothing and its type,
+  so it holds only unambiguous words. Ambiguous ones ("top", "short", "tank", "trunk", "jean", "bikini", "bag") are in
+  `config.CLOTHING_TAG_FALLBACK` and only fill in a missing type on an item that is **already** clothing, first match wins
+  (`scoring.fallback_tags`). Then `CLOTHING_TAG_BRAND` covers one-garment stores that name products by model (Kizik, Sarah
+  Flint, Stance). Storewide sales stay untagged. An item with no type disappears when someone picks a chip: on 2026-11-23,
+  417 of 1,874 clothing deals had none; after the fix about 150 do, mostly storewide sales. The chip list is
+  `CLOTH_CATS` in `template.html` (Swimwear added 2026-11-25): keep it in step with `CLOTHING_TERMS`.
 - **Gender** (`gender.py`), in order: title words (handles curly apostrophes "Women’s", "unisex", "men's & women's") →
+  **a kids' brand → Kids** unless the item is marked adult (Little Sleepies' `age:adult` tag, Tea Collection's "Adult
+  Pajama Top"; before 2026-11-25 their girls' dresses landed in Women's) →
   garment hints (dress, skirt set, bra → Women's) → **structured retailer tags** (`gender:Men`, `division:Womens`) →
   free-text tags (**"color-family" is not "family" = unisex**: that bug labeled Faherty's men's shirts as unisex) → brand
   audience (`brands.BRAND_AUDIENCE`) → description → storewide sale → Everyone.

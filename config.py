@@ -132,20 +132,58 @@ CLOTHING_TERMS = {
     "Tops": ["hoodie", "hoodies", "sweatshirt", "sweatshirts", "sweater", "sweaters", "cardigan",
              "pullover", "quarter zip", "1/4 zip", "half zip", "crewneck", "t-shirt", "t-shirts", "tee",
              "tees", "polo", "polos", "henley", "flannel", "button down", "button-down", "oxford shirt",
-             "dress shirt", "shirt", "shirts", "blouse", "tank top", "turtleneck", "fleece"],
+             "dress shirt", "shirt", "shirts", "blouse", "tank top", "turtleneck", "fleece",
+             "longsleeve", "overshirt", "overshirts", "tunic", "tunics", "camisole", "camisoles", "bodysuit",
+             "bodysuits"],
     "Bottoms": ["jeans", "pants", "chinos", "trousers", "joggers", "sweatpants", "leggings",
-                "shorts", "skirt", "cargo pants", "jogger", "legging", "sweatpant"],
+                "shorts", "skirt", "cargo pants", "jogger", "legging", "sweatpant",
+                "pant", "chino", "trouser", "skort", "skorts", "overalls", "culottes", "tights", "sweatshorts"],
     "Dresses & Sets": ["dress", "dresses", "jumpsuit", "romper", "suit", "suits", "blazer", "sport coat",
-                       "pajama", "pajamas", "pjs", "loungewear", "robe", "matching set"],
+                       "pajama", "pajamas", "pjs", "loungewear", "robe", "matching set",
+                       "gown", "gowns", "shirtdress", "kaftan", "caftan", "jumpsuits", "rompers", "onesie", "onesies",
+                       "coverall", "coveralls"],
     "Footwear": ["boots", "boot", "sneakers", "sneaker", "shoes", "shoe", "loafers", "sandals", "slippers",
                  "clogs", "heels", "flats", "footwear", "running shoe", "trail runner", "chelsea boot",
-                 "mules", "slides", "slipper", "clog", "sandal", "loafer", "trainers", "cleats"],
+                 "mules", "slides", "slipper", "clog", "sandal", "loafer", "trainers", "cleats",
+                 "booties", "espadrilles", "mary janes", "duck boots", "duckboots"],
     "Activewear": ["activewear", "athleisure", "base layer", "baselayer", "thermal", "sports bra",
                    "compression", "running tights", "workout"],
+    # "bikini" alone is not here: "bikini trimmer" is a razor. The fallback below tags brand-store bikinis.
+    "Swimwear": ["swimsuit", "swimsuits", "swimwear", "tankini", "swim trunks", "swim trunk", "swim shorts",
+                 "board shorts", "boardshorts", "rash guard", "rashguard", "bathing suit", "bikini top",
+                 "bikini tops", "bikini bottom", "bikini bottoms", "bikini set"],
     "Basics & Underwear": ["socks", "underwear", "boxer", "boxers", "briefs", "bra", "bras", "undershirt",
-                           "long johns", "intimates", "lingerie"],
+                           "long johns", "intimates", "lingerie", "sock", "bralette", "bralettes", "boxer briefs",
+                           "undershirts"],
     "Accessories": ["beanie", "scarf", "gloves", "mittens", "hat", "hats", "cap", "belt", "belts",
-                    "handbag", "purse", "tote", "sunglasses", "watch strap", "tie", "ties"],
+                    "handbag", "purse", "tote", "sunglasses", "watch strap", "tie", "ties",
+                    "beanies", "scarves", "suspenders", "bucket hat"],
+}
+# Garment type for an item ALREADY classified as clothing whose title names no garment above ("Drape Top",
+# "Cheeky Jean", "Apollo Trunk 4\""). These words are too ambiguous to decide whether something is clothing
+# ("Top 10 TV deals", "short throw projector", "fish tank"), so they only fill in a missing tag. First match
+# wins, in this order: "Bikini Top" is swimwear, "High Top" footwear, "Cheeky Jean" bottoms. Without a tag an
+# item vanishes when the page filters by garment type (417 of 1,874 clothing deals on 2026-11-23).
+CLOTHING_TAG_FALLBACK = [
+    ("Swimwear", r"\bswim|\bbikinis?\b|\bone[- ]piece\b|\bpareos?\b|\bcover[- ]ups?\b"),
+    ("Footwear", r"\bslip[- ]?ons?\b|\blace[- ]?ups?\b|\bmules?\b|\b(?:high|low|mid)[- ]tops?\b|\bmary janes?\b|"
+                 r"\bslingbacks?\b|\bwedges?\b|\bheels?\b|\bpumps?\b"),
+    ("Bottoms", r"\bshorts?\b(?![\s-]*sleeve)|\bjeans?\b|\btights?\b|\b5-pocket\b|\bpalazzo\b|\bbootcut\b|"
+                r"\bflares?\b|\bwide[- ]leg\b|\bstraight\b"),
+    ("Basics & Underwear", r"\bbriefs?\b|\btrunks?\b|\bcheek(?:y|ini)\b|\bthongs?\b(?! sandal)|\bno[- ]show\b"),
+    ("Dresses & Sets", r"\bfooties?\b|\bzippy\b|\bsleepers?\b"),
+    ("Tops", r"\btops?\b(?![\s-]*(?:\d|rated|picks?|deals?|sellers?|brands?|stores?)\b)|\btanks?\b|\bcamis?\b|\bv-neck\b|\b(?:scoop|mock|crew|boat|cowl) neck\b|\bbutton[- ]up\b|"
+             r"\brugby\b|\b(?:long|short)[- ]?sleeves?\b|\bjersey\b|\bjumper\b|\bcamp collar\b|\braglan\b|\bringer\b"),
+    ("Outerwear", r"\bfull[- ]zip\b|\bzip[- ]up\b|\bbomber\b|\bshells?\b"),
+    ("Accessories", r"\bbags?\b|\bbackpacks?\b|\bcrossbody\b|\bwallets?\b|\bpouch\b|\bcard ?holder\b|\bbows?\b|"
+                    r"\bscrunchies?\b|\bheadbands?\b|\bcloche\b|\bvisors?\b|\beye mask\b"),
+]
+# Last resort for brand-store items still untagged: stores that sell essentially one garment type and name
+# products by model ("Kizik: Men's London", "Sarah Flint: Perfect Marta 85", "Stance: SHELTER WOMENS CREW").
+CLOTHING_TAG_BRAND = {
+    "kizik": "Footwear", "sarah flint": "Footwear", "birdies": "Footwear", "koio": "Footwear",
+    "thousand fell": "Footwear", "rothy's": "Footwear", "nisolo": "Footwear", "freda salvador": "Footwear",
+    "feetures": "Basics & Underwear", "darn tough": "Basics & Underwear", "stance": "Basics & Underwear",
 }
 # generic words that indicate apparel but aren't a garment category
 CLOTHING_GENERIC = ["apparel", "clothing", "clothes", "fashion", "menswear", "womenswear", "wardrobe",
@@ -224,17 +262,24 @@ CATEGORY_TERMS = {
 CLOTHING_CATEGORY_HINTS = ["clothing", "apparel", "fashion", "shoes", "footwear", "womens", "mens",
                            "accessories", "jewelry & watches", "style"]
 
-# Things that look like clothing words but usually aren't
+# Things that look like clothing words but usually aren't. A brand-store item matching any of these is not
+# clothing at all, so anchor each word: unanchored, "cruise" hid Allbirds' and Filson's Cruiser line, "paint" a
+# "Painted Floral" dress, "quilt" quilted vests and hoodies, "flight" a "Flight Hoodie", "tire" every "entire" and
+# "attire", "cat " Target's Cat & Jack (2026-11-25).
 CLOTHING_FALSE_POSITIVE = [
-    r"phone case", r"laptop", r"tv\b", r"\bssd\b", r"monitor", r"air fryer", r"car seat", r"tire", r"vacuum",
-    r"pet ", r"dog ", r"cat ", r"book jacket", r"life jacket", r"watch band", r"smartwatch", r"golf cart",
-    r"shoe rack", r"shoe organizer", r"coat rack", r"coat hanger", r"paint", r"primer coat", r"top coat",
-    r"cruise", r"vacation", r"flight", r"hotel", r"candle", r"fragrance", r"parfum", r"cologne", r"perfume",
+    r"phone case", r"\bphone (?:stand|holder|grip|mount|charger)", r"laptop", r"tv\b", r"\bssd\b", r"monitor",
+    r"air fryer", r"car seat", r"\btires?\b", r"vacuum",
+    r"\bpets?\b", r"\bdogs?\b", r"\bcats?\b(?! ?(?:&|and) ?jack| footwear)", r"book jacket", r"life jacket",
+    r"watch band", r"smartwatch", r"golf cart",
+    r"shoe rack", r"shoe organizer", r"coat rack", r"coat hanger", r"\bpaint(?:s|ing|ings|er|ers|brush(?:es)?)?\b",
+    r"primer coat", r"top coat", r"\bcruises?\b", r"vacation", r"packing cubes?",
+    r"\bflights?\b(?!\s+(?:jacket|hoodie|bomber|suit|jumpsuit|pant|short|tee|crew|sweatshirt|boot|sneaker|shoe|vest)s?\b)",
+    r"hotel", r"candle", r"fragrance", r"parfum", r"cologne", r"perfume",
     r"eau de", r"blanket", r"comforter", r"duffel", r"luggage", r"suitcase", r"water bottle", r"tumbler",
     r"weighted vest", r"skincare", r"lotion", r"makeup", r"bedding", r"towel", r"sheet set", r"\btent\b",
     r"sleeping bag", r"cooler", r"lego", r"\btoys?\b", r"gift card", r"\begc\b", r"giveaway", r"sweepstakes",
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
-    r"\bduvet", r"\bpillow", r"\bquilt", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
+    r"\bduvet", r"\bpillow", r"\bquilts?\b", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
     r"\bnapkin", r"\btablecloth", r"\bplacemat", r"\bmug\b", r"\bornament", r"bath mat", r"\bdinnerware",
     # garment words in other senses, seen on the live site 2026-11-18 (compression leg massager, thermal printer,
     # "Golf+ ... Tee Off in VR", nylon cable tie, laser tag "no vest needed", a Joe Abercrombie ebook)

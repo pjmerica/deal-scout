@@ -4,6 +4,8 @@ storewide sales, brands that sell to both). Shared by the feed scorer and the br
 
 Order of evidence:
   1. explicit words in the title (men's / women’s / kids / unisex)
+  1b. a kids' brand (Tea Collection, Little Sleepies) -> Kids, unless the item is marked adult (their matching
+      family pajamas: "Adult Pajama Top", tag "age:adult", "gender:Women")
   2. garment words that imply an audience (dress, skirt set, bra -> Women's; boxer briefs, tuxedo -> Men's)
   3. product tags / type from the retailer (brand stores)
   4. a single-audience brand (Summersalt -> Women's, Todd Snyder -> Men's); the store counts only for storewide sales
@@ -36,6 +38,14 @@ TAG_KEYED = re.compile(r"\b(?:gender|division|department|dept|sex|audience)\s+(m
 UNISEX_TAG = re.compile(r"\bunisex\b|\ball genders?\b|\bgender neutral\b", re.I)
 STOREWIDE = re.compile(r"sitewide|site-wide|storewide|everything|\bsale\b|% off|deals\b|clearance|outlet|"
                        r"\bsavings\b|black friday|cyber monday|& more|\bstyles\b", re.I)
+ADULT = re.compile(r"\badults?\b", re.I)
+ADULT_TAG = re.compile(r"\badults?\b|\b(?:gender|division|department|dept|sex|audience)\s+(?:wo)?men\b", re.I)
+
+
+def kids_brand(brands: list[str] | None) -> bool:
+    """Every single-audience brand named is a kids' brand (a roundup naming Carter's and Summersalt is not)."""
+    auds = {BR.audience_for([b]) for b in brands or []}
+    return "Kids" in auds and not auds & {"Men's", "Women's"}
 
 
 def detect(title: str, summary: str = "", brands: list[str] | None = None, store: str = "",
@@ -53,6 +63,13 @@ def detect(title: str, summary: str = "", brands: list[str] | None = None, store
         return sorted(set(g) | {"Everyone"})
     if g:
         return g
+    # A kids' brand's dress, romper or leggings are a child's: the garment hints below read them as Women's
+    # (six Tea Collection dresses and two Little Sleepies pieces in the Women's view, 2026-11-23).
+    adult = False
+    if kids_brand(brands):
+        if not (ADULT.search(title) or ADULT_TAG.search(tags)):
+            return ["Kids"]
+        adult = True
     if WOMEN_HINT.search(title):
         return ["Women's"]
     if MEN_HINT.search(title):
@@ -80,6 +97,8 @@ def detect(title: str, summary: str = "", brands: list[str] | None = None, store
     # The store's audience only speaks for storewide sales: Macy's sells to everyone, but a sweater at Macy's
     # isn't unisex. A brand that sells to everyone is weaker evidence than a description naming one audience.
     aud = BR.audience_for(brands or [], "" if has_garment else store)
+    if adult and aud == "Kids":
+        aud = "Everyone"  # a kids' brand's adult piece with no other clue: matching family pajamas
     if aud and aud != "Everyone":
         return [aud]
     if summary:

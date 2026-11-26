@@ -250,6 +250,93 @@ def test_kids_brand_audience():
     import gender as G
     assert G.detect("Baby Zip Footie", brands=["Primary"]) == ["Kids"]
     assert G.detect("The Emma Flat", brands=["Sarah Flint"]) == ["Women's"]
+    # a kids' brand's dress or romper is a child's, not a woman's (Tea Collection, Little Sleepies, 2026-11-23)
+    assert G.detect("Ruffle Shoulder Ballet Dress", brands=["Tea Collection"], tags="Girls Dresses") == ["Kids"]
+    assert G.detect("Pointelle Leggings", brands=["Tea Collection"], tags="Baby") == ["Kids"]
+    assert G.detect("Disney Simba's Safari Bubble Romper", brands=["Little Sleepies"]) == ["Kids"]
+    # ...but their adult pieces are not
+    assert G.detect("Pink Twinkling Trees Women's Pajama Pants", brands=["Little Sleepies"]) == ["Women's"]
+    assert G.detect("Wildwood Floral Sleep Shirt", brands=["Little Sleepies"],
+                    tags="Women's Sleep Shirt age adult ss gender Women") == ["Women's"]
+    assert G.detect("Adult Pajama Top", brands=["Tea Collection"], tags="Adult Sleep") == ["Everyone"]
+    # a roundup naming a kids' brand and a women's brand is not forced to Kids
+    assert G.detect("Carter's and Summersalt dresses 40% off", brands=["Carter's", "Summersalt"]) == ["Women's"]
+    it = Item(title="Tea Collection: Print Mix Twirl Dress", link="x/twirl", source="Brand store: Tea Collection",
+              kind="deal", store="Tea Collection")
+    it.brands = ["Tea Collection"]
+    scoring.classify(it)
+    assert it.gender == ["Kids"] and it.is_clothing
+
+
+def store_item(title, store):
+    it = Item(title=f"{store}: {title}", link="x/" + title, source=f"Brand store: {store}", kind="deal", store=store)
+    it.brands = [store]
+    scoring.classify(it)
+    return it
+
+
+def test_false_positive_words_are_whole_words():
+    # "cruise", "paint", "quilt", "flight" hid real clothing from brand stores (2026-11-23)
+    for title, store in [("Women's Canvas Cruiser Slip On - Blizzard", "Allbirds"),
+                         ("Mackinaw Wool Caped Cruiser Jacket - Brick Plaid", "Filson"),
+                         ("The Men's Cruiser Loafer - Husk", "Rothy's"),
+                         ("The All Dressed Up Mock Neck Dress - Painted Floral in Slate", "Summersalt"),
+                         ("Terrace Skirt Set in Magenta Painterly Gingham", "Lake Pajamas"),
+                         ("Corbet Quilted Hoodie", "Marine Layer"),
+                         ("Voltage Quilted Vest - Vetiver", "Howler Brothers"),
+                         ("Chrome Flight Hoodie - Stained Black", "Represent")]:
+        it = store_item(title, store)
+        assert it.is_clothing and it.category == "Clothing & Shoes", title
+    for t in ["Cat & Jack Kids' Fleece Pajama Sets $8", "Old Navy 40% Off Your Entire Purchase: Sweaters & Jeans",
+              "Women's Holiday Party Attire: Dresses from $15"]:
+        assert mk(t).is_clothing, t
+    # the words still catch what they were for
+    for title, store in [("Linen Quilt - Natural", "Hill House Home"), ("Flightweight Packing Cube Set", "Ministry of Supply"),
+                         ("Desk Chic Phone Stand - Silver", "Fashion Nova")]:
+        assert not store_item(title, store).is_clothing, title
+    for t in ["AOKOWN Waterproof Dog Hoodie Raincoat w/ Leash Hole $5.59", "Carnival Cruise Deals: Hoodie Included"]:
+        assert not mk(t).is_clothing, t
+
+
+def test_garment_tag_fallback():
+    # items with no garment tag vanished when the page filtered by garment type (417 on 2026-11-23)
+    cases = [("The Way-High Skinny Jean | Ash", "Everlane", "Bottoms"),
+             ("The ’90s Cheeky® Jean | Vintage Blue", "Everlane", "Bottoms"),
+             ("Didion Drape Top - Printed Washable Silk", "M.M.LaFleur", "Tops"),
+             ("CloudKnit Short Sleeve", "Outdoor Voices", "Tops"),
+             ("ASTER SHORT", "Robert Graham", "Bottoms"),
+             ("Lime Icing Summer Bikini Top", "Montce", "Swimwear"),
+             ("Malika One Piece Floral Doodle Noir", "Solid & Striped", "Swimwear"),
+             ("Stretch Swim Trunk (Clearance)", "Bearbottom", "Swimwear"),
+             ("Apollo Trunk 4\"", "Tommy John", "Basics & Underwear"),
+             ("Women's Slip On | Black", "Thousand Fell", "Footwear"),
+             ("The Belle Bow - Lime Gingham", "Hill House Home", "Accessories"),
+             ("The Draper Pleated Pant in Buttersmooth", "Everlane", "Bottoms"),
+             ("Heavyweight Crew Sock 6-Pack", "Duckworth", "Basics & Underwear"),
+             ("Global Tek Crew - Short Sleeve", "Topo Designs", "Tops"),  # "Topo" is the store, not a top
+             ("The Essential Long Sleeve Coverall", "Wildfang", "Dresses & Sets"),
+             ("Men's London - Naval Academy/Harbor Mist", "Kizik", "Footwear"),  # one-garment store, model name
+             ("SHELTER WOMENS CREW", "Stance", "Basics & Underwear")]
+    for title, store, tag in cases:
+        assert store_item(title, store).clothing_tags == [tag], (title, store_item(title, store).clothing_tags)
+    # ambiguous words never make something clothing, and storewide sales stay untagged
+    for t in ["Top 10 Black Friday TV Deals", "Samsung Short Throw Projector $499", "Fish Tank Starter Kit $40"]:
+        it = mk(t)
+        assert not it.is_clothing and not it.clothing_tags, t
+    for store, promo in [("Hill House Home", "Up to 75% Off Everything"),
+                         ("Sarah Flint", "Happening Now: The Black Friday Sale, up to 80% off sitewide"),
+                         ("Montce", "BLACK FRIDAY: Up to 80% off swim, tops and bottoms")]:
+        it = Item(title=f"{store} sitewide: {promo}", link="x/" + store, source=f"Brand store: {store}", kind="deal",
+                  store=store)  # the shape shopify.py gives storewide promos
+        it.brands = [store]
+        scoring.classify(it)
+        assert it.is_clothing and it.clothing_tags == [], (store, it.clothing_tags)
+    # a headline roundup is not a garment (local build, 2026-11-25)
+    assert mk("Walmart Black Friday Top 100 Fashion Deals: Up to 80% off + free shipping w/ $35").clothing_tags == []
+    assert mk("Top-Rated Women's Fashion Finds Under $20").clothing_tags == []
+    assert mk("Nike Men's Lunar Force 1 Winterized Duckboots (2 Colors) $127.50").clothing_tags == ["Footwear"]
+    # "bikini" alone is not clothing in a headline (a bikini trimmer is a razor)
+    assert not mk("Panasonic Bikini Trimmer $15").is_clothing
 
 
 def test_not_on_sale_collection_rejected():
