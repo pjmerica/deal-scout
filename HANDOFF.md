@@ -26,7 +26,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (44 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (45 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -204,8 +204,12 @@ load: see the `for(const i of items)` block in `template.html`), drops brand-sto
 thumbnails per brand. **Which 2,400 deals go on the page** is `scoring.pick_for_page`: each brand store keeps its best 8
 (`MAX_ITEMS_PER_STORE`), feed deals get first claim on 1,300 slots (`FEED_SLOTS`), unused room goes to the other side.
 Without it, the 205 stores' markdowns filled every slot on 2026-11-25 (non-clothing deals 478 -> 91, Slickdeals/DealNews
-clothing 576 -> 348). Adding stores or feeds changes the balance: check both counts in `deals.json` afterwards. Live size went from 3.2 MB to 2.1 MB raw (~600 KB to ~465 KB compressed) on 2026-11-18. If you add a field the
-page uses, make sure it survives `slim()` or gets a default on load.
+clothing 576 -> 348); after it, 500 non-clothing, 800 feed clothing and 1,100 brand-store items from 162 stores. Adding
+stores or feeds changes the balance: check those counts in `deals.json` afterwards.
+
+Live size went from 3.2 MB to 2.1 MB raw (~600 KB to ~465 KB compressed) on 2026-11-18; with 205 stores' Brands cards
+it was 2.7 MB raw / ~550 KB transferred on 2026-11-25. If you add a field the page uses, make sure it survives `slim()`
+or gets a default on load.
 
 ---
 

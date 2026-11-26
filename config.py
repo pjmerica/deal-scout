@@ -38,7 +38,7 @@ SLICKDEALS_CLOTHING_QUERIES = [
     "allbirds", "ugg", "dr martens", "timberland", "bonobos", "todd snyder",
     "quince", "huckberry", "smartwool", "darn tough", "spanx", "aritzia",
     # event terms
-    "black friday clothing", "black friday apparel", "doorbuster",
+    "black friday clothing", "black friday shoes", "cyber monday clothing", "doorbuster",  # "...apparel" found nothing
     # big retailers that block direct scraping: only seen when deal sites post them (added 2026-11-18)
     "american eagle", "aerie", "hollister", "zara", "h&m", "express clothing", "kohl's", "jcpenney", "nordstrom rack",
     "saks off 5th", "bloomingdale's", "dsw", "zappos", "foot locker", "dick's sporting goods", "backcountry",
@@ -190,7 +190,7 @@ CLOTHING_TERMS = {
                    "compression", "running tights", "workout"],
     # "bikini" alone is not here: "bikini trimmer" is a razor. The fallback below tags brand-store bikinis.
     "Swimwear": ["swimsuit", "swimsuits", "swimwear", "tankini", "swim trunks", "swim trunk", "swim shorts",
-                 "board shorts", "boardshorts", "rash guard", "rashguard", "bathing suit", "bikini top",
+                 "board shorts", "boardshorts", "boardshort", "board short", "rash guard", "rashguard", "bathing suit", "bikini top",
                  "bikini tops", "bikini bottom", "bikini bottoms", "bikini set"],
     "Basics & Underwear": ["socks", "underwear", "boxer", "boxers", "briefs", "bra", "bras", "undershirt",
                            "long johns", "intimates", "lingerie", "sock", "bralette", "bralettes", "boxer briefs",
@@ -218,7 +218,8 @@ CLOTHING_TAG_FALLBACK = [
     ("Outerwear", r"\bfull[- ]zip\b|\bzip[- ]up\b|\bbomber\b|\bshells?\b"),
     ("Accessories", r"\bbags?\b|\bbackpacks?\b|\bcrossbody\b|\bwallets?\b|\bpouch\b|\bcard ?holder\b|\bbows?\b|"
                     r"\bscrunchies?\b|\bheadbands?\b|\bcloche\b|\bvisors?\b|\beye mask\b|\bhair clips?\b|"
-                    r"\bnecklaces?\b|\bearrings?\b|\bbracelets?\b|\brings?\b|\bpendants?\b"),
+                    r"\bnecklaces?\b|\bearrings?\b|\bbracelets?\b|\brings?\b|\bpendants?\b|\bsnapbacks?\b|"
+                    r"\btruckers?\b|\bbandanas?\b|\bweekenders?\b|\bbriefcases?\b"),
 ]
 # Last resort for brand-store items still untagged: stores that sell essentially one garment type and name
 # products by model ("Kizik: Men's London", "Sarah Flint: Perfect Marta 85", "Stance: SHELTER WOMENS CREW").
@@ -226,6 +227,16 @@ CLOTHING_TAG_BRAND = {
     "kizik": "Footwear", "sarah flint": "Footwear", "birdies": "Footwear", "koio": "Footwear",
     "thousand fell": "Footwear", "rothy's": "Footwear", "nisolo": "Footwear", "freda salvador": "Footwear",
     "feetures": "Basics & Underwear", "darn tough": "Basics & Underwear", "stance": "Basics & Underwear",
+    # added 2026-11-25: shoe brands and denim brands whose jeans are named by fit ("Joe's Jeans: THE LUNA",
+    # "FRAME: The Loose", "MOTHER: The Ripper"); their other products name the garment and are tagged before this
+    "clae": "Footwear", "velasca": "Footwear", "grant stone": "Footwear", "taos footwear": "Footwear",
+    "larroude": "Footwear", "dolce vita": "Footwear", "schutz": "Footwear", "matisse": "Footwear",
+    "ace marks": "Footwear", "wolf & shepherd": "Footwear", "native shoes": "Footwear", "xero shoes": "Footwear",
+    "olukai": "Footwear", "vessi": "Footwear", "allbirds": "Footwear", "thursday boots": "Footwear",
+    "tecovas": "Footwear", "joe's jeans": "Bottoms", "hudson jeans": "Bottoms", "frame": "Bottoms",
+    "mother": "Bottoms", "agolde": "Bottoms", "dl1961": "Bottoms", "citizens of humanity": "Bottoms",
+    "re/done": "Bottoms", "daze denim": "Bottoms", "pistola": "Bottoms", "naked & famous": "Bottoms",
+    "rogue territory": "Bottoms", "true classic": "Tops",
 }
 # generic words that indicate apparel but aren't a garment category
 CLOTHING_GENERIC = ["apparel", "clothing", "clothes", "fashion", "menswear", "womenswear", "wardrobe",
@@ -321,7 +332,7 @@ CLOTHING_FALSE_POSITIVE = [
     r"primer coat", r"top coat", r"\bcruises?\b", r"vacation", r"packing cubes?",
     r"\bflights?\b(?!\s+(?:jacket|hoodie|bomber|suit|jumpsuit|pant|short|tee|crew|sweatshirt|boot|sneaker|shoe|vest)s?\b)",
     r"hotel", r"candle", r"fragrance", r"parfum", r"cologne", r"perfume",
-    r"eau de", r"\bblankets?\b(?! (?:stripe|scarf|coat|hoodie|jacket|shirt|plaid|check))", r"comforter", r"duffel", r"luggage", r"suitcase", r"water bottle", r"tumbler",
+    r"eau de", r"\bblankets?\b(?! (?:stripe|scarf|coat|hoodie|jacket|shirt|plaid|check))", r"comforter", r"\bduff(?:el|le)s?\b(?! coats?)", r"luggage", r"suitcase", r"water bottle", r"tumbler",
     r"weighted vest", r"skincare", r"lotion", r"makeup", r"bedding", r"towel", r"sheet set", r"\btent\b",
     r"sleeping bag", r"cooler", r"lego", r"\btoys?\b", r"gift card", r"\begc\b", r"giveaway", r"sweepstakes",
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)

@@ -231,7 +231,8 @@ def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: b
 
 
 def _product_item(store: str, domain: str, p: dict) -> Item | None:
-    title = p.get("title") or ""
+    # some stores put markup in titles ("Hawaiian <span> Red Tiger </span>", Freenote Cloth 2026-11-25)
+    title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", p.get("title") or "")).strip()
     if SKIP_TITLE.search(title) or SKIP_TITLE.search(p.get("product_type") or ""):
         return None
     variants = p.get("variants") or []

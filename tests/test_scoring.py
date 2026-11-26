@@ -380,6 +380,20 @@ def test_store_name_is_not_the_product():
     assert store_item("Leather Crib Shoes", "Posh Peanut").is_clothing
     assert store_item("Altered Threads Overshirt - Multi Blanket Stripe", "Brixton").is_clothing
     assert not store_item("Sherpa Throw Blanket", "Barefoot Dreams").is_clothing
+    # model names at one-garment stores, hats, bags (2026-11-25)
+    assert store_item("THE LUNA", "Joe's Jeans").clothing_tags == ["Bottoms"]
+    assert store_item("MORRISON", "Clae").clothing_tags == ["Footwear"]
+    assert store_item("Seager x WSL Trestles Pro Snapback Blue", "Seager").clothing_tags == ["Accessories"]
+    assert store_item("Goldmine Boardshort Duck Camo", "Seager").clothing_tags == ["Swimwear"]
+    assert store_item("Ion Weekender", "Mack Weldon").clothing_tags == ["Accessories"]
+    assert not store_item("Large Leather Belted Duffle", "Fear of God").is_clothing
+    assert store_item("Wool Duffle Coat - Camel", "Todd Snyder").is_clothing
+
+
+def test_shopify_titles_lose_markup():
+    p = {"title": "Hawaiian <span> Red Tiger </span>", "handle": "h", "product_type": "Shirts", "tags": [],
+         "variants": [{"price": "50.00", "compare_at_price": "100.00", "available": True}]}
+    assert shopify._product_item("Freenote Cloth", "freenotecloth.com", p).title == "Freenote Cloth: Hawaiian Red Tiger"
 
 
 def test_page_slots_keep_feed_deals():
