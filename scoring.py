@@ -157,6 +157,11 @@ def classify(it: Item) -> None:
         tags = fallback_tags(product, it.store if brand_store else "")
     it.clothing_tags = tags
     it.watch = [label for label, rx in WATCH_RES if rx.search(product)]
+    if brand_store:
+        extra = C.WATCH_STORES.get(it.store) or ("Team gear sales" if it.store in C.WATCH_PROMO_STORES
+                                                 and "sitewide_promo" in it.flags else None)
+        if extra and extra not in it.watch:
+            it.watch.append(extra)
     other ={m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:
         it.brands = sorted({brand_title(b) for b in brands | other})[:6]

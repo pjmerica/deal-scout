@@ -18,7 +18,7 @@ the owner's decisions, how things break, and how to check your work.
 | 2026-11-18 | **Men's / Women's / Kids switch.** Unisex items and storewide sales count as "Everyone" and **appear in both Men's and Women's views** (owner confirmed). |
 | 2026-11-18 | **Runs until January 17, 2027, no keepalive.** Enforced by the `guard` job in `scout.yml` (`END_DATE`): scheduled runs do nothing after that date, while manual runs and pushes still work. Separately, GitHub disables scheduled workflows in public repos 60 days after the last commit. To extend, change `END_DATE` (ask the owner first). |
 | 2026-11-18 | From the improvement list, the owner **declined for now**: size filter, watch-list alerts, hourly runs over Thanksgiving weekend, enabling Reddit. They're in the backlog (§12); ask before doing them. |
-| 2026-11-26 | **Watching list: Air Force 1s and Nintendo Switch 2** ("big for deals for me"). `config.WATCH` (label + regex) gives every matching deal a 👀 badge and the **Watching** tab, and keeps it on the page whatever its score. Ranking is unchanged and there are no alerts. Each watched item also has its own Slickdeals searches. |
+| 2026-11-26 | **Watching list: Air Force 1s, Nintendo Switch 2, Detroit gear, team-gear sales** ("big for deals for me"; "detroit sports gear deals and stuff like that"). `config.WATCH` (label + regex) gives every matching deal a 👀 badge and the **Watching** tab, and keeps it on the page whatever its score. Ranking is unchanged and there are no alerts. Each watched item also has its own Slickdeals searches. Detroit: deal sites post almost no team-specific gear (one Lions BBQ set in 12 searches), so the team-gear stores ('47, New Era, Ebbets, Charlie Hustle, Sportiqe, Homage, Junk Food) and the Detroit stores (Detroit City FC, Ink Detroit) are read directly; `config.WATCH_STORES` / `WATCH_PROMO_STORES`, and `shopify.scan_store` keeps up to 30 watched items per store. Not "Detroit" alone (Detroit Axle) or "Tigers" alone (LSU). |
 | 2026-11-26 | **End dates and timing on cards** (owner asked how long deals last). See §8b. |
 
 ---
@@ -43,7 +43,7 @@ Nothing generated is committed (`site/` is gitignored). Pages source is "GitHub 
 
 ```
 feeds.py (RSS: Slickdeals ×~90 searches, DealNews, Hip2Save, editors…) ─┐
-shopify.py (205 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
+shopify.py (214 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
                                                                         │     pricing, codes)
 history.load (previous history.json from the live site)               ─┘          │
                                                     history.apply (NEW, price drop, fake-sale) 

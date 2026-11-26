@@ -154,6 +154,10 @@ SHOPIFY_STORES = {
     "Gymreapers": "gymreapers.com", "Varley": "varley.com", "ASTR the Label": "astrthelabel.com",
     "Favorite Daughter": "favoritedaughter.com", "Alice + Olivia": "aliceandolivia.com",
     "Good American": "goodamerican.com", "Brixton": "brixton.com",
+    # team gear and Detroit stores, added 2026-11-26 after a CI probe (owner: "detroit sports gear deals")
+    "47 Brand": "47brand.com", "Charlie Hustle": "charliehustle.com", "Ebbets Field Flannels": "ebbets.com",
+    "Sportiqe": "sportiqe.com", "Detroit City FC": "shop.detcityfc.com", "Ink Detroit": "inkdetroit.com",
+    "New Era": "neweracap.com", "Homage": "homage.com", "Junk Food": "junkfoodclothing.com",
 }
 
 # Store names that are ordinary words ("price cuts", "bed frame", "Mother's Day", "primary care").
@@ -166,6 +170,7 @@ AMBIGUOUS_NAMES = {
     # 2026-11-25 stores: "Dr Pepper", "Rabbit R1", "Macy's Parade", "a good American", "state and liberty"
     "pepper", "rabbit", "parade", "corridor", "sanctuary", "matisse", "brixton", "free fly", "path projects",
     "good american", "state and liberty", "petite studio", "magnetic me", "fair harbor", "selkie", "nobis",
+    "homage", "new era", "junk food",  # "an homage to", "a new era of", "junk food snacks"
 }
 
 # Brand names that are also ordinary words, still matched in headlines but only counted when the title starts with
@@ -221,7 +226,8 @@ BRAND_AUDIENCE = {
         "outdoor research",
         "alphalete", "free fly", "swiftwick", "obermeyer", "joe's jeans", "hudson jeans", "rabbit", "nobis",
         "fair harbor", "flylow", "ciele", "wolf & shepherd", "clae", "schott nyc", "parade", "ridge merino", "nobull",
-        "voormi", "brixton", "southern tide",
+        "voormi", "brixton", "southern tide", "47 brand", "charlie hustle", "ebbets field flannels", "sportiqe",
+        "detroit city fc", "ink detroit", "new era", "homage", "junk food",
     ],
 }
 BRAND_AUDIENCE["Kids"] = ["primary", "kyte baby", "little sleepies", "tea collection", "carter's",

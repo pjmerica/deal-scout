@@ -14,7 +14,19 @@ WATCH = [
     # not light/network switches or "Switch 2-Pack"
     ("Nintendo Switch 2", r"(?<!light )(?<!wall )(?<!network )(?<!ethernet )(?<!smart )(?<!toggle )(?<!dimmer )"
                           r"\bswitch\s?2\b(?![-\s]?(?:pack|pk|gang|port|way|count|ct|piece|pcs?)\b)"),
+    # Detroit teams (added 2026-11-26): "Detroit Lions", or the team plus its league. Not "Lions"/"Tigers" alone:
+    # LSU / Auburn / Clemson Tigers, Penn State Nittany Lions; not "Detroit" alone: Detroit Axle, Detroit Diesel.
+    ("Detroit gear", r"\bdetroit\s+(?:lions|tigers|pistons|red\s?wings|city fc)\b|\bdetroit vs\.? everybody\b|"
+                       r"\b(?:lions|tigers|pistons|red\s?wings)\b(?=.*\b(?:nfl|mlb|nba|nhl)\b)|"
+                       r"\b(?:nfl|mlb|nba|nhl)\b(?=.*\b(?:lions|tigers|pistons|red\s?wings)\b)"),
+    # store-wide sales at the team-gear stores (they cover the Detroit teams; deal sites rarely post team-specific gear)
+    ("Team gear sales", r"\bfanatics\b(?!.*gift ?card)|\bmitchell\s*(?:&|and)\s*ness\b|\bnfl shop\b|\bmlb shop\b|"
+                        r"\bnhl shop\b|\bnba store\b|\b'?47 brand\b"),
 ]
+# Brand stores whose every item is "Detroit gear", and team-gear stores whose sitewide promo is a "Team gear sale"
+# (their Detroit items are caught by the regex above; shopify.scan_store keeps up to 30 watched items per store)
+WATCH_STORES = {"Detroit City FC": "Detroit gear", "Ink Detroit": "Detroit gear"}
+WATCH_PROMO_STORES = {"47 Brand", "New Era", "Homage", "Charlie Hustle", "Ebbets Field Flannels", "Sportiqe", "Junk Food"}
 
 # ---------------------------------------------------------------------------
 # Scoring knobs
@@ -76,8 +88,9 @@ SLICKDEALS_GENERAL_QUERIES = [
     "tv", "laptop", "airpods", "ipad", "headphones", "nintendo switch", "ps5", "xbox", "ssd", "monitor",
     # Switch 2 and the big Nintendo games (added 2026-11-26: "nintendo switch" alone missed the Switch 2 bundles)
     "switch 2", "nintendo switch 2", "mario kart", "zelda", "pokemon", "joy-con",
-    # WATCH items (see top of file)
-    "air force 1", "af1",
+    # WATCH items (see top of file). Not "lids" (storage-container lids) or "new era" (nothing relevant).
+    "air force 1", "af1", "detroit lions", "detroit tigers", "detroit pistons", "detroit red wings", "fanatics",
+    "mitchell & ness",
     "apple watch", "kindle", "air fryer", "vacuum", "dyson", "kitchenaid", "lego", "yeti", "power tools",
     "mattress", "coffee maker", "espresso", "luggage", "smart home",
 ]
@@ -191,6 +204,7 @@ CLOTHING_TERMS = {
              "pullover", "quarter zip", "1/4 zip", "half zip", "crewneck", "t-shirt", "t-shirts", "tee",
              "tees", "polo", "polos", "henley", "flannel", "button down", "button-down", "oxford shirt",
              "dress shirt", "shirt", "shirts", "blouse", "tank top", "turtleneck", "fleece",
+             "jerseys",  # plural only: "jersey" is also New Jersey and jersey-knit sheets (the fallback reads it)
              "longsleeve", "overshirt", "overshirts", "tunic", "tunics", "camisole", "camisoles", "bodysuit",
              "bodysuits"],
     "Bottoms": ["jeans", "pants", "chinos", "trousers", "joggers", "sweatpants", "leggings",
@@ -290,7 +304,7 @@ CLOTHING_BRANDS = [
     "torrid", "lane bryant", "eloquii", "universal standard", "hoka one one", "on cloud", "ugg australia",
     # added 2026-11-25 with their Slickdeals searches
     "orvis", "talbots", "teva", "hey dude", "oshkosh", "oshkosh b'gosh", "the children's place", "amazon essentials",
-    "goodthreads", "helly hansen", "chaco",
+    "goodthreads", "helly hansen", "chaco", "fanatics", "mitchell & ness", "mitchell and ness",
 ]
 # Ambiguous brands: matched case-sensitively, with exclusions
 CLOTHING_BRANDS_CASE_SENSITIVE = ["Gap", "GAP", "Coach", "Express", "Lands' End", "Gymshark", "Loft", "LOFT",
@@ -373,7 +387,8 @@ WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "s
                   "saks", "saks off 5th", "neiman marcus", "bloomingdale's", "bloomingdales", "rei",
                   "target clothing", "eddie bauer", "ll bean", "l.l.bean", "l.l. bean", "tommy hilfiger",
                   "calvin klein", "under armour", "columbia", "carhartt", "patagonia", "the north face", "north face",
-                  "orvis", "duluth trading"]  # both also sell fishing gear, tools and home goods
+                  "orvis", "duluth trading",  # both also sell fishing gear, tools and home goods
+                  "fanatics"]  # also collectibles, signed balls, drinkware
 
 # ---------------------------------------------------------------------------
 # Event / sale terms

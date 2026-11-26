@@ -12,6 +12,8 @@
 #     (no answer), BYLT, Rhoback, Florence, Good Man Brand, Outlier, Rag & Bone, Topo Athletic, Hello Molly, La Ligne,
 #     Johnny Was, Dudley Stephens, Baggu, Blackbough, Tracksmith, Injinji (404); Pistol Lake, Chinese Laundry, Kule
 #     (empty). Open but left out on purpose (bags first): Herschel, Dagne Dover, Mission Workshop.
+#   2026-11-26 team gear / Detroit (probe run 45890607640): 9 added ('47, Charlie Hustle, Ebbets, Sportiqe, Detroit
+#     City FC, Ink Detroit, New Era, Homage, Junk Food). Closed: Mitchell & Ness (403), Detroit Vs Everybody (404).
 #
 # Open on 2026-11-25 but with nothing (or almost nothing) on sale. Re-probe these later in the season:
 Holderness & Bourne | holdernessandbourne.com | Men's
@@ -33,3 +35,6 @@ Greyson | greysonclothiers.com | Men's
 Rains | rains.com | Everyone
 Minus33 | minus33.com | Everyone
 3sixteen | 3sixteen.com | Men's
+Pure Detroit | puredetroit.com | Everyone
+Original Retro Brand | originalretrobrand.com | Everyone
+Starter | starter.com | Everyone

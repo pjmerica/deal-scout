@@ -466,6 +466,25 @@ def test_watching_list():
     for t in ["Leviton Decora Light Switch 2-Pack $9", "TP-Link 8-Port Gigabit Network Switch 2 Pack $30",
               "Super Mario Galaxy (Nintendo Switch) $30", "Air Force One (4K Blu-ray) $10"]:
         assert mk(t).watch == [], t
+    # Detroit teams and team-gear store sales (2026-11-26)
+    assert mk("Nike Men's Detroit Lions Amon-Ra St. Brown Game Jersey $90").watch == ["Detroit gear"]
+    assert mk("New Era Detroit Tigers 59FIFTY Fitted Hat $25").watch == ["Detroit gear"]
+    assert mk("Red Wings NHL Reverse Retro Hoodie $45").watch == ["Detroit gear"]
+    for t in ["LSU Tigers Football Hoodie $30", "Penn State Nittany Lions Tee $15", "Detroit Axle Front Brake Kit $60",
+              "Red Wing Heritage Iron Ranger Boots $250", "Engine Pistons Set for Honda $80"]:
+        assert "Detroit gear" not in mk(t).watch, t
+    fan = mk("Fanatics Black Friday NFL Jerseys Sale: Up to Extra 60% off + shipping varies")
+    assert fan.watch == ["Team gear sales"] and fan.is_clothing
+    assert mk("Fanatics - $100 Gift Card [Digital] at BestBuy $85").watch == []
+    # brand stores: Detroit items at team-gear stores, every item at Detroit stores, team-gear stores' promos
+    assert store_item("Detroit Tigers Clean Up", "47 Brand").watch == ["Detroit gear"]
+    assert store_item("Chicago Cubs Clean Up", "47 Brand").watch == []
+    assert store_item("DCFC Home Jersey", "Detroit City FC").watch == ["Detroit gear"]
+    promo = Item(title="47 Brand sitewide: 30% off everything", link="x/47", source="Brand store: 47 Brand",
+                 kind="deal", store="47 Brand", flags=["sitewide_promo"])
+    promo.brands = ["47 Brand"]
+    scoring.classify(promo)
+    assert promo.watch == ["Team gear sales"]
     # watched deals always make the page, even a low-scoring non-clothing one
     def item(n, source, store, score, watch=()):
         it = Item(title=f"{store} {n}", link=f"x/{store}/{n}", source=source, kind="deal", store=store)

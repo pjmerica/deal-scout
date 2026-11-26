@@ -19,6 +19,7 @@ from datetime import timezone
 from bs4 import BeautifulSoup
 
 import brands as BR
+import config as C
 import codes as CODES
 import ends as ENDS
 import gender as G
@@ -26,6 +27,8 @@ from feeds import fetch, session
 from models import NOW, Item
 
 
+
+WATCH_RES = [re.compile(rx, re.I) for _, rx in C.WATCH]
 
 SKIP_TITLE = re.compile(r"gift ?card|e-?gift|shipping protection|\broute\b|warranty|insurance|donation|"
                         r"mystery|sample|swatch|test product|do not purchase", re.I)
@@ -348,8 +351,10 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
     audience = {k: sum(1 for i in items if k in i.gender) for k in ("Men's", "Women's", "Kids", "Everyone")}
     # Keep a balanced slice so a Men's or Women's view still has this brand's best items.
     keep, seen = [], set()
+    watched = [i for i in items if any(rx.search(i.title.split(": ", 1)[-1]) for rx in WATCH_RES)]  # Detroit caps at '47
     for pool, n in ((items, 8), ([i for i in items if "Men's" in i.gender], 6),
-                    ([i for i in items if "Women's" in i.gender], 6), ([i for i in items if "Kids" in i.gender], 2)):
+                    ([i for i in items if "Women's" in i.gender], 6), ([i for i in items if "Kids" in i.gender], 2),
+                    (watched, 30)):
         for i in pool[:n]:
             if i.history_key not in seen:
                 seen.add(i.history_key)
