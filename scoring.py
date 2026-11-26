@@ -158,6 +158,8 @@ def classify(it: Item) -> None:
     it.clothing_tags = tags
     it.watch = [label for label, rx in WATCH_RES if rx.search(product)]
     if brand_store:
+        # "Team gear sales" means a store-wide sale: a '47-made crew sold at Detroit City FC is not one
+        it.watch = [w for w in it.watch if w != "Team gear sales"]
         extra = C.WATCH_STORES.get(it.store) or ("Team gear sales" if it.store in C.WATCH_PROMO_STORES
                                                  and "sitewide_promo" in it.flags else None)
         if extra and extra not in it.watch:

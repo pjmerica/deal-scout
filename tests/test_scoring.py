@@ -480,6 +480,7 @@ def test_watching_list():
     assert store_item("Detroit Tigers Clean Up", "47 Brand").watch == ["Detroit gear"]
     assert store_item("Chicago Cubs Clean Up", "47 Brand").watch == []
     assert store_item("DCFC Home Jersey", "Detroit City FC").watch == ["Detroit gear"]
+    assert store_item("47 Brand Oversized DETROIT Crew- Maroon", "Detroit City FC").watch == ["Detroit gear"]
     promo = Item(title="47 Brand sitewide: 30% off everything", link="x/47", source="Brand store: 47 Brand",
                  kind="deal", store="47 Brand", flags=["sitewide_promo"])
     promo.brands = ["47 Brand"]
