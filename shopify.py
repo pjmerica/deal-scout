@@ -37,12 +37,26 @@ DEPT_WORDS = re.compile(r"accessor|bottom|top|shoe|bag|sock|hat|kid|boy|girl|bab
                         r"best-?seller|under-\d|\d+-off")
 
 
-def _handle_score(h: str, year: int) -> float:
+# Collections named for one season or holiday, with the months they're current. Off season they're leftovers:
+# Oliver Cabell's scan picked "july-sale" in November over its "30-off-mens-bfcm" (2026-11-25).
+SEASON_HANDLES = [
+    (re.compile(r"new-?year|january"), {12, 1}), (re.compile(r"valentine"), {1, 2}),
+    (re.compile(r"presidents?-?day"), {2}), (re.compile(r"spring|easter"), {2, 3, 4, 5}),
+    (re.compile(r"mothers?-?day"), {4, 5}), (re.compile(r"memorial"), {5, 6}),
+    (re.compile(r"fathers?-?day|june"), {5, 6}), (re.compile(r"july|4th|fourth"), {6, 7}),
+    (re.compile(r"summer"), {5, 6, 7, 8}), (re.compile(r"back-?to-?school|august"), {7, 8, 9}),
+    (re.compile(r"labor-?day"), {8, 9}), (re.compile(r"prime-?day"), {7, 10}),
+    (re.compile(r"halloween|october"), {9, 10}),
+]
+
+
+def _handle_score(h: str, year: int, month: int | None = None) -> float:
     if not h or BAD_HANDLE.search(h):
         return -1
+    month = month or NOW.month
     if EXACT_SALE.match(h):
         s = 100
-    elif re.match(r"(?:black-?friday|bfcm|cyber)", h):
+    elif re.search(r"(?:^|-)(?:black-?friday|bfcm|cyber)", h):
         s = 80
     elif re.search(r"(?:^|-)sale(?:$|-)", h):
         s = 60
@@ -53,6 +67,8 @@ def _handle_score(h: str, year: int) -> float:
     years = [int(y) for y in re.findall(r"20\d\d", h)]
     if years and max(years) < year:
         s -= 70  # an old season's collection
+    elif any(rx.search(h) and month not in months for rx, months in SEASON_HANDLES):
+        s -= 70  # this year's, but another season's ("labor-day-sale-2026" in November)
     if DEPT_WORDS.search(h):
         s -= 25
     return s - 0.2 * len(h)

@@ -344,6 +344,15 @@ def test_not_on_sale_collection_rejected():
     assert shopify._handle_score("black-friday-2026", 2026) > shopify._handle_score("bfcm-decor", 2026)
 
 
+def test_off_season_collections_lose_to_black_friday():
+    # Oliver Cabell's scan picked "july-sale" in November over "30-off-mens-bfcm" (2026-11-25)
+    nov = {h: shopify._handle_score(h, 2026, 11) for h in
+           ["30-off-mens-bfcm", "july-sale", "labor-day-sale-2026", "mens-memorial-sale-10-off", "summer-sale"]}
+    assert nov["30-off-mens-bfcm"] > 20
+    assert all(nov[h] < 20 for h in ["july-sale", "labor-day-sale-2026", "mens-memorial-sale-10-off", "summer-sale"]), nov
+    assert shopify._handle_score("summer-sale", 2026, 7) > 20  # in season it's the sale
+
+
 def test_baseline_lookup():
     assert BR.baseline_for(["Patagonia"]) == 10
     assert BR.baseline_for([], "Old Navy") == 50
