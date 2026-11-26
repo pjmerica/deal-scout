@@ -337,6 +337,10 @@ def test_garment_tag_fallback():
     assert mk("Nike Men's Lunar Force 1 Winterized Duckboots (2 Colors) $127.50").clothing_tags == ["Footwear"]
     # "bikini" alone is not clothing in a headline (a bikini trimmer is a razor)
     assert not mk("Panasonic Bikini Trimmer $15").is_clothing
+    assert not mk("100-Piece RoseArt Kodak Premium Puppy Socks Jigsaw Puzzle $2.99").is_clothing
+    assert store_item("PUZZLE CREAM", "Steve Madden").is_clothing  # a shoe named Puzzle
+    assert mk("Cole Haan Men's Go-to Plain Toe Oxford (British Tan) $60").clothing_tags == ["Footwear"]
+    assert store_item("The Jack in Burgundy Oxford", "Taylor Stitch").clothing_tags != ["Footwear"]  # a shirt
 
 
 def test_not_on_sale_collection_rejected():
@@ -354,6 +358,26 @@ def test_off_season_collections_lose_to_black_friday():
     # collections whose names say "not on sale" (Free Fly, Ridge Merino probe, 2026-11-25)
     for h in ["non-markdown-products-with-compare-at-price", "all-products-minus-sale-items"]:
         assert shopify._handle_score(h, 2026, 11) < 0, h
+
+
+def test_page_slots_keep_feed_deals():
+    # 205 brand stores' markdowns outscored everything and pushed feed and non-clothing deals off the page (2026-11-25)
+    def item(n, source, store, score):
+        it = Item(title=f"{store} item {n}", link=f"x/{store}/{n}", source=source, kind="deal", store=store)
+        it.score = score
+        return it
+    stores = [item(n, f"Brand store: S{s}", f"S{s}", 150 - n) for s in range(50) for n in range(20)]  # 1,000 items
+    feed = [item(n, "Slickdeals: tv", "Amazon", 60 - n * 0.01) for n in range(500)]
+    page = scoring.pick_for_page(stores + feed, max_deals=600, feed_slots=300, per_store=4)
+    per = {}
+    for i in page:
+        if i.source.startswith("Brand store"):
+            per[i.store] = per.get(i.store, 0) + 1
+    assert len(page) == 600 and max(per.values()) <= 4
+    assert sum(1 for i in page if not i.source.startswith("Brand store")) == 400  # 300 reserved + 100 left by stores
+    # with few feed deals, the stores get the room
+    page = scoring.pick_for_page(stores + feed[:50], max_deals=600, feed_slots=300, per_store=20)
+    assert len(page) == 600 and sum(1 for i in page if not i.source.startswith("Brand store")) == 50
 
 
 def test_ordinary_words_are_not_brands():

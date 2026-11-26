@@ -151,7 +151,7 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
     arts = [i for i in items if i.kind == "article"]
     # Page weight: low-scoring non-clothing deals are dropped (they never surface), clothing is all kept.
     deals = [i for i in deals if i.is_clothing or i.score >= C.MIN_NONCLOTHING_SCORE]
-    keep = deals[:2400] + arts[:120]
+    keep = scoring.pick_for_page(deals) + arts[:120]
     keep.sort(key=lambda x: -x.score)
 
     DROP = {"boost", "feed_tags", "history_key", "thread_id", "comments", "store_median", "published",

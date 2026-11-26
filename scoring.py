@@ -165,6 +165,23 @@ def classify(it: Item) -> None:
         it.codes = CODES.extract(f"{it.title} {it.summary[:400]}")
 
 
+def pick_for_page(deals: list[Item], max_deals: int = C.MAX_DEALS, feed_slots: int = C.FEED_SLOTS,
+                  per_store: int = C.MAX_ITEMS_PER_STORE) -> list[Item]:
+    """The deals that go on the page: each brand store's best `per_store`, feed deals first for `feed_slots`,
+    then whatever room is left by score (see config.MAX_DEALS)."""
+    deals = sorted(deals, key=lambda x: -x.score)
+    feed = [i for i in deals if not i.source.startswith("Brand store")]
+    per: dict[str, int] = {}
+    stores = []
+    for i in deals:
+        if i.source.startswith("Brand store") and per.get(i.store, 0) < per_store:
+            per[i.store] = per.get(i.store, 0) + 1
+            stores.append(i)
+    take_store = stores[:max_deals - min(len(feed), feed_slots)]
+    take_feed = feed[:max_deals - len(take_store)]
+    return sorted(take_feed + take_store, key=lambda x: -x.score)
+
+
 def fallback_tags(title: str, store: str = "") -> list[str]:
     """Garment type from the ambiguous words in config.CLOTHING_TAG_FALLBACK, for an item already known to be
     clothing. The brand-store prefix is left out so a store's name can't supply the garment."""

@@ -11,6 +11,13 @@ CLOTHING_FLAT_BONUS = 12       # ...plus this flat bonus
 DEAL_HALF_LIFE_DAYS = 5        # deal score halves every N days of age
 MAX_AGE_DAYS = 30              # ignore anything older than this
 MIN_NONCLOTHING_SCORE = 8      # non-clothing deals below this are left off the page (they never surface)
+# Page slots (scoring.pick_for_page). Brand stores supply 2,000+ verified markdowns that outscore nearly every feed
+# deal; unchecked, the 205 stores filled all 2,400 slots and pushed out community deals and almost every non-clothing
+# deal (478 -> 91 on 2026-11-25). Each store keeps its best few, feed deals get first claim on FEED_SLOTS, and room
+# either side leaves unused goes to the other. The Brands tab has its own per-store list (brand_sales[].top).
+MAX_DEALS = 2400
+FEED_SLOTS = 1300
+MAX_ITEMS_PER_STORE = 8
 CARD_SCOUT_URL = "https://pjmerica.github.io/card-scout/"   # companion site (cards, cash back), linked in the footer
 
 # ---------------------------------------------------------------------------
@@ -200,7 +207,8 @@ CLOTHING_TERMS = {
 CLOTHING_TAG_FALLBACK = [
     ("Swimwear", r"\bswim|\bbikinis?\b|\bone[- ]piece\b|\bpareos?\b|\bcover[- ]ups?\b"),
     ("Footwear", r"\bslip[- ]?ons?\b|\blace[- ]?ups?\b|\bmules?\b|\b(?:high|low|mid)[- ]tops?\b|\bmary janes?\b|"
-                 r"\bslingbacks?\b|\bwedges?\b|\bheels?\b|\bpumps?\b"),
+                 r"\bslingbacks?\b|\bwedges?\b|\bheels?\b|\bpumps?\b|\b(?:plain|cap|wing)[- ]?toe\b|\bwingtips?\b|"
+                 r"\bbrogues?\b|\b(?:oxford|derby) (?:dress )?shoes?\b"),  # not "Oxford" alone: an oxford-cloth shirt
     ("Bottoms", r"\bshorts?\b(?![\s-]*sleeve)|\bjeans?\b|\btights?\b|\b5-pocket\b|\bpalazzo\b|\bbootcut\b|"
                 r"\bflares?\b|\bwide[- ]leg\b|\bstraight\b"),
     ("Basics & Underwear", r"\bbriefs?\b|\btrunks?\b|\bcheek(?:y|ini)\b|\bthongs?\b(?! sandal)|\bno[- ]show\b"),
@@ -323,6 +331,8 @@ CLOTHING_FALSE_POSITIVE = [
     r"massag", r"thermal (?:printer|paper|label|camera|imag)", r"label printer", r"\btee off\b", r"\bgolf tees?\b",
     r"\b(?:cable|zip) ties?\b", r"\bno vest\b", r"laser tag", r"\be-?books?\b", r"\bkindle edition\b", r"\bpaperback\b",
     r"\bhardcover\b", r"\baudiobook\b", r"jump starter", r"\bheater\b",
+    # "Puppy Socks Jigsaw Puzzle" (2026-11-25). Not "puzzle" alone: Steve Madden has a shoe called PUZZLE.
+    r"\bjigsaw\b", r"\bboard games?\b",
 ]
 # Department stores / broad retailers: a mention alone is weak evidence of clothing
 WEAK_RETAILERS = ["zappos", "dick's", "dick's sporting goods", "backcountry", "sierra", "nordstrom", "nordstrom rack", "macy's", "macys", "kohl's", "kohls", "jcpenney", "dillard's",
