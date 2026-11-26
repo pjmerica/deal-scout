@@ -16,6 +16,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
+| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2), wherever it ranks |
 | 🏷 Brand sales | 205 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |
@@ -30,7 +31,7 @@ Non-clothing deals are never hidden by it.
 
 | Layer | Sources |
 |---|---|
-| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 210 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, men's, women's, shoes, coats, jeans, hoodies, activewear, kids' clothes and shoes, electronics, computers, home), Dappered, Hip2Save, Krazy Coupon Lady, Ben's Bargains, 9to5Toys, TechBargains, DealCatcher, camelcamelcamel top price drops |
+| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 210 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, men's, women's, shoes, coats, jeans, hoodies, activewear, kids' clothes and shoes, electronics, computers, home), Dappered, Hip2Save, Ben's Bargains, 9to5Toys, TechBargains, DealCatcher, camelcamelcamel top price drops |
 | Brand stores (direct) | **205 clothing brands' Shopify storefronts**: menswear (Todd Snyder, Taylor Stitch, Faherty, Kith, Aimé Leon Dore…), women's (Sarah Flint, LoveShackFancy, Christy Dawn, STAUD, AGOLDE, MOTHER, Faithfull, Montce…), shoes (Allbirds, Thursday Boots, Rothy's, Thousand Fell, TOMS…), kids (Primary, Tea Collection, Little Sleepies) and outdoor (Cotopaxi, Outdoor Research, Stio, Ibex…). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
 | Editors | GQ, Esquire, Men's Health, Gear Patrol, The Strategist, Glamour, Marie Claire, Elle, Vogue, Harper's Bazaar, Who What Wear, Refinery29, PopSugar, Fashionista, Hypebeast, Highsnobiety, Good Housekeeping, CNET, ZDNet, The Verge, Tom's Guide, TechRadar, Lifehacker, RetailMeNot, Offers.com |
 | Optional | Reddit (r/frugalmalefashion, r/frugalfemalefashion, r/sneakerdeals, …). Needs free API keys, see below |
@@ -96,7 +97,14 @@ summaries are dropped, tracking parameters are stripped from links, non-clothing
 
 `history.py` downloads the previous `history.json` from the live site at the start of each run, so nothing extra is
 committed. That gives **NEW** badges (appeared since the previous run; the first run never counts), price-drop and
-lowest-price signals, and new-promo flags.
+lowest-price signals, new-promo flags, and each card's timing line ("On sale since Nov 20 · 6 days" for brand-store
+items, "Posted Nov 24 · 2d ago" for the rest).
+
+## End dates
+
+`ends.py` reads when a deal ends from DealNews's expiry field or the deal's own words ("Ends 12/1", "through November 30",
+"11/22-11/27", "today only", "ends Cyber Monday"). Cards show ⏰ Ends …, the **Ending soonest** sort puts them first, and
+deals already over are dropped. About 1 in 4 deals has one; most deals never say.
 
 ## Code map
 
@@ -109,6 +117,7 @@ lowest-price signals, and new-promo flags.
 | `gender.py` | Who a clothing deal is for |
 | `brands.py` | Brand baselines, premium list, brand audience, Shopify store list |
 | `history.py` | Run-to-run memory and the fake-sale detector |
+| `ends.py` | When a deal ends, from its own words |
 | `codes.py` | Promo-code extraction |
 | `stacks.py` | Card Scout stack hints (Rakuten and card-linked offers per store) |
 | `tools/health.py` | Breakage alerts (the self-closing health issue) |

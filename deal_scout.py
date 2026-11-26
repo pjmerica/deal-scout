@@ -150,12 +150,12 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
     deals = [i for i in items if i.kind == "deal"]
     arts = [i for i in items if i.kind == "article"]
     # Page weight: low-scoring non-clothing deals are dropped (they never surface), clothing is all kept.
-    deals = [i for i in deals if i.is_clothing or i.score >= C.MIN_NONCLOTHING_SCORE]
+    deals = [i for i in deals if i.is_clothing or i.watch or i.score >= C.MIN_NONCLOTHING_SCORE]
     keep = scoring.pick_for_page(deals) + arts[:120]
     keep.sort(key=lambda x: -x.score)
 
     DROP = {"boost", "feed_tags", "history_key", "thread_id", "comments", "store_median", "published",
-            "expires", "stack_pts"}
+            "stack_pts"}
 
     def slim(it: Item) -> dict:
         """Only what the page uses, without empty/default values (the page fills defaults back in)."""
@@ -172,6 +172,9 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
             d.pop("sources", None)
         d["link"] = strip_tracking(it.link)
         d["age_days"] = round(it.age_days, 2)
+        for k in ("expires", "first_seen"):  # UTC to the minute is plenty ("2026-11-30T04:59"; the page adds Z)
+            if d.get(k):
+                d[k] = d[k][:16]
         return d
 
     for s in brand_sales:
@@ -204,12 +207,15 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
         "sources": status,
         "card_scout_url": C.CARD_SCOUT_URL,
         "clothing_multiplier": C.CLOTHING_MULTIPLIER,
+        # items first seen in the first run were already up then: the page says "since at least" that day
+        "tracking_since": (hist.get("runs") or [NOW.isoformat()])[0][:16],
+        "watch_labels": [label for label, _ in C.WATCH],
     }
     (SITE / "deals.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
     cols = ["score", "tier", "kind", "category", "is_clothing", "title", "store", "price", "orig_price", "pct_off",
             "saved", "votes", "is_new", "is_bf", "clothing_tags", "gender", "brands",
-            "reasons", "warnings", "codes", "price_note", "source", "published", "link"]
+            "reasons", "warnings", "codes", "price_note", "source", "published", "first_seen", "expires", "link"]
     with open(SITE / "deals.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(cols)

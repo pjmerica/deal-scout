@@ -18,6 +18,8 @@ the owner's decisions, how things break, and how to check your work.
 | 2026-11-18 | **Men's / Women's / Kids switch.** Unisex items and storewide sales count as "Everyone" and **appear in both Men's and Women's views** (owner confirmed). |
 | 2026-11-18 | **Runs until January 17, 2027, no keepalive.** Enforced by the `guard` job in `scout.yml` (`END_DATE`): scheduled runs do nothing after that date, while manual runs and pushes still work. Separately, GitHub disables scheduled workflows in public repos 60 days after the last commit. To extend, change `END_DATE` (ask the owner first). |
 | 2026-11-18 | From the improvement list, the owner **declined for now**: size filter, watch-list alerts, hourly runs over Thanksgiving weekend, enabling Reddit. They're in the backlog (§12); ask before doing them. |
+| 2026-11-26 | **Watching list: Air Force 1s and Nintendo Switch 2** ("big for deals for me"). `config.WATCH` (label + regex) gives every matching deal a 👀 badge and the **Watching** tab, and keeps it on the page whatever its score. Ranking is unchanged and there are no alerts. Each watched item also has its own Slickdeals searches. |
+| 2026-11-26 | **End dates and timing on cards** (owner asked how long deals last). See §8b. |
 
 ---
 
@@ -26,7 +28,7 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (45 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (49 regression tests, one per fixed bug or feature) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
@@ -73,6 +75,8 @@ history.load (previous history.json from the live site)               ─┘    
   Strategist (its feedburner address; `nymag.com/strategist/rss/` is dead), Marie Claire, Elle and Vogue as roundup feeds.
   Checked and left out: Kicks Deals, Fat Kid Deals, DealsOfAmerica, DealSea, Mashable deals, InStyle, Real Simple, Today
   (no feed or blocked); Put This On, BuzzFeed Shopping, Sneaker News, Primer (not sale posts).
+- **Krazy Coupon Lady** was removed 2026-11-26: every feed address serves the same frozen 1,700-post archive (newest
+  post 8 days old, median 50 days), so nothing reached the page. Re-check `thekrazycouponlady.com/rss` some time.
 - **Hypebeast** answers from a home connection but not from GitHub's runners, so it shows "unavailable" in CI. Not broken.
 - **camelcamelcamel top drops**: kept only at 20%+ drop. Titles read "down X% ($saving) to $price from $orig".
 - **Blocked or useless, don't retry:** Reddit (403/429 without OAuth keys), Dealmoon, Wirecutter, Uniqlo, J.Crew,
@@ -183,6 +187,27 @@ in Card Scout, update `stacks.py` in the same change (Card Scout's HANDOFF §4b 
 - Per item: first/last seen, price, min, first original price, and a price series (changes only, last 30). Kept 30 days.
 - `orig_raised` (−15) and `was_cheaper` (−10, 14-day window) apply to **retailer-verified** prices only. Deal-site
   headline prices are too noisy to judge. Tracking started 2026-11-18, so expect the first flags in late November.
+- `first_seen` goes to the page. Brand-store cards say "On sale since Nov 20 · 6 days" ("since at least" for items
+  already up in the first run, `tracking_since`). Feed cards say when the deal was posted.
+
+## 8b. End dates (`ends.py`, 2026-11-26)
+
+- `scoring.process` sets `it.expires` (UTC ISO) from DealNews's `<expires>` field, or from the deal's words via
+  `ends.find_end`: "Ends 12/1", "through November 30", "11/22-11/27", "11/30 only", "today only", "ends Sunday",
+  "ends Cyber Monday", "ends in 2 days". The end of that day in US Eastern. Deals already over are dropped; within 36 h
+  they get "Ends soon" (+3). The page shows ⏰ on the card and has an "Ending soonest" sort; the Brands tab shows
+  `promo_ends`.
+- Rules learned from the live data: the **title's** date beats the summary's (daily-deal threads list earlier deals with
+  their own dates); a **stated date beats relative words** ("Through November 29th ... free shipping ends today" is a Nov 29
+  sale); "today" and weekdays count from the **posting** day; days and holidays need a firm end word ("wait until Black
+  Friday" is not an end); "last day" alone is not an end ("Last Day for FREE Shipping"); "by"/"before" are shipping cutoffs;
+  months are whole words ("Decor 3-5"); dates outside posted −1 to +75 days are ignored.
+- **DealNews's `<expires>` is "posted + 90 days" when it doesn't know** (223 of ~500 posts on 2026-11-26): ignored, as is
+  anything more than 45 days out. The rest (1-36 days) are real.
+- Coverage on 2026-11-26: about 1 in 4 deals on the page has an end date, mostly DealNews plus ~65 from the text.
+- How long deals stay up, from history.json (Nov 18-26): two-thirds of brand-store markdowns and Slickdeals posts drop
+  out within a day, ~90% within three days. Dropping out of a feed isn't always the sale ending (RSS only shows the newest
+  posts), so it's a lower bound. The "How it works" tab says so.
 
 ---
 

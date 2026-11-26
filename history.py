@@ -93,9 +93,11 @@ def apply(hist: dict, items: list[Item]) -> None:
         if h is None:
             H[k] = {"first": now, "last": now, "price": it.price, "min": it.price, "pct": it.pct_off,
                     "orig": it.orig_price, "series": [[now, it.price]] if it.price else []}
+            it.first_seen = now
             if not first_run:
                 it.is_new = True
             continue
+        it.first_seen = h["first"]
         if _recent(h["first"], hist):
             it.is_new = True
         prev, low = h.get("price"), h.get("min")

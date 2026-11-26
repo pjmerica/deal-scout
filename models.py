@@ -24,7 +24,7 @@ class Item:
     votes: int | None = None
     comments: int | None = None
     staff_pick: bool = False
-    expires: str = ""
+    expires: str = ""              # when the deal ends (ISO, UTC): DealNews's field or read from the text (ends.py)
     feed_tags: list[str] = field(default_factory=list)
     thread_id: str = ""            # Slickdeals thread id (for cross-feed signals)
     # Brand-store (Shopify) extras
@@ -49,5 +49,7 @@ class Item:
     sources: list[str] = field(default_factory=list)
     codes: list[str] = field(default_factory=list)       # promo codes found in the text / banner
     price_note: str = ""                                 # 'Tracked since Nov 18: $59–$79'
+    first_seen: str = ""                                 # when Deal Scout first saw it (history.py), ISO UTC
+    watch: list[str] = field(default_factory=list)       # config.WATCH labels the title matches
     stack: str = ""                                      # key into data['stacks'] (Card Scout hints)
     stack_pts: float = 0.0

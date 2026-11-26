@@ -58,7 +58,7 @@ const harness = `
   };
   const reset = (tab) => Object.assign(state, {tab, q:'', sort:'score', minOff:0, newOnly:false, bestClothing:false,
       promoOnly:false, limit:60, gender:'all', inclUnlabeled:false, source:''});
-  const variants = [{}, {sort:'off'}, {sort:'saved'}, {minOff:50}, {newOnly:true}, {q:'jacket'}, {bestClothing:true},
+  const variants = [{}, {sort:'off'}, {sort:'saved'}, {sort:'ends'}, {minOff:50}, {newOnly:true}, {q:'jacket'}, {bestClothing:true},
                     {promoOnly:true}, {gender:"Men's"}, {gender:"Women's"}, {gender:'Kids'},
                     {gender:"Women's", inclUnlabeled:true}, {gender:"Men's", bestClothing:true}, {gender:"Women's", promoOnly:true}];
   const counts = {};

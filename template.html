@@ -77,6 +77,9 @@ nav.tabs button[aria-selected="true"]{background:var(--text);color:var(--bg);bor
 .b.new{background:var(--violet-soft);color:var(--violet)}
 .b.tier{background:var(--gold-soft);color:var(--gold)}
 .b.warn{background:var(--warn-soft);color:var(--warn)}
+.b.ends{color:var(--text)}
+.b.watch{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.b.ends.soon{background:var(--warn-soft);color:var(--warn);font-weight:600}
 .b.votes{color:var(--text)}
 a.b.stack{background:var(--card-soft);color:var(--card);text-decoration:none}
 a.b.stack:hover{text-decoration:underline}
@@ -177,11 +180,36 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const items=(DATA&&DATA.items)||[];
 const STACKS=(DATA&&DATA.stacks)||{};
 for(const i of items){ // payload omits empty/default fields; restore them once
-  for(const k of ['reasons','warnings','gender','brands','clothing_tags','flags','codes']) if(!i[k]) i[k]=[];
+  for(const k of ['reasons','warnings','gender','brands','clothing_tags','flags','codes','watch']) if(!i[k]) i[k]=[];
   if(!i.sources) i.sources=[i.source];
   if(i.summary==null) i.summary=''; if(i.store==null) i.store=''; if(i.age_days==null) i.age_days=0;
 }
 const fmtAge=d=>d<1/24?'just now':d<1?Math.round(d*24)+'h ago':Math.round(d)+'d ago';
+// Times in the data are UTC to the minute ("2026-11-30T04:59"); end dates are the end of that day in US Eastern.
+const utcMs=s=>s?Date.parse(s.length<=16?s+':00Z':s):NaN;
+const fmtDay=t=>new Date(t).toLocaleDateString([], {month:'short',day:'numeric'});
+const GEN_MS=DATA?Date.parse(DATA.generated):Date.now();
+function endInfo(expires){
+  const t=utcMs(expires); if(isNaN(t)) return null;
+  const now=new Date(), d=new Date(t);
+  if(t<now.getTime()) return {txt:'Ended', soon:true, t};
+  const days=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
+  const txt=days<=0?'Ends today':days===1?'Ends tomorrow':'Ends '+d.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});
+  return {txt, soon:days<=2, t};
+}
+const endT=i=>{const t=utcMs(i.expires); return isNaN(t)?Infinity:t;};
+// How long it's been up: brand-store markdowns since Deal Scout first saw them, feed deals since they were posted.
+function seenInfo(i){
+  if(i.source.startsWith('Brand store')){
+    const t=utcMs(i.first_seen); if(isNaN(t)) return '';
+    const first=DATA.tracking_since&&Math.abs(t-utcMs(DATA.tracking_since))<3600e3;  // already up when tracking began
+    const days=Math.floor((Date.now()-t)/864e5);
+    const same=/^Same price since/.test(i.price_note||'')?' · same price throughout':'';
+    return `On sale since ${first?'at least ':''}${fmtDay(t)}${days>=1?` · ${days} day${days>1?'s':''}`:' · new today'}${same}`;
+  }
+  if(i.age_days>0.04){const t=GEN_MS-i.age_days*864e5; return `Posted ${fmtDay(t)} · ${fmtAge((Date.now()-t)/864e5)}`;}
+  const t=utcMs(i.first_seen); return isNaN(t)?'':`Seen since ${fmtDay(t)}`;
+}
 const money=v=>v==null?'':'$'+(v>=100?Math.round(v).toLocaleString():(+v).toFixed(2).replace(/\.00$/,''));
 
 function header(){
@@ -205,6 +233,7 @@ function header(){
 const TABS=[
   {id:'best',label:'🏆 Best'},
   {id:'clothing',label:'👕 Clothing',filter:i=>i.is_clothing&&i.kind==='deal',note:'Clothing and footwear deals ranked by quality score. Filter by category, gender or discount.',clothingChips:true},
+  {id:'watch',label:'👀 Watching',filter:i=>i.kind==='deal'&&i.watch.length,note:'Every deal found for the things you watch, wherever it ranks. Pick one below, or sort by lowest price.',watchChips:true},
   {id:'brands',label:'🏷 Brand sales'},
   {id:'bf',label:'🖤 Black Friday',filter:i=>i.is_bf,note:'Deals that mention Black Friday, Cyber Monday or doorbusters.',clothingChips:true},
   {id:'all',label:'🔥 All deals',filter:i=>i.kind==='deal',note:'Every deal across categories. Clothing still gets its boost.',catChips:true},
@@ -213,9 +242,10 @@ const TABS=[
 ];
 const CLOTH_CATS=['Outerwear','Tops','Bottoms','Dresses & Sets','Footwear','Activewear','Swimwear','Basics & Underwear','Accessories'];
 const GENDERS=["Men's","Women's","Kids"];
+const WATCH_LABELS=(DATA&&DATA.watch_labels)||[];
 const DEAL_CATS=[...new Set(items.filter(i=>i.kind==='deal').map(i=>i.category))].sort();
 
-let state={tab:'best',q:'',sort:'score',cats:new Set(),dcats:new Set(),source:'',minOff:0,limit:60,
+let state={tab:'best',q:'',sort:'score',cats:new Set(),dcats:new Set(),wcats:new Set(),source:'',minOff:0,limit:60,
   bestClothing:false,promoOnly:false,newOnly:false,gender:'all',inclUnlabeled:false};
 try{const t=localStorage.getItem('ds-tab'); if(t&&TABS.some(x=>x.id===t)) state.tab=t;}catch(e){}
 try{const g=localStorage.getItem('ds-gender'); if(['all',"Men's","Women's",'Kids'].includes(g)) state.gender=g;}catch(e){}
@@ -266,7 +296,7 @@ function renderTabs(){
     return `<button role="tab" data-tab="${t.id}" aria-selected="${state.tab===t.id}">${t.label}${n!==''?` <small style="opacity:.6">${n}</small>`:''}</button>`;
   }).join('');
   document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
-    state.tab=b.dataset.tab; state.limit=60; state.q=''; state.cats.clear(); state.dcats.clear(); state.source='';
+    state.tab=b.dataset.tab; state.limit=60; state.q=''; state.cats.clear(); state.dcats.clear(); state.wcats.clear(); state.source='';
     try{localStorage.setItem('ds-tab',state.tab)}catch(e){}
     renderTabs(); render(); window.scrollTo({top:Math.min(window.scrollY,document.getElementById('tabs').offsetTop)});
   });
@@ -276,6 +306,9 @@ function itemHTML(i){
   const badges=[];
   if(i.tier&&i.kind==='deal') badges.push(`<span class="b tier">${i.tier==='Exceptional'?'★ ':''}${esc(i.tier)}</span>`);
   if(i.is_new) badges.push(`<span class="b new">NEW</span>`);
+  i.watch.forEach(w=>badges.push(`<span class="b watch" title="On your Watching list">👀 ${esc(w)}</span>`));
+  const end=endInfo(i.expires);
+  if(end) badges.push(`<span class="b ends${end.soon?' soon':''}" title="From the deal's own listing">⏰ ${esc(end.txt)}</span>`);
   if(i.pct_off) badges.push(`<span class="b off">${i.pct_off}% off</span>`);
   if(i.variants>1) badges.push(`<span class="b" title="Other colours/sizes of this item are also on sale">+${i.variants-1} more colors/sizes</span>`);
   if(i.votes!=null&&i.votes!==0) badges.push(`<span class="b votes">👍 ${i.votes>0?'+':''}${i.votes}</span>`);
@@ -287,7 +320,9 @@ function itemHTML(i){
   if(st&&st.rakuten) badges.push(`<a class="b stack" href="${esc(st.rurl)}" target="_blank" rel="noopener" title="Rakuten cash back at ${esc(st.name)} (from Card Scout)">💸 Rakuten ${esc(st.rakuten)}${st.elev?' ↑':''}</a>`);
   if(st&&st.offers) st.offers.slice(0,1).forEach(o=>badges.push(`<a class="b stack" href="${esc(o.link)}" target="_blank" rel="noopener" title="${esc(o.title)}">💳 ${esc(o.label)}</a>`));
   const codes=i.codes.length?`<div class="codes">${i.codes.map(codeBtn).join('')}</div>`:'';
-  const note=i.price_note?`<p class="pnote" title="From Deal Scout's own price history for this item">📈 ${esc(i.price_note)}</p>`:'';
+  const seen=seenInfo(i);
+  const note=(i.price_note&&!/^Same price since/.test(i.price_note)?`<p class="pnote" title="From Deal Scout's own price history for this item">📈 ${esc(i.price_note)}</p>`:'')
+    +(seen?`<p class="pnote" title="Brand-store items: since Deal Scout first saw this markdown. Other deals: when the deal was posted.">🕒 ${esc(seen)}</p>`:'');
   const why=i.reasons.filter(r=>!/^\d+% off$/.test(r)&&!/^Stacks with Rakuten| (?:Offer|Deal|offer|deal) at /.test(r)).slice(0,3).map(r=>`<li>${esc(r)}</li>`).join('')+i.warnings.slice(0,2).map(w=>`<li class="w">${esc(w)}</li>`).join('');
   const price=i.price!=null?`<span class="price">${money(i.price)}${i.orig_price&&i.orig_price>i.price?`<s>${money(i.orig_price)}</s>`:''}</span>`:'';
   const img=i.image?`<div class="imgbox"><img loading="lazy" decoding="async" src="${esc(i.image)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`:'';
@@ -297,7 +332,7 @@ function itemHTML(i){
     <div class="badges">${badges.join('')}</div>
     ${why?`<ul class="why">${why}</ul>`:(i.summary?`<p class="summary">${esc(i.summary)}</p>`:'')}
     ${codes}${note}
-    <div class="row">${price}<span class="meta">${esc(i.store&&!i.source.includes(i.store)?i.store+' · ':'')}${src}${i.age_days>0.04?' · '+fmtAge(i.age_days):''}</span><span class="score" title="Deal Scout quality score">★ ${Math.round(i.score)}</span></div>
+    <div class="row">${price}<span class="meta">${esc(i.store&&!i.source.includes(i.store)?i.store+' · ':'')}${src}</span><span class="score" title="Deal Scout quality score">★ ${Math.round(i.score)}</span></div>
   </div></article>`;
 }
 
@@ -351,6 +386,7 @@ function renderList(main,tab){
   list=list.filter(i=>matchQ(i.title+' '+i.summary+' '+i.store+' '+i.brands.join(' ')));
   const preGender=list;
   if(state.cats.size) list=list.filter(i=>i.clothing_tags.some(t=>state.cats.has(t)));
+  if(state.wcats.size) list=list.filter(i=>i.watch.some(w=>state.wcats.has(w)));
   list=list.filter(genderOK);
   if(state.dcats.size) list=list.filter(i=>state.dcats.has(i.category));
   if(state.source) list=list.filter(i=>i.source===state.source||(state.source==='Slickdeals search'&&i.source.startsWith('Slickdeals: '))||(state.source==='Brand stores'&&i.source.startsWith('Brand store: ')));
@@ -358,11 +394,12 @@ function renderList(main,tab){
   if(state.newOnly) list=list.filter(i=>i.is_new);
   const sorters={score:(a,b)=>b.score-a.score,off:(a,b)=>(b.pct_off||0)-(a.pct_off||0)||b.score-a.score,
     votes:(a,b)=>(b.votes??-1e9)-(a.votes??-1e9),new:(a,b)=>a.age_days-b.age_days,
+    ends:(a,b)=>endT(a)-endT(b)||b.score-a.score,
     price:(a,b)=>(a.price??1e9)-(b.price??1e9),saved:(a,b)=>(b.saved||0)-(a.saved||0)};
   list.sort(sorters[state.sort]||sorters.score);
   main.innerHTML=`<div class="controls">
     <input type="search" id="q" placeholder="Search brands, items, stores…" value="${esc(state.q)}">
-    <select id="sort" aria-label="Sort"><option value="score">Best score</option><option value="off">Biggest % off</option><option value="saved">Most $ saved</option><option value="votes">Most votes</option><option value="new">Newest</option><option value="price">Lowest price</option></select>
+    <select id="sort" aria-label="Sort"><option value="score">Best score</option><option value="off">Biggest % off</option><option value="saved">Most $ saved</option><option value="votes">Most votes</option><option value="new">Newest</option><option value="ends">Ending soonest</option><option value="price">Lowest price</option></select>
     <select id="minOff" aria-label="Minimum discount"><option value="0">Any discount</option><option value="30">30%+ off</option><option value="50">50%+ off</option><option value="70">70%+ off</option></select>
     <select id="source" aria-label="Source"><option value="">All sources</option>${sources.map(s=>`<option ${state.source===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
     <div class="seg"><button id="newBtn" aria-pressed="${state.newOnly}">New only</button></div>
@@ -370,7 +407,8 @@ function renderList(main,tab){
   </div>
   ${tab.clothingChips?chipRow(CLOTH_CATS,state.cats,'cats'):''}
   ${tab.catChips?chipRow(DEAL_CATS,state.dcats,'dcats'):''}
-  <p class="section-note">${esc(tab.note)} Showing ${Math.min(list.length,state.limit)} of ${list.length}${state.gender!=='all'?` for ${G_LABEL[state.gender].toLowerCase()}${tab.id==='all'||tab.id==='bf'?' (non-clothing deals always shown)':''}`:''}.${unlabeledNote(preGender)}</p>
+  ${tab.watchChips?chipRow(WATCH_LABELS,state.wcats,'wcats'):''}
+  <p class="section-note">${esc(tab.note)}${state.sort==='ends'?` ${list.filter(i=>endT(i)<Infinity).length} of these state when they end; they come first, the rest follow by score.`:''} Showing ${Math.min(list.length,state.limit)} of ${list.length}${state.gender!=='all'?` for ${G_LABEL[state.gender].toLowerCase()}${tab.id==='all'||tab.id==='bf'?' (non-clothing deals always shown)':''}`:''}.${unlabeledNote(preGender)}</p>
   ${list.length?`<div class="grid">${list.slice(0,state.limit).map(itemHTML).join('')}</div>`:'<div class="empty">Nothing matches these filters.</div>'}
   ${list.length>state.limit?`<button class="more" id="more">Show more (${list.length-state.limit} left)</button>`:''}`;
   document.getElementById('sort').value=state.sort;
@@ -414,7 +452,7 @@ function renderBrands(main){
     <p class="section-note">Read straight from each brand's own store: live sale prices against the original price, in-stock items only, and the promo shown in the homepage banner. Brands are ranked by how strong the sale is compared with how often that brand usually discounts.</p>
     <div class="brands">${list.map(s=>`<div class="brand">
       <h3>${esc(s.store)} ${s.baseline<=15?'<span class="b tier">Rarely discounts</span>':''} ${s.promo_new?'<span class="b new">NEW promo</span>':''}</h3>
-      ${s.promo?`<div class="promo">${esc(s.promo)}${s.promo_code?` ${codeBtn(s.promo_code)}`:''}</div>`:''}
+      ${s.promo?`<div class="promo">${esc(s.promo)}${s.promo_code?` ${codeBtn(s.promo_code)}`:''}${(()=>{const e=endInfo(s.promo_ends); return e?` <span class="b ends${e.soon?' soon':''}">⏰ ${esc(e.txt)}</span>`:'';})()}</div>`:''}
       ${(()=>{const st=s.stack&&STACKS[s.stack]; if(!st) return ''; const parts=[];
         if(st.rakuten) parts.push(`<a class="b stack" href="${esc(st.rurl)}" target="_blank" rel="noopener">💸 Rakuten ${esc(st.rakuten)}${st.elev?' ↑':''}</a>`);
         (st.offers||[]).slice(0,2).forEach(o=>parts.push(`<a class="b stack" href="${esc(o.link)}" target="_blank" rel="noopener" title="${esc(o.title)}">💳 ${esc(o.label)}</a>`));
@@ -438,6 +476,7 @@ function renderHow(main){
     ['Quality & stock','Premium brands that rarely discount score higher. Brand-store prices are read from the retailer itself, and items with few sizes left score lower.'],
     ['Catches','Scores drop for in-store only or YMMV, membership required, refurbished, rebates, sponsored posts and "sold out" or "expired" signals. These are shown in amber on each deal.'],
     ['Freshness','Scores halve every 5 days. There\'s a small bump when a deal ends soon, and expired deals are removed.'],
+    ['End dates and timing','Few deals say when they end. When one does ("Ends 12/1", "through November 30", "11/22-11/27", "today only", "ends Cyber Monday"), or DealNews gives an expiry, the card shows ⏰ and the "Ending soonest" sort puts it first. "Today" and weekdays count from the day the deal was posted, and a date wins over relative words. Each card also says how long it has been up: when it was posted, or for brand-store items, when Deal Scout first saw the markdown. Items already up when tracking began on Nov 18 say "since at least". From that history, about two-thirds of deals drop out of the feeds within a day and over 90% within five days, though dropping out doesn\'t always mean the sale ended.'],
     ['Fake-sale detector','Deal Scout records every brand-store item\'s price and "original" price on each run. If the original price was raised after we first saw it (inflate-then-discount), or the item was cheaper at some point in the last 14 days, the deal gets an amber warning and a lower score. Each item also shows its tracked price range.'],
     ['Promo codes','Codes are pulled from deal text ("use promo code EARLYBF", "w/ code BFCM26") and from brands\' homepage banners. Tap a code to copy it.'],
     ['Stack hints','Rakuten cash back and recent card-linked offers (Amex, Chase, Capital One…) at the same store come from the companion site Card Scout. They show as 💸 and 💳 badges and add a small score bonus.'],

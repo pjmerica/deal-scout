@@ -396,6 +396,87 @@ def test_shopify_titles_lose_markup():
     assert shopify._product_item("Freenote Cloth", "freenotecloth.com", p).title == "Freenote Cloth: Hawaiian Red Tiger"
 
 
+def test_end_dates_from_deal_text():
+    import ends
+    from datetime import datetime
+    posted = datetime(2026, 11, 26, 17, 0, tzinfo=ends.ET)  # Thanksgiving afternoon
+
+    def day(title, summary=""):
+        d = ends.find_end(title, posted, summary)
+        return d.astimezone(ends.ET).strftime("%m/%d") if d else None
+    assert day("L.L.Bean 15% Off Cyber Deal Sale - Ends 12/1 $33.14") == "12/01"
+    assert day("Gap 50% to 60% OFF Sitewide ends November 27 at 11:59 PM Pacific") == "11/27"
+    assert day("Sale", "price is valid through December 20, 2026") == "12/20"
+    assert day("Target Deals of the Day 11/22-11/27") == "11/27"
+    assert day("Stio: Up To 30% Off | Holiday Sale 11/23 - 11/30") == "11/30"
+    assert day("Church's Texas Chicken 8 pc for $4.99 11/30 Only") == "11/30"
+    assert day("Fanatics Daily Deals", "Today only, Fanatics is taking 50% off") == "11/26"
+    assert day("Laura Geller Sale", "Through 4:59 pm ET today, November 26th, head to Laura Geller") == "11/26"
+    assert day("tentree: Cyber Monday Ends Dec 1: Up to 60% off Sitewide") == "12/01"
+    assert day("Voormi: Black Friday / Ends Cyber Monday 50% Off Puffy Jackets") == "11/30"
+    assert day("Nike sale ends Sunday") == "11/29"
+    # a title's date beats the summary's (daily-deal threads list earlier deals and their dates)
+    assert day("Target Deals of the Day 11/22-11/27", "40% Off Sweatshirts for All Expires Nov 22") == "11/27"
+    # a stated date beats relative words ("free shipping ends today" in a Nov 29 sale)
+    assert day("Under Armour Hoodies", "Through November 29th, score hoodies. Free shipping ends today") == "11/29"
+    # not end dates
+    for t in ["You don't need to wait until Black Friday to save 40%", "Up to 60% Off Hoodies + Last Day for FREE Shipping",
+              "Order by 12/20 for Christmas delivery", "FS Live 11/26 1AM CT: Bissell vacuum", "Decor 3-5 piece set $20",
+              "Nike 1/4 Zip Pullover $25", "Sizes 8-10 boys jeans", "Use by 1/31 for 20% off"]:
+        assert day(t) is None, t
+
+
+def test_ended_deals_are_removed_and_ends_kept():
+    from datetime import timedelta
+    from models import NOW
+    old = Item(title="Today Only Ann Taylor 50% Off Everything", link="x/ann", source="Slickdeals: ann taylor",
+               kind="deal", published=(NOW - timedelta(days=3)).isoformat(), age_days=3)
+    live = Item(title="Women's Puffer Jacket $40 - ends in 2 days", link="x/puffer", source="Slickdeals: puffer",
+                kind="deal", published=NOW.isoformat())
+    dn = Item(title="Columbia Fleece Jacket $25", link="x/dn", source="DealNews Coats", kind="deal",
+              published=NOW.isoformat(), expires=(NOW + timedelta(hours=20)).strftime("%a, %d %b %Y %H:%M:%S +0000"))
+    filler = Item(title="Rubbermaid 44-Piece Food Storage Set $20", link="x/rb", source="DealNews", kind="deal",
+                  published=NOW.isoformat(), expires=(NOW + timedelta(days=90)).isoformat())  # DealNews's default
+    kept = scoring.process([old, live, dn, filler])
+    assert old not in kept and live in kept and dn in kept
+    assert filler in kept and filler.expires == ""
+    assert live.expires and dn.expires.endswith("+00:00")  # stored as UTC ISO for the page
+    scoring.score_all(kept)
+    assert "ending" in dn.flags  # ends within 36 hours
+
+
+def test_first_seen_from_history():
+    import history
+    hist = {"items": {}, "promos": {}, "runs": ["2026-11-18T17:30:00+00:00"]}
+    a = Item(title="Jacket", link="x/a", source="Brand store: Filson", kind="deal", history_key="filson.com:a")
+    history.apply(hist, [a])
+    assert a.first_seen and hist["items"]["filson.com:a"]["first"] == a.first_seen
+    hist["items"]["filson.com:a"]["first"] = "2026-11-20T05:00:00+00:00"
+    b = Item(title="Jacket", link="x/a", source="Brand store: Filson", kind="deal", history_key="filson.com:a")
+    history.apply(hist, [b])
+    assert b.first_seen == "2026-11-20T05:00:00+00:00"
+
+
+def test_watching_list():
+    # owner's picks (config.WATCH, 2026-11-26): Air Force 1s and Nintendo Switch 2
+    assert mk("Nike Men's Air Force 1 '07 Shoes (White) $75 + Free Shipping").watch == ["Air Force 1"]
+    assert mk("Nike AF1 Low Women's Sneakers $68").watch == ["Air Force 1"]
+    assert mk("Mario Kart World (Nintendo Switch 2) $60").watch == ["Nintendo Switch 2"]
+    assert mk("Costco Members: 256GB Nintendo Switch 2 Console + Mario Kart World Bundle $400").watch == ["Nintendo Switch 2"]
+    for t in ["Leviton Decora Light Switch 2-Pack $9", "TP-Link 8-Port Gigabit Network Switch 2 Pack $30",
+              "Super Mario Galaxy (Nintendo Switch) $30", "Air Force One (4K Blu-ray) $10"]:
+        assert mk(t).watch == [], t
+    # watched deals always make the page, even a low-scoring non-clothing one
+    def item(n, source, store, score, watch=()):
+        it = Item(title=f"{store} {n}", link=f"x/{store}/{n}", source=source, kind="deal", store=store)
+        it.score, it.watch = score, list(watch)
+        return it
+    deals = [item(n, "Slickdeals: tv", "Amazon", 100 - n * 0.01) for n in range(500)]
+    low = item(0, "Slickdeals: switch 2", "Walmart", 3, ["Nintendo Switch 2"])
+    page = scoring.pick_for_page(deals + [low], max_deals=100, feed_slots=60, per_store=4)
+    assert low in page and len(page) == 100
+
+
 def test_page_slots_keep_feed_deals():
     # 205 brand stores' markdowns outscored everything and pushed feed and non-clothing deals off the page (2026-11-25)
     def item(n, source, store, score):

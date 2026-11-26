@@ -4,6 +4,19 @@ Edit this file to add/remove feeds, brands, or tune the clothing bias.
 """
 
 # ---------------------------------------------------------------------------
+# Watching (owner's pick, 2026-11-26): every deal whose title matches gets the "👀 Watching" tab and a badge, and
+# is always kept on the page (exempt from the page-slot and minimum-score cuts). Ranking is unchanged. To watch
+# something else, add (label, regex) here and a matching Slickdeals search below. Not alerts: the owner declined
+# watch-list alerts on 2026-11-18.
+# ---------------------------------------------------------------------------
+WATCH = [
+    ("Air Force 1", r"\bair\s?force\s?1s?\b|\baf-?1s?\b"),  # not "Air Force One" (the movie, in deal posts)
+    # not light/network switches or "Switch 2-Pack"
+    ("Nintendo Switch 2", r"(?<!light )(?<!wall )(?<!network )(?<!ethernet )(?<!smart )(?<!toggle )(?<!dimmer )"
+                          r"\bswitch\s?2\b(?![-\s]?(?:pack|pk|gang|port|way|count|ct|piece|pcs?)\b)"),
+]
+
+# ---------------------------------------------------------------------------
 # Scoring knobs
 # ---------------------------------------------------------------------------
 CLOTHING_MULTIPLIER = 1.6      # clothing deals get their score multiplied by this
@@ -61,6 +74,10 @@ SLICKDEALS_GENERAL_QUERIES = [
     "gift card deal",
     # broad "best deal period" coverage outside clothing
     "tv", "laptop", "airpods", "ipad", "headphones", "nintendo switch", "ps5", "xbox", "ssd", "monitor",
+    # Switch 2 and the big Nintendo games (added 2026-11-26: "nintendo switch" alone missed the Switch 2 bundles)
+    "switch 2", "nintendo switch 2", "mario kart", "zelda", "pokemon", "joy-con",
+    # WATCH items (see top of file)
+    "air force 1", "af1",
     "apple watch", "kindle", "air fryer", "vacuum", "dyson", "kitchenaid", "lego", "yeti", "power tools",
     "mattress", "coffee maker", "espresso", "luggage", "smart home",
 ]
@@ -104,7 +121,8 @@ FEEDS = [
     {"name": "DealNews Kids' Shoes", "kind": "deal", "boost": 0,
      "url": "https://www.dealnews.com/c559/Clothing-Accessories/Shoes/Kids-Shoes/?rss=1"},
     {"name": "Hip2Save", "kind": "deal", "boost": 0, "url": "https://hip2save.com/feed/"},
-    {"name": "Krazy Coupon Lady", "kind": "deal", "boost": 0, "url": "https://www.thekrazycouponlady.com/rss"},
+    # Krazy Coupon Lady removed 2026-11-26: every feed address serves the same frozen 1,700-post archive (newest
+    # post 8 days old, median 50), so nothing from it reached the page. Re-check thekrazycouponlady.com/rss later.
     {"name": "Ben's Bargains", "kind": "deal", "boost": 0, "url": "https://www.bensbargains.com/rss/"},
     {"name": "9to5Toys", "kind": "deal", "boost": 0, "url": "https://9to5toys.com/feed/"},
     {"name": "DealNews Kids' Clothes", "kind": "deal", "boost": 0,

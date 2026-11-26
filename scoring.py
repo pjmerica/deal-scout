@@ -20,11 +20,12 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import brands as BR
 import config as C
 import codes as CODES
+import ends as ENDS
 import gender as G
 from feeds import SLUG_NAMES, normalize_link, parse_date
 from models import NOW, Item
@@ -37,6 +38,7 @@ def _wordre(terms):
 
 CLOTHING_CAT_RES = {cat: _wordre(terms) for cat, terms in C.CLOTHING_TERMS.items()}
 TAG_FALLBACK_RES = [(cat, re.compile(rx, re.I)) for cat, rx in C.CLOTHING_TAG_FALLBACK]
+WATCH_RES = [(label, re.compile(rx, re.I)) for label, rx in C.WATCH]
 # "dress" in "dress socks / shirt / shoes / pants" is not a dress (Psycho Bunny's dress socks were tagged Dresses)
 DRESS_ITEM_RE = re.compile(r"\bdress(?=\s+(?:shirts?|shoes?|socks?|pants?|boots?|slacks|sneakers?)\b)", re.I)
 CLOTHING_GENERIC_RE = _wordre(C.CLOTHING_GENERIC)
@@ -154,7 +156,8 @@ def classify(it: Item) -> None:
     if it.is_clothing and not tags and not storewide:
         tags = fallback_tags(product, it.store if brand_store else "")
     it.clothing_tags = tags
-    other = {m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
+    it.watch = [label for label, rx in WATCH_RES if rx.search(product)]
+    other ={m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:
         it.brands = sorted({brand_title(b) for b in brands | other})[:6]
     if not it.gender:
@@ -177,8 +180,12 @@ def classify(it: Item) -> None:
 
 def pick_for_page(deals: list[Item], max_deals: int = C.MAX_DEALS, feed_slots: int = C.FEED_SLOTS,
                   per_store: int = C.MAX_ITEMS_PER_STORE) -> list[Item]:
-    """The deals that go on the page: each brand store's best `per_store`, feed deals first for `feed_slots`,
-    then whatever room is left by score (see config.MAX_DEALS)."""
+    """The deals that go on the page: everything on the Watching list (config.WATCH), then each brand store's best
+    `per_store`, feed deals first for `feed_slots`, then whatever room is left by score (see config.MAX_DEALS)."""
+    watched = sorted((i for i in deals if i.watch), key=lambda x: -x.score)[:300]
+    if watched:
+        rest = pick_for_page([i for i in deals if not i.watch], max_deals - len(watched), feed_slots, per_store)
+        return sorted(watched + rest, key=lambda x: -x.score)
     deals = sorted(deals, key=lambda x: -x.score)
     feed = [i for i in deals if not i.source.startswith("Brand store")]
     per: dict[str, int] = {}
@@ -513,10 +520,17 @@ def process(raw: list[Item]) -> list[Item]:
             continue
         if NOT_A_DEAL.search(it.title):
             continue
-        if it.expires:
-            d = parse_date(it.expires)
-            if d and d < NOW:
-                continue
+        # When it ends: DealNews's <expires> field, else the deal's own words ("Ends 12/1", "today only").
+        # DealNews puts "posted + 90 days" on posts with no known end (223 of ~500 on 2026-11-26): not a date.
+        d = parse_date(it.expires) if it.expires else None
+        posted = parse_date(it.published) or NOW
+        if d and (abs((d - posted).total_seconds() / 86400 - 90) < 1 or d > NOW + timedelta(days=45)):
+            d = None
+        if d is None:
+            d = ENDS.find_end(it.title, posted, it.summary)
+        it.expires = d.astimezone(timezone.utc).isoformat() if d else ""
+        if d and d < NOW:
+            continue  # already over
         classify(it)
         if it.kind == "article" and not SALE_RE.search(it.title):
             continue

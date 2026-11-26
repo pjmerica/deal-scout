@@ -14,11 +14,13 @@ import json
 import re
 import statistics
 import time
+from datetime import timezone
 
 from bs4 import BeautifulSoup
 
 import brands as BR
 import codes as CODES
+import ends as ENDS
 import gender as G
 from feeds import fetch, session
 from models import NOW, Item
@@ -213,6 +215,12 @@ def promo_from_html(html: str) -> tuple[str, int, bool, str]:
     return best[0], best[1], best[2], best[4]
 
 
+def _promo_end(promo: str) -> str:
+    """'Cyber Monday Ends Dec 1: Up to 60% off' -> ISO end (UTC) for the Brands tab card, or ''."""
+    d = ENDS.find_end(promo or "", NOW)
+    return d.astimezone(timezone.utc).isoformat()[:16] if d else ""
+
+
 def promo_item(store: str, domain: str, url: str, promo: str, pct: int, up_to: bool, code: str = "") -> Item:
     eff = round(pct * 0.75) if up_to else pct
     it = Item(
@@ -361,6 +369,7 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
         "store": store, "domain": domain, "url": url,
         "scanned": scanned, "on_sale": on_sale_total, "products": len(pcts), "median_pct": round(median), "max_pct": max(pcts) if pcts else 0,
         "promo": promo, "promo_pct": promo_pct, "promo_up_to": up_to, "promo_code": promo_code,
+        "promo_ends": _promo_end(promo),
         "premium": BR.is_premium([store]), "baseline": BR.baseline_for([store]),
         "audience": audience, "brand_audience": BR.audience_for([store]) or "Everyone",
         "top": top[:12],
