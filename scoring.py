@@ -39,6 +39,7 @@ def _wordre(terms):
 CLOTHING_CAT_RES = {cat: _wordre(terms) for cat, terms in C.CLOTHING_TERMS.items()}
 TAG_FALLBACK_RES = [(cat, re.compile(rx, re.I)) for cat, rx in C.CLOTHING_TAG_FALLBACK]
 WATCH_RES = [(label, re.compile(rx, re.I)) for label, rx in C.WATCH]
+WATCH_SUB_RES = {label: [(name, re.compile(rx, re.I)) for name, rx in subs] for label, subs in C.WATCH_SUB.items()}
 # "dress" in "dress socks / shirt / shoes / pants" is not a dress (Psycho Bunny's dress socks were tagged Dresses)
 DRESS_ITEM_RE = re.compile(r"\bdress(?=\s+(?:shirts?|shoes?|socks?|pants?|boots?|slacks|sneakers?)\b)", re.I)
 CLOTHING_GENERIC_RE = _wordre(C.CLOTHING_GENERIC)
@@ -164,6 +165,9 @@ def classify(it: Item) -> None:
                                                  and "sitewide_promo" in it.flags else None)
         if extra and extra not in it.watch:
             it.watch.append(extra)
+    it.watch_tags = [next((name for name, rx in WATCH_SUB_RES[w] if rx.search(it.title)), "")
+                     for w in it.watch if w in WATCH_SUB_RES]
+    it.watch_tags = [t for t in it.watch_tags if t]
     other ={m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
     if not brand_store:
         it.brands = sorted({brand_title(b) for b in brands | other})[:6]

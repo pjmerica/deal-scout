@@ -486,6 +486,16 @@ def test_watching_list():
     promo.brands = ["47 Brand"]
     scoring.classify(promo)
     assert promo.watch == ["Team gear sales"]
+    # second-level filters on the Watching tab (config.WATCH_SUB)
+    assert store_item("DETROIT TIGERS '47 HITCH", "47 Brand").watch_tags == ["Tigers"]
+    assert store_item("DCFC Patch Hat- Black", "Detroit City FC").watch_tags == ["Detroit City FC"]
+    assert store_item("Ink Detroit Retro Cloverleaf T-Shirt", "Ink Detroit").watch_tags == ["Other Detroit"]
+    assert mk("Costco Members: 256GB Nintendo Switch 2 Console + Mario Kart World Bundle $400").watch_tags == ["Consoles & bundles"]
+    assert mk("$92.99: Samsung P9 Express microSDXC 512GB for Nintendo Switch 2 at Amazon").watch_tags == ["Accessories"]
+    assert mk("Donkey Kong Bananza (Nintendo Switch 2 Digital) - $30 @ Walmart").watch_tags == ["Games & other"]
+    assert mk("Fanatics MLB Black Friday Sale: Up to Extra 60% off").watch_tags == ["MLB"]
+    assert promo.watch_tags == ["Store-wide"]
+    assert mk("Nike Men's Air Force 1 '07 Shoes $75").watch_tags == []  # no sub-filters (the gender switch covers it)
     # watched deals always make the page, even a low-scoring non-clothing one
     def item(n, source, store, score, watch=()):
         it = Item(title=f"{store} {n}", link=f"x/{store}/{n}", source=source, kind="deal", store=store)

@@ -56,8 +56,8 @@ const harness = `
     if (bad >= 0) throw new Error('"undefined"/NaN in ' + label + ': ' + clean.slice(Math.max(0, bad - 120), bad + 40));
     return h;
   };
-  const reset = (tab) => Object.assign(state, {tab, q:'', sort:'score', minOff:0, newOnly:false, bestClothing:false,
-      promoOnly:false, limit:60, gender:'all', inclUnlabeled:false, source:''});
+  const reset = (tab) => Object.assign(state, {tab, q:'', sort:'score', minOff:0, maxPrice:0, newOnly:false, bestClothing:false,
+      promoOnly:false, limit:60, gender:'all', inclUnlabeled:false, source:'', wcats:new Set(), wsub:new Set()});
   const variants = [{}, {sort:'off'}, {sort:'saved'}, {sort:'ends'}, {minOff:50}, {newOnly:true}, {q:'jacket'}, {bestClothing:true},
                     {promoOnly:true}, {gender:"Men's"}, {gender:"Women's"}, {gender:'Kids'},
                     {gender:"Women's", inclUnlabeled:true}, {gender:"Men's", bestClothing:true}, {gender:"Women's", promoOnly:true}];
@@ -69,6 +69,17 @@ const harness = `
     if (Object.keys(v).length <= 1 && (v.gender || !Object.keys(v).length) && ['best','clothing','brands'].includes(t.id))
       counts[t.id + ':' + (v.gender || 'all')] = (h.match(/class="(item|brand)[ "]/g) || []).length;
   }
+  // Watching: each watched thing, each of its sub-filters, the price limit, and a 👀 badge jump
+  let watchChecks = 0;
+  for (const w of WATCH_LABELS) {
+    reset('watch'); state.wcats = new Set([w]); render(); check('watch ' + w); watchChecks++;
+    for (const s of (WATCH_SUBS[w] || [])) { state.wsub = new Set([s]); render(); check('watch ' + w + ' / ' + s); watchChecks++; }
+    state.wsub = new Set(['__other__']); state.wcats.delete(w); pruneSubs();
+    if (state.wsub.size) throw new Error('sub-filter left behind after unpicking ' + w);
+  }
+  for (const p of [25, 100]) { reset('watch'); state.maxPrice = p; render(); check('watch max $' + p); reset('all'); state.maxPrice = p; render(); check('all max $' + p); }
+  if (WATCH_LABELS.length) { reset('best'); openWatch(WATCH_LABELS[0]); check('openWatch'); if (state.tab !== 'watch') throw new Error('badge jump did not open Watching'); }
+  out.watchChecks = watchChecks;
   // a gender view may only be empty if the unfiltered view is empty too (e.g. --quick skips brand stores)
   for (const k of Object.keys(counts))
     if (!counts[k] && !k.endsWith('Kids') && counts[k.split(':')[0] + ':all']) throw new Error('empty gender view ' + k);
@@ -84,10 +95,10 @@ const harness = `
     render();  // re-render so this tab's controls are wired, then click each control list once
     const lists = __lastLists.slice(before).map(l => l.slice());
     for (const l of lists) for (const b of l) { click(b, tb.dataset.tab + ' ' + JSON.stringify(b.dataset)); reset(tb.dataset.tab); render(); }
-    for (const id of ['newBtn', 'promoBtn', 'more', 'unlab', 'sort', 'minOff', 'source']) {
+    for (const id of ['newBtn', 'promoBtn', 'more', 'unlab', 'sort', 'minOff', 'maxPrice', 'source']) {
       const e = __el(id);
       if (typeof e.onclick === 'function') click(e, tb.dataset.tab + ' #' + id);
-      if (typeof e.onchange === 'function') { e.value = id === 'sort' ? 'off' : id === 'minOff' ? '50' : ''; e.onchange({target: e}); clicks++; check(tb.dataset.tab + ' change #' + id); }
+      if (typeof e.onchange === 'function') { e.value = id === 'sort' ? 'off' : id === 'minOff' || id === 'maxPrice' ? '50' : ''; e.onchange({target: e}); clicks++; check(tb.dataset.tab + ' change #' + id); }
       if (typeof e.oninput === 'function') { e.oninput({target: {value: 'a', selectionStart: 1}}); clicks++; check(tb.dataset.tab + ' input #' + id); }
       e.onclick = e.onchange = null;
     }

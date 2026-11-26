@@ -16,7 +16,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales), wherever it ranks |
+| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales), wherever it ranks. Filter by item, then by team, console/game/accessory or league; click any 👀 badge to jump here |
 | 🏷 Brand sales | 214 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |

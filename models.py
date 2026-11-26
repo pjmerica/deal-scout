@@ -51,5 +51,6 @@ class Item:
     price_note: str = ""                                 # 'Tracked since Nov 18: $59–$79'
     first_seen: str = ""                                 # when Deal Scout first saw it (history.py), ISO UTC
     watch: list[str] = field(default_factory=list)       # config.WATCH labels the title matches
+    watch_tags: list[str] = field(default_factory=list)  # config.WATCH_SUB names ("Tigers", "Games & other")
     stack: str = ""                                      # key into data['stacks'] (Card Scout hints)
     stack_pts: float = 0.0

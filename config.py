@@ -23,6 +23,19 @@ WATCH = [
     ("Team gear sales", r"\bfanatics\b(?!.*gift ?card)|\bmitchell\s*(?:&|and)\s*ness\b|\bnfl shop\b|\bmlb shop\b|"
                         r"\bnhl shop\b|\bnba store\b|\b'?47 brand\b"),
 ]
+# Second-level filters on the Watching tab: (name, regex on the full title), first match wins; "." catches the rest
+WATCH_SUB = {
+    "Detroit gear": [("Lions", r"\blions\b"), ("Tigers", r"\btigers\b"), ("Pistons", r"\bpistons\b"),
+                     ("Red Wings", r"\bred\s?wings\b"), ("Detroit City FC", r"\bdetroit city fc\b|\bdcfc\b"),
+                     ("Other Detroit", r".")],
+    "Nintendo Switch 2": [("Consoles & bundles", r"\bconsoles?\b|\bbundles?\b|\bsystem\b"),
+                          ("Accessories", r"controller|joy-?cons?|micro\s?sd|memory card|\bcases?\b|charger|\bdock\b|"
+                                          r"\bgrips?\b|screen protector|headset|\bcables?\b|\bbags?\b|carrying|storage|"
+                                          r"\bstand\b|power bank|amiibo|\bhdmi\b"),
+                          ("Games & other", r".")],
+    "Team gear sales": [("NFL", r"\bnfl\b"), ("MLB", r"\bmlb\b"), ("NBA", r"\bnba\b"), ("NHL", r"\bnhl\b"),
+                        ("College", r"\bcollege\b|\bncaa\b"), ("Store-wide", r".")],
+}
 # Brand stores whose every item is "Detroit gear", and team-gear stores whose sitewide promo is a "Team gear sale"
 # (their Detroit items are caught by the regex above; shopify.scan_store keeps up to 30 watched items per store)
 WATCH_STORES = {"Detroit City FC": "Detroit gear", "Ink Detroit": "Detroit gear"}

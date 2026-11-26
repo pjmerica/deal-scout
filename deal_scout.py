@@ -210,6 +210,7 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
         # items first seen in the first run were already up then: the page says "since at least" that day
         "tracking_since": (hist.get("runs") or [NOW.isoformat()])[0][:16],
         "watch_labels": [label for label, _ in C.WATCH],
+        "watch_subs": {label: [name for name, _ in subs] for label, subs in C.WATCH_SUB.items()},
     }
     (SITE / "deals.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
