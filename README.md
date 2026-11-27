@@ -142,6 +142,14 @@ python tests/test_scoring.py && node tests/smoke.js site/index.html
 Shopify rate-limits an IP after many requests (HTTP 429). The scanner keeps requests to about 3–4 per store and retries
 throttled stores slowly. Repeated local runs in a short time will see fewer stores than the cloud run does.
 
+## Refresh schedule
+
+The workflow is meant to run about every 3 hours. GitHub's own scheduler fires it only every 6–14 hours, so since
+2026-11-27 the Windows scheduled task `DealScout-Refresh` on the owner's PC runs `tools/pc_refresh.py` every 30
+minutes and at logon. The script starts the workflow only when the live data is 170+ minutes old and no run is
+already going. It stops after 2027-01-17, and works only while the PC is awake. Log:
+`%LOCALAPPDATA%\DealScout\pc_refresh.log`. Remove it with `Unregister-ScheduledTask -TaskName DealScout-Refresh -Confirm:$false`.
+
 ## Enable Reddit (optional)
 
 Create a free "script" app at https://www.reddit.com/prefs/apps and add `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`

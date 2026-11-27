@@ -11,6 +11,20 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
+### Refresh started from the owner's PC when GitHub's scheduler doesn't
+The owner said yes to the outside trigger: the Windows scheduled task `DealScout-Refresh` (owner's PC) runs
+`tools/pc_refresh.py` every 30 minutes and at logon, until 2027-01-18.
+- **How it works:** the script reads the first 400 bytes of the live `deals.json`. It starts the workflow only when
+  the data is 170+ minutes old and no run is already queued or running, so scrapes stay about 3 hours apart.
+- **How it runs:** it matches the owner's other tasks: pyw.exe with no window, only while the owner is logged in,
+  limited rights.
+- **First real run:** at 12:07 it found the data 370 minutes old (the PC had slept, and GitHub ran once overnight)
+  and started the update.
+- **Sleep problem fixed:** a run started during a brief wake froze when the PC went back to sleep, stayed "Running"
+  and blocked the next start (0x800710E0). The script now quits itself after 2 minutes.
+- **Log:** `%LOCALAPPDATA%\DealScout\pc_refresh.log`. To remove the task: `Unregister-ScheduledTask -TaskName
+  DealScout-Refresh -Confirm:$false`.
+
 ### Note: GitHub's scheduler didn't fire after the 3-hour fix
 After the hourly-tries change (`cf72c56`), GitHub started no scheduled run at all from 02:07 to past 06:00 UTC, while
 its status page showed Actions operational. The guard's skip logic is tested offline but not yet live. Pushes and
