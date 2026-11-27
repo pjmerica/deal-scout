@@ -104,23 +104,30 @@ def apply(hist: dict, items: list[Item]) -> None:
         series = h.get("series") or ([[h["last"], prev]] if prev else [])
         verified = "retailer_verified" in it.flags
 
-        if it.price and prev and it.price < prev - 0.5:
+        # at a brand store, a price under 40% of the last one is a different variant or pack size, not a drop (see
+        # same_variant below); deal-site headlines keep it (a price mistake can be 70% off)
+        floor = 2.5 if verified else float("inf")
+        if it.price and prev and prev - 0.5 > it.price >= prev / floor:
             it.flags.append("price_drop")
             it.reasons.append(f"Price dropped ${prev - it.price:,.0f} since last check")
-        if it.price and low and it.price < low - 0.5 and _ago(h["first"]) >= 24:
+        if it.price and low and low - 0.5 > it.price >= low / floor and _ago(h["first"]) >= 24:
             it.flags.append("tracked_low")
             it.reasons.append("Lowest price Deal Scout has recorded")
 
         # --- fake-sale detector (retailer data only: headline prices from deal sites are too noisy)
         if verified and it.price:
             orig0 = h.get("orig")
-            if orig0 and it.orig_price and it.orig_price > orig0 * 1.05 + 1:
+            # An "original" price that more than doubles or halves is a different variant, not inflation: Swiftwick's
+            # Pursuit Crew read $22 (one pair) one run and $110 (a multi-pack) the next (2026-11-27). Real
+            # inflate-then-discount is 10-50% (Comfrt $108 -> $150, Robert Graham $498 -> $598).
+            same_variant = not (orig0 and it.orig_price and not 0.5 <= it.orig_price / orig0 <= 2)
+            if same_variant and orig0 and it.orig_price and it.orig_price > orig0 * 1.05 + 1:
                 it.flags.append("orig_raised")
                 it.warnings.append(f"Original price raised ${orig0:,.0f} → ${it.orig_price:,.0f} since {_day(h['first'])}")
             window = [(t, p) for t, p in series if p and _ago(t) <= LOOKBACK_DAYS * 24]
-            if window:
+            if window and same_variant:
                 t_min, p_min = min(window, key=lambda x: x[1])
-                if it.price > p_min * 1.03 + 0.5:
+                if it.price > p_min * 1.03 + 0.5 and it.price <= p_min * 2.5:  # 2.5x: a pack-size switch, not a rise
                     it.flags.append("was_cheaper")
                     it.warnings.append(f"Was ${p_min:,.2f} on {_day(t_min)}, cheaper than now".replace(".00", ""))
             prices = [p for _, p in series if p] + [it.price]

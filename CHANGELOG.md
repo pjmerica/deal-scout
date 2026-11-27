@@ -11,7 +11,16 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Brands tab: top picks show the fake-sale warning
+### Fake-sale check: a pack-size switch is not a price change
+- Swiftwick's Pursuit Crew showed "Original price raised $22 → $110". The store lists one pair and multi-packs as
+  variants of one product, and the scan picked a different one between runs.
+- An "original" price that more than doubles or halves now counts as a different variant, not inflation. Real
+  inflate-then-discount cases run 10-50%, such as Comfrt $108 → $150 and Robert Graham $498 → $598, and are still
+  flagged.
+- At brand stores, a price more than 2.5× apart also no longer counts as "was cheaper", "price dropped" or "lowest
+  recorded". Deal-site headlines keep the drop note, since a price mistake can be 70% off.
+
+### `76cf413` Brands tab: top picks show the fake-sale warning
 - Janji's "M's Rover Merino Half-Zip" was $64 on Nov 19 and $76.80 on Nov 26. It was a top pick on Janji's brand card
   with no note, because the picks are built before the price history runs and the warning reached only the deal
   lists. Picks now show "⚠ Was $64 on Nov 19, cheaper than now" (or "Original price raised ...") and sort after the

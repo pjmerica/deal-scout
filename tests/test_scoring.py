@@ -195,6 +195,14 @@ def test_fake_sale_detector():
                 price=72.0, orig_price=180.0, thread_id="1")
     history.apply(h2, [feed])
     assert "orig_raised" not in feed.flags and "was_cheaper" not in feed.flags
+    # a pack-size switch is not inflation: Swiftwick's Pursuit Crew read $22 one run and $110 (multi-pack) the next
+    h3 = {"items": {"swiftwick.com:pursuit": {"first": old, "last": old, "price": 13.2, "min": 13.2, "pct": 40,
+                                              "orig": 22.0, "series": [[old, 13.2]]}}, "promos": {}, "runs": [old]}
+    sw = Item(title="Swiftwick: Pursuit Crew", link="https://swiftwick.com/products/pursuit", source="Brand store: Swiftwick",
+              kind="deal", price=66.0, orig_price=110.0, pct_off=40, history_key="swiftwick.com:pursuit")
+    sw.flags.append("retailer_verified")
+    history.apply(h3, [sw])
+    assert "orig_raised" not in sw.flags and "was_cheaper" not in sw.flags
 
 
 def test_fake_sale_lowers_score():
