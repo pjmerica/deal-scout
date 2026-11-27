@@ -11,7 +11,14 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Store probe counts the sale collection too (tooling)
+### 6 more stores from a Black Friday re-probe
+The 22 stores that were open on Nov 25 with nothing on sale were probed again on Black Friday, this time also
+counting their sale collections. Added, with markdowns in their sale collection: YoungLA (57), M.Gemi (57), Greyson
+(158), 3sixteen (39), Bodega (114). Alex Mill was added with 67 markdowns on its first product page. That makes 229
+stores. Still nothing on sale: Pure Detroit, Original Retro Brand, Starter, Clare V. and others. They're listed in
+`tools/store_candidates.txt` for a late-December re-probe.
+
+### `2cb04eb` Store probe counts the sale collection too (tooling)
 `tools/probe_stores.py` counted markdowns only on page 1 of a store's whole product list, which is mostly new
 arrivals. Stores with a full "bfcm" collection showed 0 on sale. It now also reports markdowns in the sale collection
 the scanner would pick (`in_sale_collection`).

@@ -15,26 +15,25 @@
 #   2026-11-26 team gear / Detroit (probe run 45890607640): 9 added ('47, Charlie Hustle, Ebbets, Sportiqe, Detroit
 #     City FC, Ink Detroit, New Era, Homage, Junk Food). Closed: Mitchell & Ness (403), Detroit Vs Everybody (404).
 #
-# Open on 2026-11-25 but with nothing (or almost nothing) on sale. Re-probe these later in the season:
+# Open on 2026-11-25 but with nothing (or almost nothing) on sale. Re-probed on Black Friday 2026-11-27 (run
+# 45934575896, now also counting the sale collection): YoungLA (57), M.Gemi (57), Greyson (158), 3sixteen (39),
+# Bodega/BDGA (114) and Alex Mill (67, page 1) were added. Still nothing or almost nothing: the rest below
+# (Pure Detroit 0, Minus33 7, Madhappy 3, Rains 2, BBC 2; Clare V. 0 despite a "bfcm" collection).
+# Re-probe these in late December (after-Christmas sales):
 Holderness & Bourne | holdernessandbourne.com | Men's
 Criquet | criquetshirts.com | Men's
 Drake's | drakes.com | Men's
-Alex Mill | alexmill.com | Everyone
 Arvin Goods | arvingoods.com | Everyone
 Bandit Running | banditrunning.com | Everyone
 Billionaire Boys Club | bbcicecream.com | Men's
 Vissla | vissla.com | Men's
-YoungLA | youngla.com | Men's
-M.Gemi | mgemi.com | Women's
 Glerups | glerups.com | Everyone
 Clare V. | clarev.com | Women's
 Oiselle | oiselle.com | Women's
 L*Space | lspace.com | Women's
 Madhappy | madhappy.com | Everyone
-Greyson | greysonclothiers.com | Men's
 Rains | rains.com | Everyone
 Minus33 | minus33.com | Everyone
-3sixteen | 3sixteen.com | Men's
 Pure Detroit | puredetroit.com | Everyone
 Original Retro Brand | originalretrobrand.com | Everyone
 Starter | starter.com | Everyone

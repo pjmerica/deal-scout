@@ -44,7 +44,9 @@ BASELINE = {
     "rails": 25, "mott & bow": 25, "taft": 20, "representclo": 10, "represent": 10, "gymshark": 25,
     # sneaker shops (2026-11-27): Nike / Jordan / New Balance stock, which rarely goes deep
     "dtlr": 25, "shoe palace": 25, "shop nice kicks": 25, "social status": 20, "sneaker politics": 20,
-    "lapstone & hammer": 20, "concepts": 15, "undefeated": 15, "a ma maniere": 15,
+    "lapstone & hammer": 20, "concepts": 15, "undefeated": 15, "a ma maniere": 15, "bodega": 20,
+    # re-probed 2026-11-27
+    "youngla": 30, "m.gemi": 20, "greyson": 20, "3sixteen": 10, "alex mill": 25,
     # rarely discounted
     "patagonia": 10, "arc'teryx": 5, "arcteryx": 5, "canada goose": 0, "moncler": 0, "lululemon": 10,
     "vuori": 10, "on running": 0, "on": 0, "birkenstock": 5, "aime leon dore": 0, "aimé leon dore": 0,
@@ -166,6 +168,9 @@ SHOPIFY_STORES = {
     "DTLR": "dtlr.com", "Social Status": "socialstatuspgh.com", "Sneaker Politics": "sneakerpolitics.com",
     "Concepts": "cncpts.com", "Undefeated": "undefeated.com", "Lapstone & Hammer": "lapstoneandhammer.com",
     "A Ma Maniere": "a-ma-maniere.com", "Shoe Palace": "shoepalace.com", "Shop Nice Kicks": "shopnicekicks.com",
+    # re-probed on Black Friday 2026-11-27 (open on 11-25 with nothing on sale), counting the sale collection too
+    "YoungLA": "youngla.com", "M.Gemi": "mgemi.com", "Greyson": "greysonclothiers.com", "3sixteen": "3sixteen.com",
+    "Bodega": "bdgastore.com", "Alex Mill": "alexmill.com",
 }
 
 # Store names that are ordinary words ("price cuts", "bed frame", "Mother's Day", "primary care").
@@ -180,6 +185,7 @@ AMBIGUOUS_NAMES = {
     "good american", "state and liberty", "petite studio", "magnetic me", "fair harbor", "selkie", "nobis",
     "homage", "new era", "junk food",  # "an homage to", "a new era of", "junk food snacks"
     "concepts", "undefeated", "social status",  # sneaker shops (2026-11-27): "new concepts", "undefeated Lions"
+    "bodega", "greyson",  # "corner bodega", a first name
 }
 
 # Brand names that are also ordinary words, still matched in headlines but only counted when the title starts with
@@ -202,6 +208,7 @@ BRAND_AUDIENCE = {
         "montce", "splits59", "year of ours", "naked cashmere", "white + warren", "jenni kayne", "motel rocks",
         "loveshackfancy", "agolde", "mother", "staud", "solid & striped", "edikted", "re/done", "cuyana",
         "m.m.lafleur", "rebecca minkoff", "freda salvador", "loeffler randall", "sarah flint", "margaux", "taos footwear",
+        "m.gemi",  # added 2026-11-27
         "ulla johnson", "cleobella", "tiger mist", "sanctuary", "spiritual gangster", "frankies bikinis", "anine bing",
         "halfdays", "dolce vita", "larroude", "selkie", "lisa says gah", "daze denim", "pistola", "pepper",
         "mara hoffman", "schutz", "beach riot", "show me your mumu", "nili lotan", "petite studio", "matisse", "doen",
@@ -210,6 +217,7 @@ BRAND_AUDIENCE = {
     ],
     "Men's": [
         "todd snyder", "bonobos", "mack weldon", "untuckit", "saxx", "true classic", "cuts", "chubbies", "johnnie-o",
+        "youngla", "greyson", "3sixteen",  # added 2026-11-27
         "robert graham", "jachs", "iron & resin", "howler brothers", "naked & famous", "beckett simonon",
         "oliver cabell", "taft", "ten thousand", "jos. a. bank", "jos a bank", "men's wearhouse", "taylor stitch",
         "buck mason", "peter millar", "rhone", "mizzen+main", "proper cloth", "suitsupply", "indochino",
@@ -238,7 +246,7 @@ BRAND_AUDIENCE = {
         "voormi", "brixton", "southern tide", "47 brand", "charlie hustle", "ebbets field flannels", "sportiqe",
         "detroit city fc", "ink detroit", "new era", "homage", "junk food",
         "dtlr", "social status", "sneaker politics", "concepts", "undefeated", "lapstone & hammer", "a ma maniere",
-        "shoe palace", "shop nice kicks",
+        "shoe palace", "shop nice kicks", "bodega", "alex mill",
     ],
 }
 BRAND_AUDIENCE["Kids"] = ["primary", "kyte baby", "little sleepies", "tea collection", "carter's",

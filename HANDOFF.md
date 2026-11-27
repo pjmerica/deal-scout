@@ -48,7 +48,7 @@ Nothing generated is committed (`site/` is gitignored). Pages source is "GitHub 
 
 ```
 feeds.py (RSS: Slickdeals ×~90 searches, DealNews, Hip2Save, editors…) ─┐
-shopify.py (223 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
+shopify.py (229 brand stores: sale collections, homepage promo)       ─┼─> scoring.process (dedupe, classify, gender,
                                                                         │     pricing, codes)
 history.load (previous history.json from the live site)               ─┘          │
                                                     history.apply (NEW, price drop, fake-sale) 
