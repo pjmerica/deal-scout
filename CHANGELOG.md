@@ -11,7 +11,9 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### 9 sneaker shops read directly, for Air Force 1 coverage
+### `056974c` 9 sneaker shops read directly, for Air Force 1 coverage
+Result on the first run: Air Force 1 deals on the Watching tab went from 6 to 23, and all 9 shops were read (1,821
+items on sale between them).
 - Only 6 Air Force 1 deals were on the Watching tab: Nike, Foot Locker and Finish Line aren't readable.
 - Sneaker shops that carry AF1s and run on Shopify were probed from CI (12 of 15 open). Added, with items on sale at
   the probe: DTLR (11), Social Status (28), Sneaker Politics (35), Concepts (46), Undefeated (44), Lapstone & Hammer
