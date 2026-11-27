@@ -17,7 +17,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales, gym deals), wherever it ranks. Filter by item, then by team, console/game/accessory, league, or for gyms NYC / basketball courts / memberships / home gym gear (gym filters overlap); click any 👀 badge to jump here. Gym offers show 📍 where the NYC locations and basketball courts are |
+| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales, gym deals, home gym gear), wherever it ranks. Filter by item, then by team, console/game/accessory, league, gyms in NYC / with basketball courts (they overlap) / other, or weights / cardio gear; click any 👀 badge to jump here. Gym offers show 📍 where the NYC locations and basketball courts are |
 | 🏷 Brand sales | 229 brands' and shops' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |

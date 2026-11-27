@@ -708,7 +708,7 @@ def test_gym_deals_watch_and_filters():
     scoring.classify(it)
     scoring.score_deal(it)
     assert it.watch == ["Gym deals"]
-    assert set(it.watch_tags) == {"Memberships & classes", "NYC", "Basketball courts"}
+    assert set(it.watch_tags) == {"NYC", "Basketball courts"}
     assert "Membership required" not in it.warnings  # the membership is the deal, not a catch
     assert "Basketball: two courts" in it.where
     scoring.extract_pricing(it)
@@ -717,22 +717,26 @@ def test_gym_deals_watch_and_filters():
     far = gyms.gym_item({"name": "24 Hour Fitness", "urls": [], "nyc": "", "courts": "most clubs"}, "https://x/",
                         "Black Friday BOGO Deal")
     scoring.classify(far)
-    assert set(far.watch_tags) == {"Memberships & classes", "Basketball courts"} and far.where.startswith("No NYC")
-    # deal-site posts: memberships and home-gym gear, overlapping filters
+    assert far.watch_tags == ["Basketball courts"] and far.where.startswith("No NYC")
+    other = gyms.gym_item({"name": "Club Pilates", "urls": [], "nyc": ""}, "https://x/", "Black Friday Special: 30% Off")
+    scoring.classify(other)
+    assert other.watch_tags == ["Other gyms"]  # no NYC location, no courts
+    # deal-site posts: memberships (Gym deals) and equipment (Home gym gear, its own item since 2026-11-27)
     pf = mk("Planet Fitness Black Friday: Join for $0 Down + $15/Month at participating NYC gyms")
-    assert pf.watch == ["Gym deals"] and set(pf.watch_tags) == {"NYC", "Memberships & classes"}
+    assert pf.watch == ["Gym deals"] and pf.watch_tags == ["NYC"]
     assert "Membership required" not in pf.warnings
     assert pf.price is None  # "$0 Down" is not a price
-    assert set(mk("24 Hour Fitness Black Friday Buy 1 Year Get 2nd Year Free").watch_tags) == \
-        {"Basketball courts", "Memberships & classes"}
+    assert mk("24 Hour Fitness Black Friday Buy 1 Year Get 2nd Year Free").watch_tags == ["Basketball courts"]
     db = mk("[Sam's Club] NordicTrack Select-A-Weight Adjustable Dumbbell Set (55 lb Pair) $229.98")
-    assert db.watch == ["Gym deals"] and db.watch_tags == ["Home gym gear"]
-    assert mk("Mikolo M11 Smith Machine Home Gym, 2200 lbs Power Rack $659.99").watch_tags == ["Home gym gear"]
+    assert db.watch == ["Home gym gear"] and db.watch_tags == ["Weights & racks"] and db.category == "Outdoor & Fitness"
+    assert db.price == 229.98  # equipment keeps its price; only membership terms are not prices
+    assert mk("Mikolo M11 Smith Machine Home Gym, 2200 lbs Power Rack $659.99").watch_tags == ["Weights & racks"]
+    assert mk("Merach 350lbs 10% Auto Incline Walking Pad Treadmill $149.99").watch_tags == ["Cardio"]
     for t in ["Nike Men's Air Jordan MVP 92 Shoes (White/Black/Gym Red) $65.23", "SwissGear 36L Travel & Gym Duffle Bag $19",
               "Smart Watch with 24 Hour Fitness Tracking, Heart Rate $22", "Whoop Black Friday: $60 off memberships",
               "Barbell Apparel Athletic Fit Jeans 40% off"]:
-        assert "Gym deals" not in mk(t).watch, t
-    assert mk("Costway Core Fitness Abdominal Trainer Crunch Exercise Bench $52").watch_tags == ["Home gym gear"]  # not Crunch
+        assert not {"Gym deals", "Home gym gear"} & set(mk(t).watch), t
+    assert mk("Costway Core Fitness Abdominal Trainer Crunch Exercise Bench $52").watch == ["Home gym gear"]  # not Crunch
     # other watched things keep one sub-filter each (first match)
     assert mk("Nintendo Switch 2 Console Bundle with Carrying Case $449").watch_tags == ["Consoles & bundles"]
 
@@ -761,7 +765,7 @@ def test_dotted_end_dates():
 def test_gym_equipment_is_not_clothing():
     # "CAP Rubber Coated Hex Dumbbell" was clothing with an Accessories tag ("cap" read as a hat), 2026-11-27
     d = mk("CAP Rubber Coated Hex Dumbbell Singles, 10-120 lbs, $11.29 - $186.99 at Amazon $23.26")
-    assert not d.is_clothing and d.clothing_tags == [] and d.watch == ["Gym deals"]
+    assert not d.is_clothing and d.clothing_tags == [] and d.watch == ["Home gym gear"]
     assert not store_item("Barbell Squat Pad - Black", "Gymreapers").is_clothing
     assert store_item("Oversized Pump Cover Hoodie", "Gymreapers").is_clothing
     assert mk("New Era Detroit Lions 9FIFTY Snapback Cap $25").is_clothing
@@ -868,8 +872,8 @@ def test_more_classification_fixes():
     assert not mk("Today Only: Rare Black Friday Savings on Quince Ceramic Nonstick Cookware + Free Shipping").is_clothing
     w = mk("Lacoste 12.12 Men's Quartz Watch (White TR90 Case, Silicone Strap) $53.43 - Amazon")
     assert not w.is_clothing or w.clothing_tags == ["Accessories"]
-    assert "Gym deals" not in mk("24-Oz Peloton x CamelBak Podium BPA-Free Water Bottle (Black) $10.50").watch
-    assert mk("Peloton Cross Training Tread Treadmill w/ 24\" HD Swivel Touchscreen $2560").watch == ["Gym deals"]
+    assert "Home gym gear" not in mk("24-Oz Peloton x CamelBak Podium BPA-Free Water Bottle (Black) $10.50").watch
+    assert mk("Peloton Cross Training Tread Treadmill w/ 24\" HD Swivel Touchscreen $2560").watch == ["Home gym gear"]
     # Switch 2 sub-filters: accessory kits aren't console bundles; the bare console is a console
     assert mk("[Prime] $12.91* | ivoler 21-in-1 Accessories Bundle Kit for Nintendo Switch 2 w/ Carrying Case").watch_tags \
         == ["Accessories"]

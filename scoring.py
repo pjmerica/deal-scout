@@ -215,7 +215,7 @@ def classify(it: Item) -> None:
             if rx.search(title) or rx.search(ft):
                 it.category = cat
                 break
-        if "Gym deals" in it.watch:
+        if {"Gym deals", "Home gym gear"} & set(it.watch):
             it.category = "Outdoor & Fitness"  # not Beauty & Health for a JCC "Health Club"
     it.is_bf = bool(BF_RE.search(f"{it.title} {it.summary[:200]}"))
     if not it.codes:
@@ -352,7 +352,7 @@ def extract_pricing(it: Item) -> None:
     it.pct_off = min(int(round(eff)), 90) if eff >= 0.5 else None
     if extras and base and not assumed and not price_pct and it.pct_off:
         it.reasons.append(f"Stacked discount ≈ {it.pct_off}% off")
-    if "Memberships & classes" in it.watch_tags and "Home gym gear" not in it.watch_tags:
+    if "Gym deals" in it.watch and "Home gym gear" not in it.watch:
         # "$0 join fee", "$1 down", "save $180": membership terms, not an item's price (the % off badge stays)
         it.price = it.orig_price = None
     if not it.store:

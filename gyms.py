@@ -160,8 +160,8 @@ def gym_item(g: dict, url: str, offer: str) -> Item:
     it.where = where_line(g)
     it.flags.append("gym_offer")
     it.brands = [g["name"]]
-    it.watch_tags = ["Memberships & classes"] + (["NYC"] if g.get("nyc") else []) \
-        + (["Basketball courts"] if g.get("courts") else [])
+    # neither -> scoring.classify adds the catch-all "Other gyms"
+    it.watch_tags = (["NYC"] if g.get("nyc") else []) + (["Basketball courts"] if g.get("courts") else [])
     it.reasons.append("Live offer on the gym's own website")
     return it
 

@@ -11,7 +11,14 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Watching: "New for you"; gym equipment isn't clothing
+### Gym deals are gyms; home-gym equipment is its own Watching item
+The owner asked for gym deals, especially in NYC and with basketball courts. Inside "Gym deals", 73 dumbbells and
+treadmills outnumbered and outranked the 13 actual gym offers.
+- **Gym deals** is now memberships and classes only, with filters NYC / Basketball courts / Other gyms.
+- **Home gym gear** is a separate Watching item, with filters Weights & racks / Cardio / Other gear.
+- Equipment keeps its price. Only membership terms ("$0 join fee") are not prices.
+
+### `317edb4` Watching: "New for you"; gym equipment isn't clothing
 - **"New for you" on the Watching tab.** Watched deals that appeared since you last opened the tab get a "New for
   you" badge, and each item's chip shows the count ("Gym deals 23 · 18 new").
   - The time of your last visit is kept in your browser only (localStorage, `ds-watch-seen`).

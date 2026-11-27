@@ -23,9 +23,12 @@ WATCH = [
     ("Team gear sales", r"\bfanatics\b(?!.*gift ?card)|\bmitchell\s*(?:&|and)\s*ness\b|\bnfl shop\b|\bmlb shop\b|"
                         r"\bnhl shop\b|\bnba store\b|\b'?47 brand\b"),
     # Gyms (added 2026-11-26, owner: "gym deals, especially ones in NYC", "ones with basketball facilities too"):
-    # membership offers from the gyms' own sites (gyms.py, config.GYMS), plus membership and home-gym posts on the deal
-    # sites. Not bare "gym": Nike's "Gym Red" colourway, gym bags and gym shoes.
-    ("Gym deals", r"(?:GYM_MEMBERSHIP)|(?:GYM_GEAR)"),
+    # membership offers from the gyms' own sites (gyms.py, config.GYMS), plus membership posts on the deal sites.
+    # Not bare "gym": Nike's "Gym Red" colourway, gym bags and gym shoes.
+    ("Gym deals", r"GYM_MEMBERSHIP"),
+    # Home-gym equipment, its own item since 2026-11-27: inside "Gym deals" its 73 dumbbells and treadmills outnumbered
+    # and outranked the 13 gym offers the owner asked for
+    ("Home gym gear", r"GYM_GEAR"),
 ]
 # Gym memberships and classes, by phrase or chain name. Not "Gold's Gym" (an equipment brand at Walmart), not
 # "24 Hour Fitness Tracking" / "Lifetime Fitness Tracker" (watches).
@@ -57,13 +60,18 @@ WATCH_SUB = {
                           ("Games & other", r".")],
     "Team gear sales": [("NFL", r"\bnfl\b"), ("MLB", r"\bmlb\b"), ("NBA", r"\bnba\b"), ("NHL", r"\bnhl\b"),
                         ("College", r"\bcollege\b|\bncaa\b"), ("Store-wide", r".")],
-    # Overlapping filters (see WATCH_SUB_MULTI): an NYC gym with courts is under NYC, Basketball courts and Memberships.
+    # Overlapping filters (see WATCH_SUB_MULTI): an NYC gym with courts is under both NYC and Basketball courts.
     # Gym-site offers get their NYC / courts tags from config.GYMS (gyms.py); these regexes cover deal-site posts.
     # Basketball: chains where most clubs have a court (LA Fitness, 24 Hour Fitness Sport clubs, Life Time, the Y, JCCs).
     "Gym deals": [("NYC", r"\bnyc\b|\bnew york\b|\bmanhattan\b|\bbrooklyn\b|\bqueens\b|\bbronx\b|\bstaten island\b|"
                           r"\bharlem\b"),
                   ("Basketball courts", r"basketball|\b(?:24[ -]?hour fitness|la fitness|life ?time fitness|ymca|jcc)\b"),
-                  ("Memberships & classes", GYM_MEMBERSHIP), ("Home gym gear", GYM_GEAR)],
+                  ("Other gyms", r".")],
+    "Home gym gear": [("Weights & racks", r"dumbbell|kettlebell|barbell|weight|plates?\b|\brack|smith machine|bench|"
+                                          r"power (?:tower|cage)|pull[- ]?up|dip station|cable machine|bowflex select"),
+                      ("Cardio", r"treadmill|walking pad|\bbikes?\b|elliptical|rowing|\browers?\b|peloton|nordictrack|"
+                                 r"concept ?2"),
+                      ("Other gear", r".")],
 }
 # Watched things whose second-level filters overlap: every matching filter applies, not just the first
 WATCH_SUB_MULTI = {"Gym deals"}
