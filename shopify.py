@@ -28,7 +28,9 @@ from models import NOW, Item
 
 
 
-WATCH_RES = [re.compile(rx, re.I) for _, rx in C.WATCH]
+# Watched things a store keeps extra items for (up to 30 Detroit caps at '47). Not broad categories: with jackets
+# every store kept 30 more, 666 jacket deals took every guaranteed Watching slot and Detroit gear fell from 84 to 2.
+WATCH_RES = [re.compile(rx, re.I) for label, rx in C.WATCH if label not in C.WATCH_BROAD]
 
 SKIP_TITLE = re.compile(r"gift ?card|e-?gift|shipping protection|\broute\b|warranty|insurance|donation|"
                         r"mystery|sample|swatch|test product|do not purchase", re.I)

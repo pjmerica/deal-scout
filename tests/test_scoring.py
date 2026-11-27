@@ -746,6 +746,26 @@ def test_gym_deals_watch_and_filters():
     assert mk("Nintendo Switch 2 Console Bundle with Carrying Case $449").watch_tags == ["Consoles & bundles"]
 
 
+def test_broad_watch_cannot_crowd_out_others():
+    # 666 jacket deals took every guaranteed slot: Detroit gear fell from 84 to 2, Gym deals vanished (2026-11-27)
+    import config as C
+    def item(n, score, watch):
+        it = Item(title=f"x{n}", link=f"x/{n}", source="Slickdeals: x", kind="deal", store=f"S{n}")
+        it.score, it.watch = score, [watch]
+        return it
+    jackets = [item(n, 200 - n * 0.01, "Jackets & coats") for n in range(700)]
+    gyms = [item(1000 + n, 5, "Gym deals") for n in range(13)]
+    filler = [Item(title=f"f{n}", link=f"f/{n}", source="Slickdeals: tv", kind="deal", store="Amazon") for n in range(3000)]
+    for n, f in enumerate(filler):
+        f.score = 100 - n * 0.001
+    page = scoring.pick_for_page(jackets + gyms + filler, max_deals=2400, feed_slots=1300, per_store=8)
+    assert all(g in page for g in gyms)  # every gym deal kept despite its low score
+    assert sum("Jackets & coats" in i.watch for i in page) >= C.MAX_WATCHED_PER_LABEL
+    # brand stores keep extra items only for narrow watched things (Detroit caps), not for jackets
+    import shopify
+    assert len(shopify.WATCH_RES) == len(C.WATCH) - len(C.WATCH_BROAD)
+
+
 def test_watched_overflow_competes_for_slots():
     # past config.MAX_WATCHED, watched deals compete for ordinary slots instead of vanishing
     import config as C

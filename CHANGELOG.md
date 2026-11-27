@@ -11,7 +11,24 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Jackets & coats highlighted; Card Scout refreshed from the PC too
+### Fix: jackets crowded every other watched item off the page
+The Jackets & coats deploy (`e5ba3ee`) matched 666 deals, not the ~165 estimated from the page. The other watched
+items lost their guaranteed spots: Detroit gear went from 84 to 2, Air Force 1 from 27 to 8, Home gym gear from 79
+to 8, Switch 2 from 57 to 17, and Gym deals from 13 to 0. Two causes:
+- **Brand stores:** each brand store keeps up to 30 extra watched items (meant for Detroit caps at '47), so every
+  store added 30 jackets.
+- **No per-item limit:** the watched deals shared one 600-deal limit, ranked by score, and jackets (clothing) score
+  highest.
+
+Fixed:
+- Brand stores keep no extra items for broad categories (`config.WATCH_BROAD`).
+- Each watched item gets its own guaranteed share: its best `MAX_WATCHED_PER_LABEL` (200) deals, out of 600 in all.
+- A test checks that 700 high-scoring jacket deals can't push out 13 low-scoring gym deals.
+
+Also confirmed live: GitHub fired a scheduled run at 19:59 UTC, and the guard skipped it (data 91 min old, same
+commit). That skip is no longer untested.
+
+### `e5ba3ee` Jackets & coats highlighted; Card Scout refreshed from the PC too
 - **Jackets & coats on the Watching list** (owner: "can you highlight jacket deals?").
   - Every jacket, coat, parka, puffer, anorak, windbreaker, shacket, bomber, blazer or sport coat gets the 👀
     Jackets & coats badge, a chip on the Watching tab and its own link, `#watch/jackets-coats`. That was about 165

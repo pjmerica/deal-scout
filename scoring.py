@@ -227,7 +227,15 @@ def pick_for_page(deals: list[Item], max_deals: int = C.MAX_DEALS, feed_slots: i
                   per_store: int = C.MAX_ITEMS_PER_STORE, watch_first: bool = True) -> list[Item]:
     """The deals that go on the page: the Watching list (config.WATCH, up to MAX_WATCHED), then each brand store's best
     `per_store`, feed deals first for `feed_slots`, then whatever room is left by score (see config.MAX_DEALS)."""
-    watched = sorted((i for i in deals if i.watch), key=lambda x: -x.score)[:C.MAX_WATCHED] if watch_first else []
+    watched = []
+    if watch_first:
+        # each watched thing gets its own share (its best MAX_WATCHED_PER_LABEL), so a broad one can't take every slot:
+        # 666 jacket deals pushed Detroit gear from 84 to 2 and Gym deals off the page (2026-11-27)
+        chosen = {}
+        for label in {w for i in deals for w in i.watch}:
+            for i in sorted((i for i in deals if label in i.watch), key=lambda x: -x.score)[:C.MAX_WATCHED_PER_LABEL]:
+                chosen[id(i)] = i
+        watched = sorted(chosen.values(), key=lambda x: -x.score)[:C.MAX_WATCHED]
     if watched:
         # past the cap, watched deals compete for ordinary slots instead of disappearing
         keep = {id(i) for i in watched}

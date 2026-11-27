@@ -37,6 +37,9 @@ WATCH = [
 ]
 # Watched things that only count on clothing items
 WATCH_CLOTHING_ONLY = {"Jackets & coats"}
+# Broad categories: brand stores keep no extra items for them (shopify.WATCH_RES); their deals come in through the
+# stores' ordinary picks and the deal sites
+WATCH_BROAD = {"Jackets & coats"}
 # Gym memberships and classes, by phrase or chain name. Not "Gold's Gym" (an equipment brand at Walmart), not
 # "24 Hour Fitness Tracking" / "Lifetime Fitness Tracker" (watches).
 GYM_MEMBERSHIP = (r"\bgym (?:memberships?|pass(?:es)?|day pass(?:es)?)\b|\bfitness (?:memberships?|clubs?|studios?)\b|"
@@ -95,7 +98,8 @@ WATCH_SUB_MULTI = {"Gym deals"}
 # Sources whose every item is on the Watching list (source name prefix -> label)
 WATCH_SOURCES = {"Gym site:": "Gym deals"}
 # Cap on watched deals kept regardless of rank; past it they compete for ordinary page slots
-MAX_WATCHED = 600  # 400 until 2026-11-27; Jackets & coats added ~170 to the ~270 watched deals
+MAX_WATCHED = 600  # 400 until 2026-11-27, when Jackets & coats was added
+MAX_WATCHED_PER_LABEL = 200  # each watched thing's guaranteed share, so one can't crowd out the others
 # Names that open a sale headline, for deals with no store (scoring.LEAD_STORE_RE), besides the Slickdeals store slugs
 # (feeds.SLUG_NAMES) and brands with a known sale level (brands.BASELINE). Retailers count before a dash too
 # ("Sportsmans Warehouse - Darn Tough socks"); brands only before sale words ("Hoka Black Friday Sale"), since
