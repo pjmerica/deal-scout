@@ -38,3 +38,9 @@ Minus33 | minus33.com | Everyone
 Pure Detroit | puredetroit.com | Everyone
 Original Retro Brand | originalretrobrand.com | Everyone
 Starter | starter.com | Everyone
+
+# 2026-11-27 sneaker shops (Air Force 1 coverage for Watching), CI probe run 45927725431:
+#   added: DTLR (11 on sale, early-black-friday), Social Status (28), Sneaker Politics (35), Concepts (46),
+#          Undefeated (44, bfcm-sale-26), Lapstone & Hammer (32), A Ma Maniere (7), Shoe Palace (4), Shop Nice Kicks (5)
+#   left out: Extra Butter (0 on sale), Feature (2), BDGA (3); closed: Jimmy Jazz (connection error),
+#             atmos USA (404), Kicks USA (404)

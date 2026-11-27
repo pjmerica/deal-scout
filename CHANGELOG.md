@@ -11,7 +11,17 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Fake-sale check: a pack-size switch is not a price change
+### 9 sneaker shops read directly, for Air Force 1 coverage
+- Only 6 Air Force 1 deals were on the Watching tab: Nike, Foot Locker and Finish Line aren't readable.
+- Sneaker shops that carry AF1s and run on Shopify were probed from CI (12 of 15 open). Added, with items on sale at
+  the probe: DTLR (11), Social Status (28), Sneaker Politics (35), Concepts (46), Undefeated (44), Lapstone & Hammer
+  (32), A Ma Maniere (7), Shoe Palace (4), Shop Nice Kicks (5). That makes 223 stores.
+- Each keeps up to 30 watched items (AF1s, Detroit gear) on top of its best 8.
+- Left out: Extra Butter, Feature and BDGA (0-3 items on sale). Closed: Jimmy Jazz, atmos USA, Kicks USA. Details are
+  in `tools/store_candidates.txt`.
+- "Concepts", "Undefeated" and "Social Status" are ordinary words, so they aren't matched in deal-site headlines.
+
+### `ebe4238` Fake-sale check: a pack-size switch is not a price change
 - Swiftwick's Pursuit Crew showed "Original price raised $22 → $110". The store lists one pair and multi-packs as
   variants of one product, and the scan picked a different one between runs.
 - An "original" price that more than doubles or halves now counts as a different variant, not inflation. Real

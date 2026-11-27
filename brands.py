@@ -42,6 +42,9 @@ BASELINE = {
     "roark": 20, "howler brothers": 20, "ronhill": 30, "janji": 20, "satisfy": 10, "district vision": 15,
     "topo designs": 20, "toad&co": 25, "sunday afternoons": 20, "jachs": 40, "duer": 20, "comfrt": 30,
     "rails": 25, "mott & bow": 25, "taft": 20, "representclo": 10, "represent": 10, "gymshark": 25,
+    # sneaker shops (2026-11-27): Nike / Jordan / New Balance stock, which rarely goes deep
+    "dtlr": 25, "shoe palace": 25, "shop nice kicks": 25, "social status": 20, "sneaker politics": 20,
+    "lapstone & hammer": 20, "concepts": 15, "undefeated": 15, "a ma maniere": 15,
     # rarely discounted
     "patagonia": 10, "arc'teryx": 5, "arcteryx": 5, "canada goose": 0, "moncler": 0, "lululemon": 10,
     "vuori": 10, "on running": 0, "on": 0, "birkenstock": 5, "aime leon dore": 0, "aimé leon dore": 0,
@@ -158,6 +161,11 @@ SHOPIFY_STORES = {
     "47 Brand": "47brand.com", "Charlie Hustle": "charliehustle.com", "Ebbets Field Flannels": "ebbets.com",
     "Sportiqe": "sportiqe.com", "Detroit City FC": "shop.detcityfc.com", "Ink Detroit": "inkdetroit.com",
     "New Era": "neweracap.com", "Homage": "homage.com", "Junk Food": "junkfoodclothing.com",
+    # sneaker shops that carry Air Force 1s (Watching), added 2026-11-27 after a CI probe: 12 of 15 open; Extra Butter
+    # (nothing on sale), Feature and BDGA (2-3 items) left out, Jimmy Jazz / atmos USA / Kicks USA closed
+    "DTLR": "dtlr.com", "Social Status": "socialstatuspgh.com", "Sneaker Politics": "sneakerpolitics.com",
+    "Concepts": "cncpts.com", "Undefeated": "undefeated.com", "Lapstone & Hammer": "lapstoneandhammer.com",
+    "A Ma Maniere": "a-ma-maniere.com", "Shoe Palace": "shoepalace.com", "Shop Nice Kicks": "shopnicekicks.com",
 }
 
 # Store names that are ordinary words ("price cuts", "bed frame", "Mother's Day", "primary care").
@@ -171,6 +179,7 @@ AMBIGUOUS_NAMES = {
     "pepper", "rabbit", "parade", "corridor", "sanctuary", "matisse", "brixton", "free fly", "path projects",
     "good american", "state and liberty", "petite studio", "magnetic me", "fair harbor", "selkie", "nobis",
     "homage", "new era", "junk food",  # "an homage to", "a new era of", "junk food snacks"
+    "concepts", "undefeated", "social status",  # sneaker shops (2026-11-27): "new concepts", "undefeated Lions"
 }
 
 # Brand names that are also ordinary words, still matched in headlines but only counted when the title starts with
@@ -228,6 +237,8 @@ BRAND_AUDIENCE = {
         "fair harbor", "flylow", "ciele", "wolf & shepherd", "clae", "schott nyc", "parade", "ridge merino", "nobull",
         "voormi", "brixton", "southern tide", "47 brand", "charlie hustle", "ebbets field flannels", "sportiqe",
         "detroit city fc", "ink detroit", "new era", "homage", "junk food",
+        "dtlr", "social status", "sneaker politics", "concepts", "undefeated", "lapstone & hammer", "a ma maniere",
+        "shoe palace", "shop nice kicks",
     ],
 }
 BRAND_AUDIENCE["Kids"] = ["primary", "kyte baby", "little sleepies", "tea collection", "carter's",
