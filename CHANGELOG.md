@@ -11,7 +11,12 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Gym offers: no bare "% off" badge
+### Note: GitHub's scheduler didn't fire after the 3-hour fix
+After the hourly-tries change (`cf72c56`), GitHub started no scheduled run at all from 02:07 to past 06:00 UTC, while
+its status page showed Actions operational. The guard's skip logic is tested offline but not yet live. Pushes and
+manual runs still deploy. HANDOFF's Deploy row lists the options, and an outside trigger is the owner's call.
+
+### `7d6bf3c` Gym offers: no bare "% off" badge
 Harbor Fitness topped Gym deals with a "75% off" badge, but that was 75% off a $149 registration fee. Gyms put their
 percentage on different things (a fee, the first month, 12 months), so for offers read from gym sites the badge and
 its score boost are dropped, and the offer line itself carries the terms. This replaces the earlier "50% off" badge
