@@ -11,7 +11,23 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Gym offers: Equinox's new offer, tidier headings
+### Ready for Cyber Monday, the holidays and January
+The site runs until 2027-01-17, and several things assumed November:
+- **Header label.** In January it would have said "Black Friday in 310 days" (it counted to next November), and on
+  Cyber Monday itself it already said "Holiday sales season". The labels now run:
+  - Black Friday in N days / tomorrow;
+  - Black Friday weekend is on;
+  - Cyber Monday is on;
+  - Holiday sales season;
+  - After-Christmas sales (from Dec 26);
+  - New Year and winter clearance sales (January).
+- **Brand-store collections.** Black Friday, Cyber and holiday collections count as current in November and
+  December only. In January, a store's leftover "black-friday" collection loses to its "winter-sale",
+  "boxing-day-sale" or "new-year-sale" (`shopify.SEASON_HANDLES`).
+- **Slickdeals searches** added for the rest of the season: cyber week, green monday, holiday sale, after christmas,
+  winter clearance, end of season sale.
+
+### `706365d` Gym offers: Equinox's new offer, tidier headings
 - Equinox changed its offer overnight to "Black Friday: Rest of the year on us ... Offer ends Black Friday", and the
   scanner dropped it: "on us", "rest of the year" and "free until" weren't counted as terms. They are now. The card
   shows it ending tonight (11:59 pm ET).

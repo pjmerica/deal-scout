@@ -758,6 +758,14 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_january_collections_beat_black_friday_leftovers():
+    # the site runs to 2027-01-17: in January a leftover "black-friday" collection must lose to the winter sales
+    assert shopify._handle_score("winter-sale", 2027, 1) > shopify._handle_score("black-friday", 2027, 1)
+    assert shopify._handle_score("boxing-day-sale", 2027, 1) > shopify._handle_score("bfcm-sale", 2027, 1)
+    assert shopify._handle_score("black-friday", 2026, 11) > shopify._handle_score("winter-sale", 2026, 11)
+    assert shopify._handle_score("cyber-monday", 2026, 12) > shopify._handle_score("winter-sale", 2026, 12)
+
+
 def test_headline_price_skips_minimums_and_discounts():
     # 72 live headlines read a shipping minimum or a "$X off" as the price (2026-11-27)
     for t in ["Levi's Black Friday Deals at Macy's: 40% to 75% off + free shipping w/ $39",

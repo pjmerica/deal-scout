@@ -196,6 +196,8 @@ SLICKDEALS_CLOTHING_QUERIES = [
 ]
 SLICKDEALS_GENERAL_QUERIES = [
     "black friday", "cyber monday", "early black friday", "price mistake", "all time low", "lowest price",
+    # the rest of the season the site runs through (to 2027-01-17); added 2026-11-27
+    "cyber week", "green monday", "holiday sale", "after christmas", "winter clearance", "end of season sale",
     "gift card deal",
     # broad "best deal period" coverage outside clothing
     "tv", "laptop", "airpods", "ipad", "headphones", "nintendo switch", "ps5", "xbox", "ssd", "monitor",

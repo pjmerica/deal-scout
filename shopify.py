@@ -54,6 +54,10 @@ SEASON_HANDLES = [
     (re.compile(r"summer"), {5, 6, 7, 8}), (re.compile(r"back-?to-?school|august"), {7, 8, 9}),
     (re.compile(r"labor-?day"), {8, 9}), (re.compile(r"prime-?day"), {7, 10}),
     (re.compile(r"halloween|october"), {9, 10}),
+    # the season this site runs through (to 2027-01-17): Black Friday leftovers lose to January's sales (2026-11-27)
+    (re.compile(r"black-?friday|bfcm|cyber"), {11, 12}), (re.compile(r"holiday|christmas|xmas|gift"), {11, 12}),
+    (re.compile(r"boxing-?day|after-?christmas|year-?end|end-of-(?:the-)?year"), {12, 1}),
+    (re.compile(r"winter"), {11, 12, 1, 2}),
 ]
 
 

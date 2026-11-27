@@ -216,18 +216,28 @@ function seenInfo(i){
   const t=utcMs(i.first_seen); return isNaN(t)?'':`Seen since ${fmtDay(t)}`;
 }
 const money=v=>v==null?'':'$'+(v>=100?Math.round(v).toLocaleString():(+v).toFixed(2).replace(/\.00$/,''));
+// Header label. The site runs into January (until 2027-01-17): counting to next November there said "Black Friday in
+// 310 days", and Cyber Monday itself fell outside the weekend window (2026-11-27).
+function seasonLabel(now){
+  const y=now.getFullYear(), m=now.getMonth();
+  if(m===0) return 'New Year and winter clearance sales';
+  if(m<10) return 'Deals, clothing first';
+  const nov1=new Date(y,10,1), thanks=new Date(y,10,1+((11-nov1.getDay())%7)+21), bf=new Date(thanks.getTime()+86400000);
+  const days=Math.ceil((bf-now)/86400000);
+  if(days>1) return `Black Friday in ${days} days (${bf.toLocaleDateString([], {month:'short',day:'numeric'})})`;
+  if(days===1) return 'Black Friday is tomorrow';
+  if(now<new Date(bf.getTime()+3*86400000)) return 'Black Friday weekend is on';
+  if(now<new Date(bf.getTime()+4*86400000)) return 'Cyber Monday is on';
+  if(m===11&&now.getDate()>=26) return 'After-Christmas sales';
+  return 'Holiday sales season';
+}
 
 function header(){
   if(!DATA) return;
   document.getElementById('updated').textContent='Updated '+new Date(DATA.generated).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})+'.';
   document.getElementById('mult').textContent=DATA.clothing_multiplier;
   const cs=document.getElementById('csLink'); if(cs&&DATA.card_scout_url) cs.href=DATA.card_scout_url;
-  const now=new Date(), y=now.getFullYear();
-  const nov1=new Date(y,10,1), thanks=new Date(y,10,1+((11-nov1.getDay())%7)+21), bf=new Date(thanks.getTime()+86400000);
-  const cm=new Date(bf.getTime()+3*86400000);
-  const days=Math.ceil((bf-now)/86400000);
-  document.getElementById('countdown').textContent= days>1?`Black Friday in ${days} days (${bf.toLocaleDateString([], {month:'short',day:'numeric'})})`
-    : days===1?'Black Friday is tomorrow':(now<=cm?'Black Friday weekend is on':'Holiday sales season');
+  document.getElementById('countdown').textContent=seasonLabel(new Date());
   const c=DATA.counts;
   document.getElementById('stats').innerHTML=[
     [c.clothing,'clothing deals'],[c.deals,'deals ranked'],[c.brands,'brand stores scanned'],
