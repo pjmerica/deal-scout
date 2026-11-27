@@ -79,6 +79,12 @@ const harness = `
   }
   for (const p of [25, 100]) { reset('watch'); state.maxPrice = p; render(); check('watch max $' + p); reset('all'); state.maxPrice = p; render(); check('all max $' + p); }
   if (WATCH_LABELS.length) { reset('best'); openWatch(WATCH_LABELS[0]); check('openWatch'); if (state.tab !== 'watch') throw new Error('badge jump did not open Watching'); }
+  // one watched thing picked: a bookmarkable link to it, and every label has a slug the link can find
+  if (WATCH_LABELS.length) {
+    reset('watch'); state.wcats = new Set([WATCH_LABELS[0]]); render(); const hl = check('watch link');
+    if (!hl.includes('#watch/' + watchSlug(WATCH_LABELS[0]))) throw new Error('watch link missing');
+    if (new Set(WATCH_LABELS.map(watchSlug)).size !== WATCH_LABELS.length) throw new Error('two watched labels share a link slug');
+  }
   // "New for you": a visit long ago makes every watched deal new (badge on cards, "· N new" on the chips)
   if (WATCH_LABELS.length) {
     watchSeen = '2000-01-01T00:00'; reset('watch'); render(); const hw = check('watch new for you');

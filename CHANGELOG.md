@@ -11,7 +11,15 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Refresh started from the owner's PC when GitHub's scheduler doesn't
+### A direct link to each watched item
+The owner asked "is there no tab for switch 2 or af1?" Each one is a chip inside the 👀 Watching tab. Now each also
+has its own bookmarkable link that opens the Watching tab filtered to it:
+- `#watch/air-force-1`, `#watch/nintendo-switch-2`, `#watch/detroit-gear`, `#watch/team-gear-sales`,
+  `#watch/gym-deals` and `#watch/home-gym-gear`;
+- picking one chip shows a "🔗 Link to just …" link to copy.
+The smoke test checks the link and that no two items share one.
+
+### `f7d7890` Refresh started from the owner's PC when GitHub's scheduler doesn't
 The owner said yes to the outside trigger: the Windows scheduled task `DealScout-Refresh` (owner's PC) runs
 `tools/pc_refresh.py` every 30 minutes and at logon, until 2027-01-18.
 - **How it works:** the script reads the first 400 bytes of the live `deals.json`. It starts the workflow only when

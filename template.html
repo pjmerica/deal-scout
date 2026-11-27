@@ -395,6 +395,8 @@ function watchChips(){
     counts[w]=these.length+(f?` · ${f} new`:'');
   }
   let h=chipRow(WATCH_LABELS,state.wcats,'wcats',counts);
+  if(state.wcats.size===1){const w=[...state.wcats][0];
+    h+=`<p class="chips-label"><a href="#watch/${watchSlug(w)}" title="Bookmark this to open ${esc(w)} directly">🔗 Link to just ${esc(w)}</a></p>`;}
   for(const w of WATCH_LABELS.filter(w=>state.wcats.has(w)&&WATCH_SUBS[w])){
     const these=pool.filter(i=>i.watch.includes(w)), sc={};
     for(const s of WATCH_SUBS[w]) sc[s]=these.filter(i=>i.watch_tags.includes(s)).length;
@@ -403,6 +405,15 @@ function watchChips(){
   }
   return h;
 }
+// A bookmarkable link per watched thing (2026-11-27, owner: "is there no tab for switch 2 or af1?"):
+// #watch/air-force-1, #watch/nintendo-switch-2, ... open the Watching tab filtered to it.
+const watchSlug=l=>l.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function watchFromHash(){
+  const h=(typeof location!=='undefined'&&location.hash)||'';
+  const m=h.match(/^#watch\/([a-z0-9-]+)/);
+  return (m&&WATCH_LABELS.find(l=>watchSlug(l)===m[1]))||null;
+}
+if(typeof window!=='undefined'&&window.addEventListener) window.addEventListener('hashchange',()=>{const w=watchFromHash(); if(w) openWatch(w);});
 function openWatch(label){
   state.tab='watch'; state.wcats=new Set([label]); state.wsub.clear(); state.limit=60; state.q='';
   try{localStorage.setItem('ds-tab','watch')}catch(e){}
@@ -561,7 +572,7 @@ function render(){
 }
 
 if(!DATA){document.getElementById('main').innerHTML='<div class="empty">No data yet. Run deal_scout.py.</div>';}
-else {header(); renderTabs(); render();}
+else {header(); const w=watchFromHash(); if(w){state.tab='watch'; state.wcats=new Set([w]);} renderTabs(); render();}
 </script>
 </body>
 </html>
