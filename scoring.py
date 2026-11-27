@@ -176,7 +176,8 @@ def classify(it: Item) -> None:
     if it.is_clothing and not tags and not storewide:
         tags = fallback_tags(product, it.store if brand_store else "")
     it.clothing_tags = tags if it.is_clothing else []  # a dumbbell "cap" is not an Accessory
-    it.watch = [label for label, rx in WATCH_RES if rx.search(product)]
+    it.watch = [label for label, rx in WATCH_RES if rx.search(product)
+                and (it.is_clothing or label not in C.WATCH_CLOTHING_ONLY)]
     if brand_store:
         # "Team gear sales" means a store-wide sale: a '47-made crew sold at Detroit City FC is not one
         it.watch = [w for w in it.watch if w != "Team gear sales"]

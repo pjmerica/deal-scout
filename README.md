@@ -17,7 +17,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales, gym deals, home gym gear), wherever it ranks. Filter by item, then by team, console/game/accessory, league, gyms in NYC / with basketball courts (they overlap) / other, or weights / cardio gear; click any 👀 badge to jump here. Each item has its own link: `#watch/air-force-1`, `#watch/nintendo-switch-2`, and so on. Gym offers show 📍 where the NYC locations and basketball courts are |
+| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales, gym deals, home gym gear, jackets & coats), wherever it ranks. Filter by item, then by team, console/game/accessory, league, gyms in NYC / with basketball courts (they overlap) / other, weights / cardio gear, or jacket type (puffers, rain shells, fleece, leather & denim, wool coats, blazers); click any 👀 badge to jump here. Each item has its own link: `#watch/air-force-1`, `#watch/nintendo-switch-2`, and so on. Gym offers show 📍 where the NYC locations and basketball courts are |
 | 🏷 Brand sales | 229 brands' and shops' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |
@@ -144,10 +144,10 @@ throttled stores slowly. Repeated local runs in a short time will see fewer stor
 
 ## Refresh schedule
 
-The workflow is meant to run about every 3 hours. GitHub's own scheduler fires it only every 6–14 hours, so since
+The workflow is meant to run about every 3 hours (Card Scout's every 4). GitHub's own scheduler fires it only every 6–14 hours, so since
 2026-11-27 the Windows scheduled task `DealScout-Refresh` on the owner's PC runs `tools/pc_refresh.py` every 30
-minutes and at logon. The script starts the workflow only when the live data is 170+ minutes old and no run is
-already going. It stops after 2027-01-17, and works only while the PC is awake. Log:
+minutes and at logon. The script starts each site's workflow only when its live data is old enough (Deal Scout 170+
+minutes, Card Scout 230+) and no run is already going. It stops after 2027-01-17, and works only while the PC is awake. Log:
 `%LOCALAPPDATA%\DealScout\pc_refresh.log`. Remove it with `Unregister-ScheduledTask -TaskName DealScout-Refresh -Confirm:$false`.
 
 ## Enable Reddit (optional)

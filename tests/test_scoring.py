@@ -767,6 +767,27 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_jackets_and_coats_watch():
+    # owner: "can you highlight jacket deals?" (2026-11-27): a Watching item with its own filters
+    def tags(t, store=None):
+        it = store_item(t, store) if store else mk(t)
+        return it.watch, it.watch_tags
+    assert tags("Repleto Down Jacket - Men's", "Cotopaxi") == (["Jackets & coats"], ["Puffers & down"])
+    assert tags("Women's Aspire 3L Rain Jacket - Plus", "Outdoor Research") == (["Jackets & coats"], ["Rain & shells"])
+    assert tags("Liza Trucker Jacket", "Hudson Jeans") == (["Jackets & coats"], ["Leather & denim"])
+    assert tags("Double Weave Wool Double Breasted Lapelless Coat", "Fear of God") == (["Jackets & coats"], ["Wool & dress coats"])
+    assert tags("The Empower Double Breasted Blazer", "Wildfang") == (["Jackets & coats"], ["Blazers & sport coats"])
+    assert tags("Adidas Men's Puffer Jacket Only $29.99 Shipped (Reg. $120)")[0] == ["Jackets & coats"]
+    # not a jacket: a blazer dress, a vest, a life jacket or a coat rack
+    assert tags("The Kenne Shirt Jacket in Canyon Cotton Wool Crepe", "Taylor Stitch")[1] == ["Other jackets"]
+    assert tags("Grey Striped Wool Collarless Sport Jacket", "Fear of God")[1] == ["Blazers & sport coats"]
+    for t, s in [("Nyla Blazer Dress", "Rebecca Minkoff"), ("Fuego Max Down Vest - Men's", "Cotopaxi"),
+                 ("Single-Breasted Blazer Mini Dress in Black", "Oh Polly")]:
+        assert "Jackets & coats" not in store_item(t, s).watch, t
+    for t in ["Onyx Adult Universal Life Jacket $19.99", "Wall-Mounted Coat Rack with 5 Hooks $15"]:
+        assert "Jackets & coats" not in mk(t).watch, t
+
+
 def test_gym_equipment_is_not_clothing():
     # "CAP Rubber Coated Hex Dumbbell" was clothing with an Accessories tag ("cap" read as a hat), 2026-11-27
     d = mk("CAP Rubber Coated Hex Dumbbell Singles, 10-120 lbs, $11.29 - $186.99 at Amazon $23.26")

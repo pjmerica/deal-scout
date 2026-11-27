@@ -29,7 +29,14 @@ WATCH = [
     # Home-gym equipment, its own item since 2026-11-27: inside "Gym deals" its 73 dumbbells and treadmills outnumbered
     # and outranked the 13 gym offers the owner asked for
     ("Home gym gear", r"GYM_GEAR"),
+    # Jackets and coats (added 2026-11-27, owner: "can you highlight jacket deals?"). Clothing items only
+    # (WATCH_CLOTHING_ONLY: not "book jacket", "coat rack"); not vests, not a "Blazer Dress".
+    ("Jackets & coats", r"\bjackets?\b|\bcoats?\b|\bparkas?\b|\bpuffers?\b|\banoraks?\b|\bwindbreakers?\b|\bshackets?\b|"
+                        r"\bovercoats?\b|\bpea ?coats?\b|\btopcoats?\b|\btrench(?:es| coats?)?\b|\bbombers?\b|"
+                        r"\bblazers?\b(?!(?: [\w-]+){0,2} dress\b)|\bsport ?coats?\b"),  # "Blazer Mini Dress" is a dress
 ]
+# Watched things that only count on clothing items
+WATCH_CLOTHING_ONLY = {"Jackets & coats"}
 # Gym memberships and classes, by phrase or chain name. Not "Gold's Gym" (an equipment brand at Walmart), not
 # "24 Hour Fitness Tracking" / "Lifetime Fitness Tracker" (watches).
 GYM_MEMBERSHIP = (r"\bgym (?:memberships?|pass(?:es)?|day pass(?:es)?)\b|\bfitness (?:memberships?|clubs?|studios?)\b|"
@@ -72,13 +79,23 @@ WATCH_SUB = {
                       ("Cardio", r"treadmill|walking pad|\bbikes?\b|elliptical|rowing|\browers?\b|peloton|nordictrack|"
                                  r"concept ?2"),
                       ("Other gear", r".")],
+    # first match wins: a wool blazer is a blazer, a down parka a puffer, a leather puffer a puffer
+    "Jackets & coats": [("Blazers & sport coats", r"\bblazers?\b|\bsport ?(?:coats?|jackets?)\b|\bsuit jackets?\b|\btux"),
+                        ("Puffers & down", r"puffer|\bdown\b|insulated|parka|quilted|primaloft|thermoball|nuptse"),
+                        ("Rain & shells", r"\brain|\bshells?\b|waterproof|gore-?tex|windbreaker|anorak|\b[23](?:\.5)?l\b"),
+                        ("Fleece & sherpa", r"fleece|sherpa|\bpile\b"),
+                        ("Leather & denim", r"leather|suede|denim|trucker|shearling|\bmoto\b|biker"),
+                        # a coat word too: "Shirt Jacket in Cotton Wool Crepe" is not a wool coat
+                        ("Wool & dress coats", r"overcoat|pea ?coat|topcoat|trench|car coat|longline coat|"
+                                               r"(?:wool|cashmere|camel|tweed)\b.*\bcoats?\b"),
+                        ("Other jackets", r".")],
 }
 # Watched things whose second-level filters overlap: every matching filter applies, not just the first
 WATCH_SUB_MULTI = {"Gym deals"}
 # Sources whose every item is on the Watching list (source name prefix -> label)
 WATCH_SOURCES = {"Gym site:": "Gym deals"}
 # Cap on watched deals kept regardless of rank; past it they compete for ordinary page slots
-MAX_WATCHED = 400
+MAX_WATCHED = 600  # 400 until 2026-11-27; Jackets & coats added ~170 to the ~270 watched deals
 # Names that open a sale headline, for deals with no store (scoring.LEAD_STORE_RE), besides the Slickdeals store slugs
 # (feeds.SLUG_NAMES) and brands with a known sale level (brands.BASELINE). Retailers count before a dash too
 # ("Sportsmans Warehouse - Darn Tough socks"); brands only before sale words ("Hoka Black Friday Sale"), since

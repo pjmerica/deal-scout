@@ -11,6 +11,22 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
+### Jackets & coats highlighted; Card Scout refreshed from the PC too
+- **Jackets & coats on the Watching list** (owner: "can you highlight jacket deals?").
+  - Every jacket, coat, parka, puffer, anorak, windbreaker, shacket, bomber, blazer or sport coat gets the 👀
+    Jackets & coats badge, a chip on the Watching tab and its own link, `#watch/jackets-coats`. That was about 165
+    live deals.
+  - Clothing items only, so not "book jacket" or "coat rack". Not vests, and not a "Blazer Mini Dress".
+  - Filters (first match wins): Blazers & sport coats / Puffers & down / Rain & shells / Fleece & sherpa / Leather &
+    denim / Wool & dress coats (needs a coat word: a "Shirt Jacket in Cotton Wool" isn't one) / Other jackets.
+  - `MAX_WATCHED` went from 400 to 600, because the watched deals went from about 270 to 435. The page still holds
+    2,400.
+- **Card Scout is refreshed from the PC too** (owner: "yeah do that"). It had the same scheduler gap (runs 8-13 hours
+  apart; its data was 12 hours old). `tools/pc_refresh.py` now starts Card Scout's `cards.yml` when its data is 230+
+  minutes old, keeping its 4-hour cadence. Deal Scout's threshold is still 170 minutes, and it's the same task.
+- **Fix:** under pyw.exe there is no console, so the script's final output flush crashed. The process then hung until
+  its 2-minute stop, and the task reported result 1. That's fixed: a run takes about 4 seconds and returns 0.
+
 ### A direct link to each watched item
 The owner asked "is there no tab for switch 2 or af1?" Each one is a chip inside the 👀 Watching tab. Now each also
 has its own bookmarkable link that opens the Watching tab filtered to it:

@@ -248,7 +248,7 @@ function header(){
 const TABS=[
   {id:'best',label:'🏆 Best'},
   {id:'clothing',label:'👕 Clothing',filter:i=>i.is_clothing&&i.kind==='deal',note:'Clothing and footwear deals ranked by quality score. Filter by category, gender or discount.',clothingChips:true},
-  {id:'watch',label:'👀 Watching',filter:i=>i.kind==='deal'&&i.watch.length,note:'Every deal found for the things you watch, wherever it ranks. Pick one to get its own filters (team, console or game, league; gyms in NYC or with basketball courts; weights or cardio gear); the price menu sets a limit. “New for you” marks deals that appeared since you last opened this tab (remembered in this browser only).',watchChips:true},
+  {id:'watch',label:'👀 Watching',filter:i=>i.kind==='deal'&&i.watch.length,note:'Every deal found for the things you watch, wherever it ranks. Pick one to get its own filters (team, console or game, league, jacket type; gyms in NYC or with basketball courts; weights or cardio gear); the price menu sets a limit. “New for you” marks deals that appeared since you last opened this tab (remembered in this browser only).',watchChips:true},
   {id:'brands',label:'🏷 Brand sales'},
   {id:'bf',label:'🖤 Black Friday',filter:i=>i.is_bf,note:'Deals that mention Black Friday, Cyber Monday or doorbusters.',clothingChips:true},
   {id:'all',label:'🔥 All deals',filter:i=>i.kind==='deal',note:'Every deal across categories. Clothing still gets its boost.',catChips:true},
