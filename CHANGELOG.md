@@ -11,7 +11,14 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Ready for Cyber Monday, the holidays and January
+### Sneaker models count as footwear
+13 of 53 items from the new sneaker shops had no garment type, so the Footwear chip missed them: DTLR names the model
+("Nike Air Force 1 Low LV8 Edge", "Javi Elevate Toddler", "Steve Madden Pryce Grade-School"). The footwear fallback
+now knows sneaker models (Air Force 1, Air Max, Dunk, Jordan N, Kobe, Samba, Gazelle, 1906R, 990vN, clogs, slides) and
+kids' shoe sizes (Grade-School, Pre-School, "... Toddler"). It applies only to clothing items with no garment word, so
+"Jordan Retro 4 Tee" is still a top.
+
+### `710fc1c` Ready for Cyber Monday, the holidays and January
 The site runs until 2027-01-17, and several things assumed November:
 - **Header label.** In January it would have said "Black Friday in 310 days" (it counted to next November), and on
   Cyber Monday itself it already said "Holiday sales season". The labels now run:

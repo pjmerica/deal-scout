@@ -758,6 +758,14 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_sneaker_models_are_footwear():
+    # sneaker-shop titles name the model, not the garment (DTLR, 2026-11-27)
+    assert store_item("Nike Air Force 1 Low LV8 Edge", "DTLR").clothing_tags == ["Footwear"]
+    assert store_item("Steve Madden Pryce Grade-School", "DTLR").clothing_tags == ["Footwear"]
+    assert store_item("Javi Elevate Toddler", "DTLR").clothing_tags == ["Footwear"]
+    assert store_item("Jordan Retro 4 Tee", "DTLR").clothing_tags == ["Tops"]  # a garment word still wins
+
+
 def test_january_collections_beat_black_friday_leftovers():
     # the site runs to 2027-01-17: in January a leftover "black-friday" collection must lose to the winter sales
     assert shopify._handle_score("winter-sale", 2027, 1) > shopify._handle_score("black-friday", 2027, 1)

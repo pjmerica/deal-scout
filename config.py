@@ -358,7 +358,12 @@ CLOTHING_TAG_FALLBACK = [
     ("Swimwear", r"\bswim|\bbikinis?\b|\bone[- ]piece\b|\bpareos?\b|\bcover[- ]ups?\b"),
     ("Footwear", r"\bslip[- ]?ons?\b|\blace[- ]?ups?\b|\bmules?\b|\b(?:high|low|mid)[- ]tops?\b|\bmary janes?\b|"
                  r"\bslingbacks?\b|\bwedges?\b|\bheels?\b|\bpumps?\b|\b(?:plain|cap|wing)[- ]?toe\b|\bwingtips?\b|"
-                 r"\bbrogues?\b|\b(?:oxford|derby) (?:dress )?shoes?\b"),  # not "Oxford" alone: an oxford-cloth shirt
+                 r"\bbrogues?\b|\b(?:oxford|derby) (?:dress )?shoes?\b|"  # not "Oxford" alone: an oxford-cloth shirt
+                 # sneaker models and kids' shoe sizes at the sneaker shops (2026-11-27: "DTLR: Nike Air Force 1 Low LV8
+                 # Edge", "Javi Elevate Toddler", "Steve Madden Pryce Grade-School" had no type)
+                 r"\bair force 1\b|\bair max\b|\bdunks?\b|\bjordan \d|\bretro \d|\bkobe\b|\blebron\b|\bfoamposites?\b|"
+                 r"\bsambas?\b|\bgazelles?\b|\bgel-\w|\b1906r\b|\b9060\b|\b990v\d\b|\bclogs?\b|\bslides?\b|\blv8\b|"
+                 r"\b(?:grade|pre)-?school\b|\btoddler$|\bcrib$"),
     ("Bottoms", r"\bshorts?\b(?![\s-]*sleeve)|\bjeans?\b|\btights?\b|\b5-pocket\b|\bpalazzo\b|\bbootcut\b|"
                 r"\bflares?\b|\bwide[- ]leg\b|\bstraight\b|\bbibs?\b"),  # ski bibs; baby bibs are false positives
     ("Basics & Underwear", r"\bbriefs?\b|\btrunks?\b|\bcheek(?:y|ini)\b|\bthongs?\b(?! sandal)|\bno[- ]show\b"),
