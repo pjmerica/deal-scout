@@ -201,6 +201,9 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
 
     data = {
         "generated": NOW.isoformat(),
+        # second key on purpose: scout.yml's guard reads the first 400 bytes to skip a run when the data is fresh
+        # and built from the current commit
+        "commit": os.environ.get("GITHUB_SHA", "")[:12],
         "counts": {
             "total": len(keep),
             "clothing": sum(1 for i in keep if i.is_clothing and i.kind == "deal"),

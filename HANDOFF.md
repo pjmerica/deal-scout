@@ -37,7 +37,7 @@ future changes").
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |
-| Deploy | `.github/workflows/scout.yml`: push to `main`, every 3 h (`17 */3 * * *`), or manual (`gh workflow run scout.yml`). Order: tests → scrape → smoke → summary → health (always) → Pages. **A failing test blocks the deploy**, so the live site keeps its last good build |
+| Deploy | `.github/workflows/scout.yml`: push to `main`, every 3 h, or manual (`gh workflow run scout.yml`). Since 2026-11-27 the schedule is tried hourly (`17 * * * *`) and the `guard` job skips it while the live `deals.json` is under 170 min old and its `commit` matches the current one: GitHub dropped most 3-hourly starts (runs came 6–14 h apart). Runs queue instead of cancelling each other (`cancel-in-progress: false`). Order: tests → scrape → smoke → summary → health (always) → Pages. **A failing test blocks the deploy**, so the live site keeps its last good build |
 | Test the alert | `gh workflow run scout.yml -f health_test=true` opens the health issue; the next normal run closes it |
 
 Nothing generated is committed (`site/` is gitignored). Pages source is "GitHub Actions".

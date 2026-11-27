@@ -2,7 +2,10 @@ name: Scrape deals & deploy Pages
 
 on:
   schedule:
-    - cron: "17 */3 * * *"   # every 3 hours
+    # Every 3 hours, as the owner chose. GitHub drops most scheduled starts (runs came 6-14 h apart, Nov 19-27), so
+    # it is tried hourly and the guard below skips the run while the live data is under ~3 h old and built from the
+    # current commit. Scrapes still happen at most every ~3 h (hourly scrapes were declined, HANDOFF §1).
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       health_test:
@@ -18,12 +21,15 @@ permissions:
   id-token: write
   issues: write              # tools/health.py opens/closes the "Site health: needs attention" issue
 
+# Queue, don't cancel: an hourly check must not cancel a build in progress (it then sees fresh data and skips)
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # Planned end (owner, 2026-11-18): scheduled runs stop after END_DATE. Manual runs and pushes still work.
+  # Cadence (2026-11-27): a scheduled run is skipped while the live data is under MIN_AGE_MIN minutes old AND was built
+  # from this commit (deals.json starts with "generated" and "commit"). Any doubt (fetch or parse fails) -> run.
   guard:
     runs-on: ubuntu-latest
     outputs:
@@ -32,13 +38,27 @@ jobs:
       - id: check
         env:
           END_DATE: "2027-01-17"
+          MIN_AGE_MIN: "170"
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%F)" \> "$END_DATE" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "Past the planned end date ($END_DATE): scheduled runs are off. Manual runs still work." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+          run=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "$(date -u +%F)" \> "$END_DATE" ]; then
+              run=false
+              echo "Past the planned end date ($END_DATE): scheduled runs are off. Manual runs still work." >> "$GITHUB_STEP_SUMMARY"
+            else
+              head=$(curl -s --max-time 20 -r 0-399 https://pjmerica.github.io/deal-scout/deals.json || true)
+              gen=$(printf '%s' "$head" | sed -n 's/.*"generated": "\([^"]*\)".*/\1/p')
+              built=$(printf '%s' "$head" | sed -n 's/.*"commit": "\([0-9a-f]*\)".*/\1/p')
+              if [ -n "$gen" ] && gen_s=$(date -u -d "$gen" +%s 2>/dev/null); then
+                age=$(( ($(date -u +%s) - gen_s) / 60 ))
+                if [ "$age" -lt "$MIN_AGE_MIN" ] && [ "$built" = "${GITHUB_SHA:0:12}" ]; then
+                  run=false
+                  echo "Skipped: the live data is $age min old and built from this commit (runs at most every ~3 h)." >> "$GITHUB_STEP_SUMMARY"
+                fi
+              fi
+            fi
           fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
 
   build:
     needs: guard

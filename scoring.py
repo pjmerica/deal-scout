@@ -83,7 +83,8 @@ HISTORY_PATTERNS = [
 
 CATCHES = [
     (re.compile(r"expired|sold out|\bdead\b|out of stock|no longer available", re.I), -40, "May be expired / sold out"),
-    (re.compile(r"refurbished|renewed|open[- ]box|pre-?owned|\bused\b(?! to)|grade [ab]\b", re.I), -8, "Refurbished / used"),
+    (re.compile(r"refurbished|renewed|open[- ]box|pre-?owned|\bused\b(?! to)|grade [ab]\b|\bresale\b", re.I), -8,
+     "Refurbished / used"),
     (re.compile(r"\bymmv\b|targeted|in-?store only|\bB&M\b|select stores|in stores? only|in-store pickup only", re.I), -6,
      "In-store only / YMMV"),
     (re.compile(r"members? only|membership|\bmembers?:|costco|sam's club|\bbj's\b|must be a member", re.I), -3,

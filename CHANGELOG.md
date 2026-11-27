@@ -11,6 +11,18 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
+### Refresh every 3 hours for real; "[Resale]" posts get the used-item warning
+- **The 3-hour refresh wasn't happening.** GitHub drops most scheduled starts: from Nov 19 to 27, runs came 6 to 14
+  hours apart, including 13 hours over Thanksgiving. Changes:
+  - The schedule is now tried every hour.
+  - The `guard` job skips the run while the live data is under 170 minutes old and was built from the current
+    commit. `deals.json` now records the commit it was built from (`"commit"`, its second key, so the guard reads
+    only the first 400 bytes).
+  - Scrapes still happen at most every ~3 hours, which is the owner's chosen cadence. Hourly scrapes were declined
+    (HANDOFF §1), and this doesn't add them.
+  - Runs now queue instead of cancelling each other, so an hourly check can't cancel a build in progress.
+- Slickdeals "[Resale]" posts get the "Refurbished / used" warning even when they don't say "used".
+
 ### `703e5f7` Fixes from an audit of the live data
 Owner: "keep trying to fix and improve everything as much as possible and document all prior and future changes".
 The audit checked the 2,520 live items for expired deals (none), duplicates (none), dead sources (Hypebeast and
