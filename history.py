@@ -142,6 +142,20 @@ def apply(hist: dict, items: list[Item]) -> None:
             h["pct"] = max(h.get("pct") or 0, it.pct_off)
 
 
+def flag_brand_picks(items: list[Item], summaries: list[dict]) -> None:
+    """Carry the fake-sale warnings onto the Brands tab's top picks, which shopify.scan_store builds before history runs:
+    Janji's "M's Rover Merino Half-Zip" was $64 on Nov 19 and $76.80 on Nov 26, shown as a top pick with no note.
+    A flagged pick gets "warn" and moves after the clean ones."""
+    flagged = {i.link: i for i in items if {"orig_raised", "was_cheaper"} & set(i.flags)}
+    for s in summaries:
+        top = s.get("top") or []
+        for t in top:
+            it = flagged.get(t.get("link"))
+            if it:
+                t["warn"] = next((w for w in it.warnings if w.startswith(("Was $", "Original price raised"))), "")
+        top.sort(key=lambda t: bool(t.get("warn")))  # stable: keeps the %-off order within each group
+
+
 def apply_promos(hist: dict, summaries: list[dict]) -> None:
     P = hist["promos"]
     for s in summaries:

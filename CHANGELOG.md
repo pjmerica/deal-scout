@@ -11,7 +11,15 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Refresh every 3 hours for real; "[Resale]" posts get the used-item warning
+### Brands tab: top picks show the fake-sale warning
+- Janji's "M's Rover Merino Half-Zip" was $64 on Nov 19 and $76.80 on Nov 26. It was a top pick on Janji's brand card
+  with no note, because the picks are built before the price history runs and the warning reached only the deal
+  lists. Picks now show "⚠ Was $64 on Nov 19, cheaper than now" (or "Original price raised ...") and sort after the
+  clean ones (`history.flag_brand_picks`).
+- Every pick now goes through the history check: Kids and "Everyone" picks could fall outside the items checked.
+- Context: on 2026-11-27, 12 live brand-store items were priced more than 3% above their tracked low.
+
+### `cf72c56` Refresh every 3 hours for real; "[Resale]" posts get the used-item warning
 - **The 3-hour refresh wasn't happening.** GitHub drops most scheduled starts: from Nov 19 to 27, runs came 6 to 14
   hours apart, including 13 hours over Thanksgiving. Changes:
   - The schedule is now tried every hour.

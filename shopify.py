@@ -374,6 +374,9 @@ def scan_store(store: str, domain: str, promo_cache: dict | None = None) -> tupl
             if all(t["link"] != i.link for t in top):
                 top.append({"title": i.title.split(": ", 1)[-1], "price": i.price, "orig": i.orig_price,
                             "pct": i.pct_off, "link": i.link, "image": i.image, "gender": i.gender})
+                if i.history_key not in seen:  # every pick goes through history (fake-sale check, brand-card warning)
+                    seen.add(i.history_key)
+                    keep.append(i)
     top.sort(key=lambda t: -(t["pct"] or 0))
     if promo and promo_pct >= 20:
         pi = promo_item(store, domain, url, promo, promo_pct, up_to, promo_code)

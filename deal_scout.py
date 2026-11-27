@@ -277,6 +277,7 @@ def main() -> int:
 
     items = scoring.process(feed_items + shop_items + gym_items)
     history.apply(hist, items)
+    history.flag_brand_picks(items, brand_sales)
     history.apply_promos(hist, brand_sales)
     STACKS.apply(stack_data, items, brand_sales)
     scoring.score_all(items)

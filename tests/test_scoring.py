@@ -740,6 +740,18 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_brand_card_picks_carry_fake_sale_warning():
+    # Janji's half-zip was $64 on Nov 19 and $76.80 on Nov 26: a top pick on its brand card with no note
+    import history
+    it = Item(title="Janji: M's Rover Merino Half-Zip", link="https://janji.com/products/ms-rover-merino-half-zip",
+              source="Brand store: Janji", kind="deal", flags=["retailer_verified", "was_cheaper"],
+              warnings=["Was $64 on Nov 19, cheaper than now"])
+    s = {"top": [{"title": "M's Rover Merino Half-Zip", "pct": 40, "link": it.link},
+                 {"title": "Atlas Pant", "pct": 30, "link": "https://janji.com/products/atlas"}]}
+    history.flag_brand_picks([it], [s])
+    assert s["top"][0]["title"] == "Atlas Pant" and s["top"][1]["warn"] == "Was $64 on Nov 19, cheaper than now"
+
+
 def test_articles_capped_per_source():
     import deal_scout
     arts = [Item(title=f"a{n}", link=f"x/{n}", source="Lifehacker" if n < 50 else f"S{n % 7}", kind="article")
