@@ -713,6 +713,11 @@ def test_gym_deals_watch_and_filters():
     assert "Basketball: two courts" in it.where
     scoring.extract_pricing(it)
     assert it.price is None and it.category == "Outdoor & Fitness"  # "save $180" is not a price
+    harbor = gyms.gym_item({"name": "Harbor Fitness", "urls": [], "nyc": "Brooklyn"}, "https://x/",
+                           "Registration fee $149.00 75% off registration fee $37.00 to join. Sale ends Monday November 30")
+    scoring.classify(harbor)
+    scoring.extract_pricing(harbor)
+    assert harbor.pct_off is None  # 75% off a fee, not the membership: no bare % badge
     assert "Lesser-known brand" not in it.warnings and it.brands == ["JCC Manhattan"]
     far = gyms.gym_item({"name": "24 Hour Fitness", "urls": [], "nyc": "", "courts": "most clubs"}, "https://x/",
                         "Black Friday BOGO Deal")

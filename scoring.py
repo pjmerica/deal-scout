@@ -353,8 +353,12 @@ def extract_pricing(it: Item) -> None:
     if extras and base and not assumed and not price_pct and it.pct_off:
         it.reasons.append(f"Stacked discount ≈ {it.pct_off}% off")
     if "Gym deals" in it.watch and "Home gym gear" not in it.watch:
-        # "$0 join fee", "$1 down", "save $180": membership terms, not an item's price (the % off badge stays)
+        # "$0 join fee", "$1 down", "save $180": membership terms, not an item's price
         it.price = it.orig_price = None
+        if "gym_offer" in it.flags:
+            # a gym's % applies to a fee, the first month or a year ("75% off registration fee", Harbor Fitness): as a
+            # bare badge and score it misled, so the offer line (the title) carries the terms (2026-11-27)
+            it.pct_off = None
     if not it.store:
         m = STORE_FROM_TITLE.search(it.title) or STORE_ON_RE.search(it.title)
         lead = LEAD_STORE_RE.match(it.title)

@@ -11,7 +11,13 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Gym deals are gyms; home-gym equipment is its own Watching item
+### Gym offers: no bare "% off" badge
+Harbor Fitness topped Gym deals with a "75% off" badge, but that was 75% off a $149 registration fee. Gyms put their
+percentage on different things (a fee, the first month, 12 months), so for offers read from gym sites the badge and
+its score boost are dropped, and the offer line itself carries the terms. This replaces the earlier "50% off" badge
+on Pure Barre's offer. Deal-site posts ("buy 2, get 1 free") keep their % off.
+
+### `81c9cb1` Gym deals are gyms; home-gym equipment is its own Watching item
 The owner asked for gym deals, especially in NYC and with basketball courts. Inside "Gym deals", 73 dumbbells and
 treadmills outnumbered and outranked the 13 actual gym offers.
 - **Gym deals** is now memberships and classes only, with filters NYC / Basketball courts / Other gyms.
