@@ -40,7 +40,8 @@ def load(args: list[str]) -> list[tuple[str, str, str]]:
 
 def probe(c: tuple[str, str, str]) -> dict:
     name, domain, aud = c
-    row = {"name": name, "domain": domain, "audience": aud, "status": "", "products": 0, "on_sale": 0, "handles": ""}
+    row = {"name": name, "domain": domain, "audience": aud, "status": "", "products": 0, "on_sale": 0, "handles": "",
+           "in_sale_collection": 0}
     try:
         r = session.get(f"https://{domain}/products.json?limit=250", timeout=20)
         if r.status_code != 200 or not r.text.lstrip().startswith("{"):
@@ -51,7 +52,13 @@ def probe(c: tuple[str, str, str]) -> dict:
         for p in prods:
             if shopify._product_item(name, domain, p):
                 row["on_sale"] += 1
-        row["handles"] = ", ".join(shopify.pick_sale_handles(domain)) or "-"
+        handles = shopify.pick_sale_handles(domain)
+        row["handles"] = ", ".join(handles) or "-"
+        # page 1 of /products.json is mostly new arrivals; a store's markdowns sit in its sale collection
+        # (2026-11-27: stores with a full "bfcm" collection showed 0 on sale)
+        if handles:
+            sale = shopify._collection_products(domain, handles[0], 1)
+            row["in_sale_collection"] = sum(1 for p in sale if shopify._product_item(name, domain, p))
         row["status"] = "OPEN" if prods else "open but empty"
     except Exception as ex:  # noqa: BLE001
         row["status"] = f"error {type(ex).__name__}"
@@ -64,12 +71,13 @@ def main() -> int:
     with cf.ThreadPoolExecutor(max_workers=4) as ex:  # gentle: 4 at a time
         for row in ex.map(probe, cands):
             rows.append(row)
-            print(f"{row['status']:16} {row['domain']:28} products={row['products']:3} on_sale={row['on_sale']:3} sale={row['handles']}")
+            print(f"{row['status']:16} {row['domain']:28} products={row['products']:3} on_sale={row['on_sale']:3} "
+                  f"in_sale_collection={row['in_sale_collection']:3} sale={row['handles']}")
             time.sleep(0.2)
     good = [r for r in rows if r["status"] == "OPEN"]
     print(f"\n{len(good)}/{len(rows)} open")
-    lines = ["| Store | Domain | Status | Products | On sale (page 1) | Sale collections |", "|---|---|---|---|---|---|"]
-    lines += [f"| {r['name']} | {r['domain']} | {r['status']} | {r['products']} | {r['on_sale']} | {r['handles']} |" for r in rows]
+    lines = ["| Store | Domain | Status | Products | On sale (page 1) | On sale (sale collection) | Sale collections |", "|---|---|---|---|---|---|---|"]
+    lines += [f"| {r['name']} | {r['domain']} | {r['status']} | {r['products']} | {r['on_sale']} | {r['in_sale_collection']} | {r['handles']} |" for r in rows]
     paste = [f'    "{r["name"]}": "{r["domain"]}",' for r in good]
     (HERE.parent / "probe_results.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     if "GITHUB_STEP_SUMMARY" in os.environ:

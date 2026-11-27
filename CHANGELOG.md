@@ -11,7 +11,12 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Sneaker models count as footwear
+### Store probe counts the sale collection too (tooling)
+`tools/probe_stores.py` counted markdowns only on page 1 of a store's whole product list, which is mostly new
+arrivals. Stores with a full "bfcm" collection showed 0 on sale. It now also reports markdowns in the sale collection
+the scanner would pick (`in_sale_collection`).
+
+### `b8a01ef` Sneaker models count as footwear
 13 of 53 items from the new sneaker shops had no garment type, so the Footwear chip missed them: DTLR names the model
 ("Nike Air Force 1 Low LV8 Edge", "Javi Elevate Toddler", "Steve Madden Pryce Grade-School"). The footwear fallback
 now knows sneaker models (Air Force 1, Air Max, Dunk, Jordan N, Kobe, Samba, Gazelle, 1906R, 990vN, clogs, slides) and
