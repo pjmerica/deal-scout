@@ -5,7 +5,9 @@
 **Sibling:** Card Scout (`Documents\card-scout`, https://pjmerica.github.io/card-scout/), which has its own `HANDOFF.md`
 
 Read this first, then `README.md` (features and scoring) and the code. This file holds what the code doesn't tell you:
-the owner's decisions, how things break, and how to check your work.
+the owner's decisions, how things break, and how to check your work. **`CHANGELOG.md` lists every change since the
+first commit; add an entry there in the same commit as every change** (owner, 2026-11-27: "document all prior and
+future changes").
 
 ---
 
@@ -21,6 +23,7 @@ the owner's decisions, how things break, and how to check your work.
 | 2026-11-26 | **Watching list: Air Force 1s, Nintendo Switch 2, Detroit gear, team-gear sales** ("big for deals for me"; "detroit sports gear deals and stuff like that"). `config.WATCH` (label + regex) gives every matching deal a 👀 badge and the **Watching** tab, and keeps it on the page whatever its score. Ranking is unchanged and there are no alerts. Filters (owner asked): a chip per watched thing with counts, then its own sub-filters (`config.WATCH_SUB`: Detroit by team, Switch 2 by consoles / accessories / games, team-gear sales by league); a max-price menu on every list; a 👀 badge on any card opens the Watching tab filtered to it. Each watched item also has its own Slickdeals searches. Detroit: deal sites post almost no team-specific gear (one Lions BBQ set in 12 searches), so the team-gear stores ('47, New Era, Ebbets, Charlie Hustle, Sportiqe, Homage, Junk Food) and the Detroit stores (Detroit City FC, Ink Detroit) are read directly; `config.WATCH_STORES` / `WATCH_PROMO_STORES`, and `shopify.scan_store` keeps up to 30 watched items per store. Not "Detroit" alone (Detroit Axle) or "Tigers" alone (LSU). |
 | 2026-11-26 | **Gym deals, "especially ones in NYC", and "ones with basketball facilities too"** (owner). Deal sites barely post gym memberships and Google News turns up gyms in other states, so `gyms.py` reads 28 gyms' own pages (`config.GYMS`) every run and keeps the offer line each advertises ("Black Friday Sale: 50% off first two months + $0 join fee"); a line needs an occasion (Black Friday, holiday, New Year, "sale ends") and terms ($0 down, % off, free month, buy N get N). Each gym entry says where its NYC locations and basketball courts are, checked on the gym's own site 2026-11-26 (courts: Equinox Sports Club NY + East 61st, Life Time Sky, the Y, JCC Manhattan, Manny Cantor Center, Asphalt Green BPC, Chelsea Piers Field House, LA Fitness, 24 Hour Fitness); the card shows it on a 📍 line. Deal-site posts count too: membership phrases and chains (`config.GYM_MEMBERSHIP`) and home-gym gear (`GYM_GEAR`), not bare "gym" (Nike "Gym Red", gym bags). Watching filters NYC / Basketball courts / Memberships & classes / Home gym gear **overlap** (`WATCH_SUB_MULTI`). Membership offers carry no item price ("$0 join fee" is not a price) and skip the "Membership required" catch. planetfitness.com refuses scripts (403) from a PC; New York Sports Clubs / Lucille Roberts sometimes answer an empty 202 (bot check). Watched deals: up to `MAX_WATCHED` (400) kept whatever their score; past that they compete for ordinary slots (before, the overflow vanished). |
 | 2026-11-26 | **End dates and timing on cards** (owner asked how long deals last). See §8b. |
+| 2026-11-27 | **Keep fixing and improving, and document every change** ("keep trying to fix and improve everything as much as possible and document all prior and future changes"). `CHANGELOG.md` has every change since the first commit; each new change adds an entry in the same commit (date, what, why). Standing permission to audit the live data and fix what's wrong; the §1 "declined for now" items still need the owner's OK. |
 
 ---
 
@@ -29,7 +32,8 @@ the owner's decisions, how things break, and how to check your work.
 | Task | How |
 |---|---|
 | Run locally | `py -X utf8 deal_scout.py --open` (about 30–120 s). `--quick` skips brand stores and most searches |
-| Logic tests | `py -X utf8 tests/test_scoring.py` (53 regression tests, one per fixed bug or feature) |
+| Logic tests | `py -X utf8 tests/test_scoring.py` (57 regression tests, one per fixed bug or feature) |
+| Change log | Add an entry to `CHANGELOG.md` with every change (newest first; date, what, why; hash once committed) |
 | Page smoke test | `node tests/smoke.js site/index.html`: runs the page JS in a DOM stub, renders every tab × filter/gender variant, then **clicks every tab, chip, switch and button**. Fails on a throw, empty output, `undefined` or `NaN` |
 | Real-browser check | `tools/shots.js` (headless Chrome over CDP, both sites, desktop + phone screenshots). See its header for usage |
 | Health | `py -X utf8 tools/health.py` locally (prints only). In CI, `--issue` manages the health issue (§9) |

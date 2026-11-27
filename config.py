@@ -37,7 +37,8 @@ GYM_MEMBERSHIP = (r"\bgym (?:memberships?|pass(?:es)?|day pass(?:es)?)\b|\bfitne
 GYM_GEAR = (r"\bhome gym\b|\bpower (?:rack|tower|cage)s?\b|\bsquat (?:rack|stand)s?\b|\bsmith machine\b|\bdumbbells?\b|"
             r"\bkettlebells?\b|\bweight (?:bench|set|plate|vest)(?:e?s)?\b|\b(?:workout|exercise|weight|flat|incline) bench"
             r"(?:es)?\b|\btreadmills?\b|\bwalking pads?\b|\browing machines?\b|\b(?:exercise|spin|stationary|indoor cycling|"
-            r"recumbent) bikes?\b|\belliptical(?: machine)?s?\b|\bpeloton\b|\bbowflex\b|\bnordictrack\b|\bspeediance\b|"
+            r"recumbent) bikes?\b|\belliptical(?: machine)?s?\b|"
+            r"\bpeloton\b(?!.*\b(?:water bottle|strap|socks?|shoes?|apparel|leggings|tee|shirt|hoodie|bra)\b)|\bbowflex\b|\bnordictrack\b|\bspeediance\b|"
             r"\bcable machines?\b|\bpull[- ]?up (?:bars?|stations?)\b|\bdip stations?\b|\bbarbells?\b(?! apparel)|"
             r"\bbumper plates?\b|\b(?:gym|exercise|workout) (?:floor(?:ing)?|mats?)\b|\bpilates reformers?\b|\bconcept ?2\b|"
             r"\b(?:rogue|rep|titan) fitness\b")
@@ -47,8 +48,10 @@ WATCH_SUB = {
     "Detroit gear": [("Lions", r"\blions\b"), ("Tigers", r"\btigers\b"), ("Pistons", r"\bpistons\b"),
                      ("Red Wings", r"\bred\s?wings\b"), ("Detroit City FC", r"\bdetroit city fc\b|\bdcfc\b"),
                      ("Other Detroit", r".")],
-    "Nintendo Switch 2": [("Consoles & bundles", r"\bconsoles?\b|\bbundles?\b|\bsystem\b"),
-                          ("Accessories", r"controller|joy-?cons?|micro\s?sd|memory card|\bcases?\b|charger|\bdock\b|"
+    # not "21-in-1 Accessories Bundle Kit" (an accessory kit); "Nintendo Switch 2 - Black ($391.99)" is the console
+    "Nintendo Switch 2": [("Consoles & bundles", r"^(?!.*\baccessor(?:y|ies)\b)(?:.*\b(?:consoles?|bundles?|system)\b|"
+                                                 r".*\bswitch 2\s*[-–(]\s*(?:black|white|\d{3}\s?gb)\b)"),
+                          ("Accessories", r"accessor|controller|joy-?cons?|micro\s?sd|memory card|\bcases?\b|charger|\bdock\b|"
                                           r"\bgrips?\b|screen protector|headset|\bcables?\b|\bbags?\b|carrying|storage|"
                                           r"\bstand\b|power bank|amiibo|\bhdmi\b"),
                           ("Games & other", r".")],
@@ -68,6 +71,18 @@ WATCH_SUB_MULTI = {"Gym deals"}
 WATCH_SOURCES = {"Gym site:": "Gym deals"}
 # Cap on watched deals kept regardless of rank; past it they compete for ordinary page slots
 MAX_WATCHED = 400
+# Names that open a sale headline, for deals with no store (scoring.LEAD_STORE_RE), besides the Slickdeals store slugs
+# (feeds.SLUG_NAMES) and brands with a known sale level (brands.BASELINE). Retailers count before a dash too
+# ("Sportsmans Warehouse - Darn Tough socks"); brands only before sale words ("Hoka Black Friday Sale"), since
+# "Apple - AirPods Pro 3" is usually sold somewhere else. Not "On" (shoe brand): "On Black Friday, ..." is a sentence.
+EXTRA_STORES = ["Sportsman's Warehouse", "Sportsmans Warehouse", "Academy Sports", "Bass Pro Shops", "Cabela's",
+                "Backcountry", "Moosejaw", "Ulta", "Sephora", "Wayfair", "Newegg", "GameStop", "Staples",
+                "Nordstrom", "Neiman Marcus", "Saks Fifth Avenue", "Belk", "Burlington", "TJ Maxx", "Marshalls",
+                "Huckberry", "Barnes & Noble"]
+EXTRA_BRANDS = ["Lululemon", "Athleta", "Anthropologie", "Urban Outfitters", "Free People", "Madewell", "Everlane",
+                "Quince", "Uniqlo", "Patagonia", "The North Face", "Dell", "Lenovo", "Samsung", "Apple", "Hoka",
+                "New Balance", "Brooks", "Saucony", "Vans", "Converse", "UGG", "Allbirds", "Vuori", "Alo Yoga",
+                "Fabletics", "Gymshark", "Old Navy", "Gap", "Banana Republic", "Spanx", "Comfrt"]
 
 # ---------------------------------------------------------------------------
 # Gym sites (gyms.py): each run reads these pages and keeps the Black Friday / holiday / New Year membership offer it
@@ -139,6 +154,8 @@ MIN_NONCLOTHING_SCORE = 8      # non-clothing deals below this are left off the 
 MAX_DEALS = 2400
 FEED_SLOTS = 1300
 MAX_ITEMS_PER_STORE = 8
+MAX_ARTICLES = 120             # Sale roundups tab
+MAX_ARTICLES_PER_SOURCE = 20   # one site can't fill it (Lifehacker had 38 of 120 on 2026-11-26)
 CARD_SCOUT_URL = "https://pjmerica.github.io/card-scout/"   # companion site (cards, cash back), linked in the footer
 
 # ---------------------------------------------------------------------------
@@ -350,7 +367,7 @@ CLOTHING_TAG_FALLBACK = [
     ("Accessories", r"\bbags?\b|\bbackpacks?\b|\bcrossbody\b|\bwallets?\b|\bpouch\b|\bcard ?holder\b|\bbows?\b|"
                     r"\bscrunchies?\b|\bheadbands?\b|\bcloche\b|\bvisors?\b|\beye mask\b|\bhair clips?\b|"
                     r"\bnecklaces?\b|\bearrings?\b|\bbracelets?\b|\brings?\b|\bpendants?\b|\bsnapbacks?\b|"
-                    r"\btruckers?\b|\bbandanas?\b|\bweekenders?\b|\bbriefcases?\b"),
+                    r"\btruckers?\b|\bbandanas?\b|\bweekenders?\b|\bbriefcases?\b|\bwatch(?:es)?\b"),
 ]
 # Last resort for brand-store items still untagged: stores that sell essentially one garment type and name
 # products by model ("Kizik: Men's London", "Sarah Flint: Perfect Marta 85", "Stance: SHELTER WOMENS CREW").
@@ -469,6 +486,8 @@ CLOTHING_FALSE_POSITIVE = [
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
     r"\bduvet", r"\bpillow", r"\bquilts?\b", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
     r"\bnapkin", r"\btablecloth", r"\bplacemat", r"\bmug\b", r"\bornament", r"bath mat", r"\bdinnerware",
+    # "Quince Ceramic Nonstick Cookware" (2026-11-26: Quince is a clothing brand that also sells kitchenware)
+    r"\bcookware\b", r"\bnon-?stick\b", r"\bskillets?\b", r"\bdutch ovens?\b", r"\b(?:frying|sauce) ?pans?\b",
     # garment words in other senses, seen on the live site 2026-11-18 (compression leg massager, thermal printer,
     # "Golf+ ... Tee Off in VR", nylon cable tie, laser tag "no vest needed", a Joe Abercrombie ebook)
     r"massag", r"thermal (?:printer|paper|label|camera|imag)", r"label printer", r"\btee off\b", r"\bgolf tees?\b",

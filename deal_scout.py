@@ -145,6 +145,19 @@ def strip_tracking(url: str) -> str:
     return urlunsplit((p.scheme, p.netloc, p.path, urlencode(q), p.fragment))
 
 
+def pick_articles(arts: list[Item], n: int = C.MAX_ARTICLES, per_source: int = C.MAX_ARTICLES_PER_SOURCE) -> list[Item]:
+    """The Sale roundups tab: the best n articles (already sorted by score), at most per_source from one site.
+    Lifehacker had 38 of the 120 on 2026-11-26, mostly tech, crowding out the fashion desks."""
+    out, per = [], {}
+    for a in arts:
+        if per.get(a.source, 0) < per_source:
+            per[a.source] = per.get(a.source, 0) + 1
+            out.append(a)
+            if len(out) >= n:
+                break
+    return out
+
+
 # ---------------------------------------------------------------------------
 def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
     SITE.mkdir(exist_ok=True)
@@ -152,7 +165,7 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
     arts = [i for i in items if i.kind == "article"]
     # Page weight: low-scoring non-clothing deals are dropped (they never surface), clothing is all kept.
     deals = [i for i in deals if i.is_clothing or i.watch or i.score >= C.MIN_NONCLOTHING_SCORE]
-    keep = scoring.pick_for_page(deals) + arts[:120]
+    keep = scoring.pick_for_page(deals) + pick_articles(arts)
     keep.sort(key=lambda x: -x.score)
 
     DROP = {"boost", "feed_tags", "history_key", "thread_id", "comments", "store_median", "published",

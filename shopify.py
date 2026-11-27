@@ -32,6 +32,8 @@ WATCH_RES = [re.compile(rx, re.I) for _, rx in C.WATCH]
 
 SKIP_TITLE = re.compile(r"gift ?card|e-?gift|shipping protection|\broute\b|warranty|insurance|donation|"
                         r"mystery|sample|swatch|test product|do not purchase", re.I)
+RESALE = re.compile(r"\bresale\b|\bpre-?owned\b|\bpre-?loved\b|\bsecond-?hand\b|\bused\b|\bre-?commerce\b|"
+                    r"\bworn wear\b|\bgently worn\b|\brenewed\b|\brefurbished\b", re.I)
 
 
 EXACT_SALE = re.compile(r"^(?:sale|sales|shop-sale|all-sale|sale-all|on-sale|the-sale|sale-items|black-?friday|"
@@ -245,6 +247,12 @@ def _product_item(store: str, domain: str, p: dict) -> Item | None:
     # some stores put markup in titles ("Hawaiian <span> Red Tiger </span>", Freenote Cloth 2026-11-25)
     title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", p.get("title") or "")).strip()
     if SKIP_TITLE.search(title) or SKIP_TITLE.search(p.get("product_type") or ""):
+        return None
+    # used / resale items are priced against the new price: not a markdown ("iconoclast-high-rise-skinny-...-resale",
+    # Outerknown, shown as 88% off on 2026-11-26)
+    raw_tags = p.get("tags") or []
+    tag_str = raw_tags if isinstance(raw_tags, str) else " ".join(raw_tags)
+    if RESALE.search(f"{(p.get('handle') or '').replace('-', ' ')} {title} {p.get('product_type') or ''} {tag_str}"):
         return None
     variants = p.get("variants") or []
     if not variants:

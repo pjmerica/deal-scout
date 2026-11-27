@@ -164,6 +164,31 @@ def sd_store(encoded: str, desc: str) -> str:
     return named
 
 
+# Feeds that link straight to the retailer (TechBargains, some 9to5Toys posts): the store is the link's domain when it's
+# a known store ("https://www.amazon.com/gp/product/..." -> Amazon). Deal-site and blog links are not stores.
+LINK_STORES = {"amazon": "Amazon", "walmart": "Walmart", "target": "Target", "bestbuy": "Best Buy", "ebay": "eBay",
+               "costco": "Costco", "samsclub": "Sam's Club", "homedepot": "Home Depot", "lowes": "Lowe's",
+               "macys": "Macy's", "kohls": "Kohl's", "nordstrom": "Nordstrom", "nordstromrack": "Nordstrom Rack",
+               "woot": "Woot", "newegg": "Newegg", "bhphotovideo": "B&H Photo", "adorama": "Adorama", "dell": "Dell",
+               "lenovo": "Lenovo", "samsung": "Samsung", "apple": "Apple", "nike": "Nike", "adidas": "adidas",
+               "rei": "REI", "dickssportinggoods": "Dick's Sporting Goods", "zappos": "Zappos", "gap": "Gap",
+               "oldnavy": "Old Navy", "jcrew": "J.Crew", "llbean": "L.L.Bean", "landsend": "Lands' End",
+               "gamestop": "GameStop", "staples": "Staples", "wayfair": "Wayfair", "jcpenney": "JCPenney",
+               "ulta": "Ulta", "sephora": "Sephora", "underarmour": "Under Armour", "levi": "Levi's"}
+
+
+def store_from_link(link: str) -> str:
+    try:
+        host = (urlsplit(link).hostname or "").lower()
+    except ValueError:
+        return ""
+    parts = host.split(".")
+    label = parts[-2] if len(parts) >= 2 else ""
+    if label == "co" and len(parts) >= 3:  # amazon.co.uk
+        label = parts[-3]
+    return LINK_STORES.get(label, "")
+
+
 def parse_feed(content: bytes, source: str, kind: str, boost: float) -> list[Item]:
     soup = BeautifulSoup(content, "xml")
     entries = soup.find_all("item") or soup.find_all("entry")
@@ -210,11 +235,15 @@ def parse_feed(content: bytes, source: str, kind: str, boost: float) -> list[Ite
         m = re.search(r"Thumb Score:\s*([+-]?\d+)", encoded or "")
         if m:
             it.votes = int(m.group(1))
-        r_el = e.find("retailer")
+        r_el = e.find("retailer") or e.find("vendorname")  # DealNews <retailer>, TechBargains <vendorname>
         if r_el is not None:
             it.store = r_el.get_text(strip=True)
         if not it.store and it.thread_id:
             it.store = sd_store(encoded, clean_text(desc_raw, 200))
+        if not it.store:
+            it.store = store_from_link(link)
+        if _alnum(it.store) == _alnum(source):  # TechBargains' own roundups name itself as the vendor
+            it.store = ""
         p_el = e.find("price")
         if p_el is not None:
             try:

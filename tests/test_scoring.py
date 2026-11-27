@@ -740,6 +740,66 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_articles_capped_per_source():
+    import deal_scout
+    arts = [Item(title=f"a{n}", link=f"x/{n}", source="Lifehacker" if n < 50 else f"S{n % 7}", kind="article")
+            for n in range(200)]
+    picked = deal_scout.pick_articles(arts, n=120, per_source=20)
+    assert len(picked) == 120 and sum(a.source == "Lifehacker" for a in picked) == 20
+
+
+def test_resale_items_are_not_markdowns():
+    # used items priced against the new price (Outerknown "...-resale" showed as 88% off, 2026-11-26)
+    def product(handle, title="Iconoclast High Rise Skinny - Outerworn", tags=()):
+        return {"title": title, "handle": handle, "product_type": "Jeans", "tags": list(tags),
+                "variants": [{"available": True, "price": "30.00", "compare_at_price": "248.00"}]}
+    assert shopify._product_item("Outerknown", "outerknown.com", product("iconoclast-high-rise-skinny-93xd6xofbt-resale")) is None
+    assert shopify._product_item("Patagonia", "x.com", product("fleece", "Worn Wear Retro-X Fleece")) is None
+    assert shopify._product_item("X", "x.com", product("jacket", "Down Jacket", tags=["pre-owned"])) is None
+    assert shopify._product_item("Outerknown", "outerknown.com", product("iconoclast-high-rise-skinny")) is not None
+
+
+def test_store_from_headline_start():
+    # Hip2Save / TechBargains / 9to5Toys headlines name the store first (141 deals had no store, 2026-11-26)
+    assert mk("Kohl's Black Friday Doorbusters | Up to 70% Off Sweaters, Boots & More", source="Hip2Save").store == "Kohl's"
+    assert mk("American Eagle Black Friday Sale: 50% Off ALL Jeans", source="Hip2Save").store == "American Eagle"
+    assert mk("Amazon - Nike Men's Winflo 11 Road Running Shoes $71.74").store == "Amazon"
+    assert mk("Sportsmans Warehouse - Darn Tough socks BOGO $2").store == "Sportsmans Warehouse"
+    assert mk("Hoka Black Friday Sale: Up to 40% off").store == "Hoka"
+    # a brand before a dash is usually sold elsewhere; a brand before a product is not a store; "at X" still wins
+    assert mk("Apple - AirPods Pro 3 Wireless Earbuds").store == ""
+    assert mk("Nike Men's Air Max 270 Shoes (White) $70.48").store == ""
+    assert mk("Nike Black Friday Deals at Macy's: Up to 70% off").store == "Macy's"
+    assert mk("Kohl’s Black Friday Doorbusters | Up to 70% Off").store == "Kohl's"  # curly apostrophe
+    assert mk("Woot! Daily Deals: Up to 80% Off Appliances, Bose, More", source="TechBargains").store == "Woot"
+    assert mk("Bonobos 30% – 40% off most Black Friday 2026", source="Dappered").store == "Bonobos"
+    assert mk("J. Crew 40% off Black Friday 2026", source="Dappered").store == "J.Crew"
+    # feeds that link straight to the retailer, and TechBargains' <vendorname>
+    import feeds
+    assert feeds.store_from_link("https://www.amazon.com/gp/product/B0GJTFXNRX/ref=ox_sc") == "Amazon"
+    assert feeds.store_from_link("https://slickdeals.net/f/123") == "" and feeds.store_from_link("") == ""
+    xml = (b'<rss><channel><item><title>Apple 2nd Generation AirTag Tracker $18</title><link>https://x.example/a</link>'
+           b'<vendorname>Amazon</vendorname></item></channel></rss>')
+    assert feeds.parse_feed(xml, "TechBargains", "deal", 0)[0].store == "Amazon"
+
+
+def test_more_classification_fixes():
+    # Quince sells cookware too; watches are accessories; Peloton bottles aren't home-gym gear (2026-11-26)
+    assert not mk("Today Only: Rare Black Friday Savings on Quince Ceramic Nonstick Cookware + Free Shipping").is_clothing
+    w = mk("Lacoste 12.12 Men's Quartz Watch (White TR90 Case, Silicone Strap) $53.43 - Amazon")
+    assert not w.is_clothing or w.clothing_tags == ["Accessories"]
+    assert "Gym deals" not in mk("24-Oz Peloton x CamelBak Podium BPA-Free Water Bottle (Black) $10.50").watch
+    assert mk("Peloton Cross Training Tread Treadmill w/ 24\" HD Swivel Touchscreen $2560").watch == ["Gym deals"]
+    # Switch 2 sub-filters: accessory kits aren't console bundles; the bare console is a console
+    assert mk("[Prime] $12.91* | ivoler 21-in-1 Accessories Bundle Kit for Nintendo Switch 2 w/ Carrying Case").watch_tags \
+        == ["Accessories"]
+    assert mk("Nintendo Switch 2 - Black ($391.99 + S/H)").watch_tags == ["Consoles & bundles"]
+    assert mk("Nintendo Switch 2 + Mario Kart World Bundle $499.99 @Best Buy").watch_tags == ["Consoles & bundles"]
+    # "buy N, get M free" as a discount: 10 of 20 classes free is 50% off
+    assert mk("Pure Barre: Black Friday Special Buy 10 Classes, Get 10 Free").pct_off == 50
+    assert mk("Old Navy Socks: Buy 2, Get 1 Free").pct_off == 33
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

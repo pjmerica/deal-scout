@@ -5,6 +5,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 **https://pjmerica.github.io/deal-scout/**
 
 **Agents and maintainers: start with [HANDOFF.md](HANDOFF.md)** (owner decisions, how things break, how to verify).
+**[CHANGELOG.md](CHANGELOG.md)** lists every change since the first commit; add an entry with each change.
 
 > **Credit cards, cash back and card news moved out on 2026-11-18** to the companion project **Card Scout**
 > (`Documents\card-scout`, https://github.com/pjmerica/card-scout, https://pjmerica.github.io/card-scout/). Its

@@ -1,0 +1,185 @@
+# Changelog
+
+Every change to Deal Scout, newest first. **Rule for every future change (people and agents):** add an entry here
+in the same commit: the date, what changed on the site or in the logic, and why (the bug seen, or the owner's
+request). Commit hashes are filled in once a change is committed. Owner decisions live in HANDOFF.md §1, and this
+file links to them where one applies.
+
+Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
+
+---
+
+## 2026-11-27
+
+### Fixes from an audit of the live data
+Owner: "keep trying to fix and improve everything as much as possible and document all prior and future changes".
+The audit checked the 2,520 live items for expired deals (none), duplicates (none), dead sources (Hypebeast and
+Reddit, both known), price oddities, clothing misreads, store names and the Watching lists.
+
+- **Resale items are no longer counted as markdowns.** Outerknown's used "Iconoclast High Rise Skinny" (product link
+  ending `-resale`) showed as 88% off, priced against the new price. Brand-store products whose link, title, type or
+  tags say resale, pre-owned, used, Worn Wear or refurbished are skipped (`shopify.RESALE`).
+- **Store names for deals that had none.** 141 deals had no store, mostly Hip2Save, TechBargains and 9to5Toys
+  headlines that open with the store ("Kohl's Black Friday Doorbusters", "American Eagle Black Friday Sale").
+  - A known store or brand at the start of a sale headline is now the store (`scoring.LEAD_STORE_RE`, lists in
+    `config.EXTRA_STORES` / `EXTRA_BRANDS`).
+  - Retailers count before a dash too ("Amazon - Nike Men's ..."). Brands count only before sale words: "Apple -
+    AirPods" is usually sold somewhere else.
+  - "Deals at Macy's: Up to 70% off" now reads the store after "at" when a colon follows (29 live headlines).
+  - TechBargains' `<vendorname>` field is read as the store. Feeds that link straight to a retailer
+    ("https://www.amazon.com/...") take the store from the link (`feeds.store_from_link`).
+  - Curly apostrophes ("Kohl’s"), "Woot! Daily Deals", "Bonobos 30% – 40% off" and "J. Crew" are also handled.
+  - Result: storeless deals in a test build fell from 212 to 109. Store names feed the Best list's
+    one-per-store rule and the Rakuten / card-offer badges.
+- **Switch 2 filters:** accessory kits ("21-in-1 Accessories Bundle Kit") moved from Consoles & bundles to
+  Accessories, and the bare console ("Nintendo Switch 2 - Black") from Games to Consoles.
+- **Sale roundups tab: at most 20 articles from one site.** Lifehacker had 38 of the 120 slots, mostly tech, on a
+  clothing-first site (`config.MAX_ARTICLES_PER_SOURCE`).
+- **Cookware isn't clothing.** "Quince Ceramic Nonstick Cookware" was in Clothing (Quince is a clothing brand).
+  Cookware, nonstick, skillets, dutch ovens and pans are now excluded.
+- **Watches get the Accessories type** instead of no garment type.
+- **Peloton bottles, straps and apparel are not home-gym gear** (Gym deals → Home gym gear); treadmills and bikes are.
+- **"Buy 10 classes, get 10 free" counts as 50% off** and "buy 2, get 1 free" as 33%. Pure Barre's offer had no
+  discount badge.
+- **This changelog**, with every change since the first commit, and a rule in HANDOFF.md to keep it current.
+
+---
+
+## 2026-11-26
+
+### `3f9d0ad` Gym deals: offers from 28 gyms' own sites, NYC and basketball-court filters
+Owner: "look for gym deals, especially ones in NYC", then "find ones with basketball facilities too" (HANDOFF §1).
+- `gyms.py` reads 28 gyms' own pages each run (`config.GYMS`) and keeps the membership offer line each one
+  advertises. A line needs an occasion (Black Friday, holiday, New Year, "sale ends") and terms ($0 down, % off,
+  free month, buy N get N). Deal sites barely post memberships, and news searches found gyms in other states.
+- Each gym entry records where its NYC locations and basketball courts are, checked on the gyms' own sites. The card
+  shows this on a 📍 line.
+  - Courts: Equinox Sports Club NY and East 61st, Life Time Sky, the Y, JCC Manhattan, Manny Cantor Center, Asphalt
+    Green BPC, Chelsea Piers Field House, LA Fitness, 24 Hour Fitness.
+- Watching tab: "Gym deals", with overlapping filters NYC / Basketball courts / Memberships & classes / Home gym gear.
+  It also takes membership and home-gym posts from the deal sites, plus 11 new Slickdeals searches.
+- Membership terms ("$0 join fee", "save $180") are not shown as prices, and don't get the "Membership required"
+  warning. Gym offers count the gym as the brand (no "Lesser-known brand"), with category Outdoor & Fitness.
+- "Ends 11.30" (dotted dates after an end word) is read as an end date. "Join ... by November 30" ends a gym offer.
+- Watched deals past the 400 cap now compete for ordinary page slots. Before, the overflow vanished.
+
+### `016f621` Watching badge: same size as the other badges
+
+### `2e77321` Watching filters: counts, sub-filters per item, max price, badge jump
+Owner: "can you add filters for these items?"
+- Item chips with counts. Picking one adds its own filters (`config.WATCH_SUB`):
+  - Detroit gear by team;
+  - Switch 2 by consoles & bundles / accessories / games;
+  - team-gear sales by league.
+- Max-price menu (under $25 / $50 / $100 / $200) on every list.
+- A 👀 badge on any card opens the Watching tab filtered to that item.
+
+### `a90238c` Team gear sales: store-wide sales only
+Detroit City FC's "47 Brand Oversized DETROIT Crew" was listed as a team-gear sale. For brand-store items the label
+now comes only from the team-gear stores' sitewide promos.
+
+### `3ff814e` Watching: Detroit gear and team-gear sales; 9 team-gear and Detroit stores
+Owner: "look for any Detroit sports gear deals".
+- Deal sites post almost no team-specific gear, so the team-gear stores and Detroit stores are now read directly:
+  - team gear: '47, New Era, Ebbets, Charlie Hustle, Sportiqe, Homage, Junk Food;
+  - Detroit: Detroit City FC, Ink Detroit.
+- "Detroit gear" matches the team name, or team plus league. Not "Detroit" alone (Detroit Axle) or "Tigers" alone
+  (LSU).
+
+### `e7e55b7` End dates and timing on cards; Watching tab (Air Force 1, Switch 2); drop frozen feed
+Owner: "is there a timeframe on how long the deals are?", "Air Force 1s and Nintendo Switch 2 are big for deals for
+me".
+- `ends.py` reads end dates from the deal's own words ("Ends 12/1", "through November 30", "today only", "ends Cyber
+  Monday"), or DealNews's expiry field minus its "posted + 90 days" filler. This adds a ⏰ badge and an "Ending
+  soonest" sort. Deals already over are dropped: 9 were still showing.
+- Every card says how long it's been up ("On sale since Nov 20 · 6 days" / "Posted Nov 24 · 2d ago").
+- Watching list (`config.WATCH`): Air Force 1s and Switch 2, with a badge and their own tab, always kept on the page.
+- Krazy Coupon Lady removed: its feed is a frozen archive.
+
+## 2026-11-25
+
+### `1c7182c` Garment types for model names at shoe and denim brands; hats, bags; titles without markup
+Shoe brands → Footwear, denim brands → Bottoms when the product name is a model ("Clae: MORRISON"). Snapbacks,
+truckers and bandanas are Accessories. Duffle bags aren't clothing, but duffle coats are. HTML is stripped from
+Shopify titles.
+
+### `b83a010` Garment types: ignore the store's name in brand-store titles; bibs, blankets, jewelry
+"Kickee Pants: Knot Headband" was tagged Bottoms because of the store name. Garment words now read only the product
+part. Dress socks aren't dresses. Ski bibs are bottoms, but baby bibs and swaddles aren't clothing.
+
+### `eecba0a` Page slots: brand stores no longer crowd out feed and non-clothing deals
+With 205 stores, brand-store markdowns took all 2,400 slots: non-clothing deals fell from 478 to 91. Now:
+- each store keeps its best 8;
+- feed deals get first claim on 1,300 slots;
+- unused room goes to the other side.
+
+### `ad16573` Expand sources: 69 brand stores, DealNews clothing feeds fixed, ~65 searches, new feeds
+- DealNews "Women's" and "Shoes" feeds were returning travel deals. They were replaced, and men's, coats, jeans,
+  hoodies, activewear and kids' shoes feeds were added.
+- 69 Shopify stores added (205 total).
+- New feeds: Dappered, TechBargains, Gear Patrol, The Strategist, Marie Claire, Elle, Vogue.
+
+### `e8fdc23` Brand stores: Black Friday collections win over off-season ones
+Oliver Cabell's scan picked "july-sale" in November. Black Friday words now count anywhere in a collection name, and
+collections named for another season lose 70 points.
+
+### `95116bf` Anchor clothing false-positive words, garment-type fallback, kids' brands to Kids
+- False-positive words now match whole words only. "cruise" had hidden Cruiser shoes, "tire" every "entire", and
+  "cat" Cat & Jack.
+- Garment type for the 417 clothing items whose title named none. New Swimwear chip.
+- Kids' brands' dresses are Kids, not Women's.
+
+## 2026-11-18
+
+### `6281671` Store names for Slickdeals deals, clothing false positives, promo-menu and gender fixes
+- Slickdeals store from the outbound link and description: deals with no store fell from 48% to 13%.
+- Brand names that are ordinary words (Diesel, Mango, Express) need a garment word. Lysol wipes and a Keurig had
+  been in Clothing.
+- Filter menus ("20% Off Sale ... 70% Off Sale") are no longer read as promos.
+
+### `f27649d` HANDOFF: note phrase-quoted Slickdeals searches
+
+### `1cb512f` Quote multi-word Slickdeals searches
+"free people" returned body wash and cameras. Multi-word searches are now phrase matches.
+
+### `3fedb53` 55 more brand stores, ~40 retailer searches, end-date guard
+- Stores verified from CI (136 total).
+- Store names that are ordinary words (Cuts, FRAME, MOTHER) aren't matched in headlines.
+- Searches for retailers that block scraping.
+- Scheduled runs stop after 2027-01-17 (owner's planned end).
+
+### `f58f5b7` tools: probe candidate Shopify stores from CI (probe.yml)
+
+### `e4ce82c` HANDOFF.md for agents + tools/shots.js real-browser check
+
+### `a7c1586` Banner codes: only take a nearby code when it can't belong to a different promo
+Steve Madden's code EARLY was shown on the wrong promo.
+
+### `60d8444` Health check: manual test-alert switch
+
+### `d6ab479` Fake-sale detector, promo codes, Card Scout stack hints, health alerts, lighter page
+- `history.py` flags an inflated "original" price or a recent lower price.
+- `codes.py` adds copy buttons for promo codes.
+- `stacks.py` shows Rakuten and card offers from Card Scout.
+- `tools/health.py` keeps the self-closing "Site health" issue.
+- Page weight roughly halved.
+
+### `7aa7249` Cleanup: structured gender tags, tighter promo text
+
+### `fcf5b14` Fixes from a real-browser look at the live site
+Brand thumbnails were ~4 MB and showed blank. Colour and size variants are collapsed. Compact header on phones.
+
+### `a89a70c` Split: Deal Scout is Black Friday deals only; cards moved to card-scout
+Also: tab clicks threw an error on a removed state field, and the smoke test now clicks every control.
+
+### `69a7dfe` Men's / Women's / Kids filter across deal tabs and brand sales
+
+### `61005a1` NEW badge = appeared since the previous run
+
+### `24b7239` Best list: one pick per store/brand; soften no-name deals
+
+### `7eeed95` Deeper deal logic: brand-store scanning, explainable quality score, run history
+81 Shopify stores, the Deal Quality Score with reasons and warnings, run-to-run memory, more feeds, and CI tests
+before deploy.
+
+### `a77b2ad` Deal Scout: Black Friday + credit card deal scraper with GitHub Pages deploy

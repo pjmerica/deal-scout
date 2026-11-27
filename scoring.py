@@ -64,7 +64,7 @@ REG_RE = re.compile(r"(?:reg\.?|regularly|was|list(?: price)?|orig(?:inal(?:ly)?
                     r"down from|normally)\s*:?\s*\$\s?(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 TO_FROM_RE = re.compile(r"(?:to|for|is|at)\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)\s*,?\s*(?:down\s+)?from\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 DOLLARS_OFF_RE = re.compile(r"(?:save|\bget)\s+\$(\d{2,4})|\$(\d{2,4})\s+off\b", re.I)
-STORE_FROM_TITLE = re.compile(r"(?:\bat|@|\bvia|\bfrom)\s+((?:\d+ )?[A-Z][\w'&.\- ]{1,30}?(?:\.com)?)(?:\s*(?:\(|\+|$|,| -|\|))")
+STORE_FROM_TITLE = re.compile(r"(?:\bat|@|\bvia|\bfrom)\s+((?:\d+ )?[A-Z][\w'&.\- ]{1,30}?(?:\.com)?)(?:\s*(?:\(|\+|$|,| -|\||:\s))")
 # Hip2Save-style "Only $9.34 on Amazon (Reg. $26)", "on Macys.com": "on" is too common a word, so only a .com
 # name or a big marketplace counts
 STORE_ON_RE = re.compile(r"\bon\s+([A-Z][\w'&\-]+\.com|Amazon|Walmart|Target|eBay|Etsy|Woot)\b")
@@ -249,6 +249,11 @@ def brand_title(b: str) -> str:
     return BRAND_DISPLAY.get(b) or re.sub(r"(?<![\w'’])\w", lambda m: m.group(0).upper(), b)
 
 
+_NUM_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+BUY_GET_RE = re.compile(r"\bbuy (\d{1,2}|one|two|three|four|five)(?: [a-z]+){0,2},? get (\d{1,2}|one|two|three|four|five)"
+                        r"(?: [a-z]+){0,2} free\b", re.I)
+
+
 def _promo_discount(text: str) -> tuple[float, list[int]]:
     """Base % and stackable extra %s found in one piece of text."""
     base, extras = 0.0, []
@@ -269,6 +274,11 @@ def _promo_discount(text: str) -> tuple[float, list[int]]:
     m = DOWN_RE.search(text)
     if m:
         base = max(base, int(m.group(1)))
+    n_free = BUY_GET_RE.search(text)  # "Buy 10 Classes, Get 10 Free" (Pure Barre): 10 of 20 free = 50%
+    if n_free:
+        buy, get = (_NUM_WORDS.get(x.lower()) or int(x) for x in n_free.groups())
+        if buy and get:
+            base = max(base, round(100 * get / (buy + get)))
     if re.search(r"\bbogo\b(?! 50)|buy one,? get one free|buy 1,? get 1 free", text, re.I):
         base = max(base, 50)
     elif re.search(r"buy 2,? get 1 free|b2g1", text, re.I):
@@ -330,8 +340,11 @@ def extract_pricing(it: Item) -> None:
         it.price = it.orig_price = None
     if not it.store:
         m = STORE_FROM_TITLE.search(it.title) or STORE_ON_RE.search(it.title)
+        lead = LEAD_STORE_RE.match(it.title)
         if m:
             it.store = m.group(1).strip(" .-")
+        elif lead:
+            it.store = STORE_CANON.get(_alnum(lead.group(1))) or brand_title(lead.group(1))
         else:
             m = re.search(r"\b([A-Z][\w&'\-]+(?:\s[A-Z][\w&'\-]+){0,2})\s*\[(?:www\.)?([\w\-]+)\.[\w.]+\]", it.summary)
             if m:
@@ -363,6 +376,33 @@ def tidy_store(s: str) -> str:
 
 
 STORE_CANON = {_alnum(k): v for k, v in SLUG_NAMES.items()} | {_alnum(v): v for v in SLUG_NAMES.values()}
+# A store or brand opening a sale headline: "Kohl's Black Friday Doorbusters", "American Eagle Black Friday Sale: 50% Off
+# ALL Jeans", "Sportsman's Warehouse - Darn Tough socks BOGO" (Hip2Save / TechBargains / 9to5Toys name no store
+# otherwise; 141 deals had none on 2026-11-26). Only before sale words, so "Nike Men's Air Max" stays storeless.
+_LEAD_STORES = {*STORE_CANON.values(), *C.EXTRA_STORES}
+_LEAD_NAMES = sorted((_LEAD_STORES | {brand_title(b) for b in BR.BASELINE} | set(C.EXTRA_BRANDS))
+                     - {brand_title(b) for b in BR.AMBIGUOUS_NAMES}, key=len, reverse=True)
+_SALE_WORDS = (r"(?:early |annual |big |official |daily |thanksgiving )?(?:black friday|cyber (?:monday|week)|sale\b|"
+               r"sitewide|doorbusters?|deals?\b|clearance|semi-annual|friends (?:&|and) family|\d{1,2}\s?%|up to \d|"
+               r"extra \d|bogo)")
+
+
+class _LeadStore:
+    """match(title) -> the store name opening a sale headline, or None. A brand counts only before sale words; a dash
+    or colon after the name ("Amazon - Nike Men's ...") counts only for real stores ("Apple - AirPods" is the brand)."""
+    RX = re.compile(r"^(?:\[[^\]]*\]\s*|today only:?\s*)*(" + "|".join(re.escape(n) for n in _LEAD_NAMES) + r")!?(?:'s)?"
+                    r"(?=\s*(?:(?P<sep>[-–—:|]\s)|" + _SALE_WORDS + r"))", re.I)
+    STORES = {_alnum(s) for s in _LEAD_STORES}
+
+    def match(self, title: str):
+        # curly apostrophes ("Kohl’s Black Friday Doorbusters") and "J. Crew" spelled with a space
+        m = self.RX.match(title.replace("’", "'").replace("J. Crew", "J.Crew"))
+        if m and m.group("sep") and _alnum(m.group(1)) not in self.STORES:
+            return None
+        return m
+
+
+LEAD_STORE_RE = _LeadStore()
 
 
 # --- deal score -------------------------------------------------------------
