@@ -5,7 +5,7 @@ Deal Scout: finds the best Black Friday deals (with a clothing bias) and writes 
 
 Pipeline
   1. Gather   RSS feeds + ~100 Slickdeals keyword searches, 80 Shopify brand stores
-              (retailer-verified prices), optional Reddit.
+              (retailer-verified prices), gym membership offers from ~30 gym sites, optional Reddit.
   2. Process  cross-feed signals (Frontpage/Popular), de-dupe, classify, stacked-discount math.
   3. Remember compare with the previous run (new deals, price drops, tracked lows, rate changes).
   4. Score    explainable Deal Quality Score -> tiers -> diversified "best of" lists.
@@ -35,6 +35,7 @@ from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 import requests
 
 import config as C
+import gyms
 import history
 import scoring
 import shopify
@@ -216,7 +217,7 @@ def write_outputs(items, status, brand_sales, hist, stack_data) -> Path:
 
     cols = ["score", "tier", "kind", "category", "is_clothing", "title", "store", "price", "orig_price", "pct_off",
             "saved", "votes", "is_new", "is_bf", "clothing_tags", "gender", "brands",
-            "reasons", "warnings", "codes", "price_note", "source", "published", "first_seen", "expires", "link"]
+            "reasons", "warnings", "codes", "price_note", "where", "source", "published", "first_seen", "expires", "link"]
     with open(SITE / "deals.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(cols)
@@ -246,17 +247,19 @@ def main() -> int:
     hist = history.load(SITE / "history.json")
     print(f"History: {len(hist['items'])} tracked items from {len(hist['runs'])} previous runs")
     print("Gathering (feeds and brand stores in parallel)…")
-    with cf.ThreadPoolExecutor(max_workers=2) as ex:
+    with cf.ThreadPoolExecutor(max_workers=3) as ex:
         f_feeds = ex.submit(gather_feeds, args.quick)
         f_shop = ex.submit(lambda: ([], [], []) if args.quick else shopify.scan_all())
+        f_gyms = ex.submit(gyms.scan_all)  # ~30 gym pages (config.GYMS), cheap enough for --quick too
         feed_items, feed_status = f_feeds.result()
         shop_items, brand_sales, shop_status = f_shop.result()
+        gym_items, gym_status = f_gyms.result()
     print(f"  brand stores: {len(shop_items)} items kept from {len(brand_sales)} stores")
     stack_data, stack_status = STACKS.load(C.CARD_SCOUT_URL)
     print(f"  card scout stack data: {len(stack_data)} stores")
-    status = feed_status + shop_status + [stack_status]
+    status = feed_status + shop_status + gym_status + [stack_status]
 
-    items = scoring.process(feed_items + shop_items)
+    items = scoring.process(feed_items + shop_items + gym_items)
     history.apply(hist, items)
     history.apply_promos(hist, brand_sales)
     STACKS.apply(stack_data, items, brand_sales)

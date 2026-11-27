@@ -165,11 +165,23 @@ def classify(it: Item) -> None:
                                                  and "sitewide_promo" in it.flags else None)
         if extra and extra not in it.watch:
             it.watch.append(extra)
-    it.watch_tags = [next((name for name, rx in WATCH_SUB_RES[w] if rx.search(it.title)), "")
-                     for w in it.watch if w in WATCH_SUB_RES]
-    it.watch_tags = [t for t in it.watch_tags if t]
+    for prefix, label in C.WATCH_SOURCES.items():  # gym sites: every offer is a "Gym deals" item
+        if it.source.startswith(prefix) and label not in it.watch:
+            it.watch.append(label)
+    # second-level filters: the first match, or every match for WATCH_SUB_MULTI labels (a "." catch-all only when no
+    # other matched). Tags a source already set (gyms.py: NYC / Basketball courts from config.GYMS) are kept.
+    tags = list(it.watch_tags)
+    for w in it.watch:
+        subs = WATCH_SUB_RES.get(w, [])
+        named = [name for name, rx in subs if rx.pattern != "." and rx.search(it.title)]
+        catch = [name for name, rx in subs if rx.pattern == "."][:1]
+        if w in C.WATCH_SUB_MULTI:
+            tags += named or ([] if any(name in tags for name, _ in subs) else catch)
+        else:
+            tags += named[:1] or catch
+    it.watch_tags = list(dict.fromkeys(tags))
     other ={m.group(0).lower() for m in OTHER_BRAND_RE.finditer(title)} - (BR.CONTEXT_NAMES - brands)
-    if not brand_store:
+    if not brand_store and "gym_offer" not in it.flags:  # gym offers: the gym is the brand (gyms.py)
         it.brands = sorted({brand_title(b) for b in brands | other})[:6]
     if not it.gender:
         if it.is_clothing:
@@ -184,18 +196,23 @@ def classify(it: Item) -> None:
             if rx.search(title) or rx.search(ft):
                 it.category = cat
                 break
+        if "Gym deals" in it.watch:
+            it.category = "Outdoor & Fitness"  # not Beauty & Health for a JCC "Health Club"
     it.is_bf = bool(BF_RE.search(f"{it.title} {it.summary[:200]}"))
     if not it.codes:
         it.codes = CODES.extract(f"{it.title} {it.summary[:400]}")
 
 
 def pick_for_page(deals: list[Item], max_deals: int = C.MAX_DEALS, feed_slots: int = C.FEED_SLOTS,
-                  per_store: int = C.MAX_ITEMS_PER_STORE) -> list[Item]:
-    """The deals that go on the page: everything on the Watching list (config.WATCH), then each brand store's best
+                  per_store: int = C.MAX_ITEMS_PER_STORE, watch_first: bool = True) -> list[Item]:
+    """The deals that go on the page: the Watching list (config.WATCH, up to MAX_WATCHED), then each brand store's best
     `per_store`, feed deals first for `feed_slots`, then whatever room is left by score (see config.MAX_DEALS)."""
-    watched = sorted((i for i in deals if i.watch), key=lambda x: -x.score)[:300]
+    watched = sorted((i for i in deals if i.watch), key=lambda x: -x.score)[:C.MAX_WATCHED] if watch_first else []
     if watched:
-        rest = pick_for_page([i for i in deals if not i.watch], max_deals - len(watched), feed_slots, per_store)
+        # past the cap, watched deals compete for ordinary slots instead of disappearing
+        keep = {id(i) for i in watched}
+        rest = pick_for_page([i for i in deals if id(i) not in keep], max_deals - len(watched), feed_slots, per_store,
+                             watch_first=False)
         return sorted(watched + rest, key=lambda x: -x.score)
     deals = sorted(deals, key=lambda x: -x.score)
     feed = [i for i in deals if not i.source.startswith("Brand store")]
@@ -308,6 +325,9 @@ def extract_pricing(it: Item) -> None:
     it.pct_off = min(int(round(eff)), 90) if eff >= 0.5 else None
     if extras and base and not assumed and not price_pct and it.pct_off:
         it.reasons.append(f"Stacked discount ≈ {it.pct_off}% off")
+    if "Memberships & classes" in it.watch_tags and "Home gym gear" not in it.watch_tags:
+        # "$0 join fee", "$1 down", "save $180": membership terms, not an item's price (the % off badge stays)
+        it.price = it.orig_price = None
     if not it.store:
         m = STORE_FROM_TITLE.search(it.title) or STORE_ON_RE.search(it.title)
         if m:
@@ -447,6 +467,8 @@ def score_deal(it: Item) -> None:
 
     # catches
     for rx, pts, label in CATCHES:
+        if label == "Membership required" and "Gym deals" in it.watch:
+            continue  # a gym membership is the thing being sold, not a catch
         if rx.search(it.title) or (pts > -10 and rx.search(it.summary[:200])):
             s += pts
             W.append(label)

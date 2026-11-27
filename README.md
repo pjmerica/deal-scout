@@ -16,7 +16,7 @@ GitHub Actions re-scrapes every 3 hours and redeploys the site to GitHub Pages:
 |---|---|
 | 🏆 Best | Diversified top 60 (one per store and per brand, colour variants collapsed), then the best picks in each category |
 | 👕 Clothing | Every clothing and footwear deal, with category chips (Outerwear, Tops, Footwear, …) |
-| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales), wherever it ranks. Filter by item, then by team, console/game/accessory or league; click any 👀 badge to jump here |
+| 👀 Watching | Every deal for the things you watch (`config.WATCH`: Air Force 1s, Nintendo Switch 2, Detroit teams' gear, team-gear store sales, gym deals), wherever it ranks. Filter by item, then by team, console/game/accessory, league, or for gyms NYC / basketball courts / memberships / home gym gear (gym filters overlap); click any 👀 badge to jump here. Gym offers show 📍 where the NYC locations and basketball courts are |
 | 🏷 Brand sales | 214 brands' own stores: live sitewide promo, number of items on sale, typical and max discount, top picks |
 | 🖤 Black Friday | Deals that mention Black Friday, Cyber Monday or doorbusters |
 | 🔥 All deals | Everything, with category chips (Tech, Home & Kitchen, Toys, …) |
@@ -31,8 +31,9 @@ Non-clothing deals are never hidden by it.
 
 | Layer | Sources |
 |---|---|
-| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 210 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, and top tech and home categories), DealNews (main, clothing, men's, women's, shoes, coats, jeans, hoodies, activewear, kids' clothes and shoes, electronics, computers, home), Dappered, Hip2Save, Ben's Bargains, 9to5Toys, TechBargains, DealCatcher, camelcamelcamel top price drops |
+| Deal aggregators | Slickdeals (frontpage, popular, hot deals, plus about 230 keyword searches: clothing items, ~90 apparel brands and big retailers that block scraping, "price mistake", "all time low", gift card deals, top tech and home categories, and the Watching list: Switch 2, Air Force 1, Detroit teams, gym memberships and home-gym gear), DealNews (main, clothing, men's, women's, shoes, coats, jeans, hoodies, activewear, kids' clothes and shoes, electronics, computers, home), Dappered, Hip2Save, Ben's Bargains, 9to5Toys, TechBargains, DealCatcher, camelcamelcamel top price drops |
 | Brand stores (direct) | **214 clothing brands' Shopify storefronts**: menswear (Todd Snyder, Taylor Stitch, Faherty, Kith, Aimé Leon Dore…), women's (Sarah Flint, LoveShackFancy, Christy Dawn, STAUD, AGOLDE, MOTHER, Faithfull, Montce…), shoes (Allbirds, Thursday Boots, Rothy's, Thousand Fell, TOMS…), kids (Primary, Tea Collection, Little Sleepies) and outdoor (Cotopaxi, Outdoor Research, Stio, Ibex…). Real sale price vs original price, in-stock sizes, product tags (used for gender), and the live sitewide promo from the homepage banner |
+| Gym sites (direct) | **28 gyms' own pages** (`config.GYMS`, `gyms.py`): NYC gyms and studios (Equinox, PureGym/ex-Blink, New York Sports Clubs, Lucille Roberts, Planet Fitness, Crunch, Chelsea Piers, Harbor Fitness, Movement and Bouldering Project climbing, [solidcore], Pure Barre, CorePower, Barry's, SoulCycle, Rumble, Orangetheory, Tone House, ClassPass), gyms with basketball courts (Equinox Sports Club, Life Time Sky, the Y, JCC Manhattan, Manny Cantor Center, Asphalt Green, Chelsea Piers Field House, LA Fitness, 24 Hour Fitness) and Club Pilates. Keeps the Black Friday / holiday / New Year membership offer line a gym advertises, if any |
 | Editors | GQ, Esquire, Men's Health, Gear Patrol, The Strategist, Glamour, Marie Claire, Elle, Vogue, Harper's Bazaar, Who What Wear, Refinery29, PopSugar, Fashionista, Hypebeast, Highsnobiety, Good Housekeeping, CNET, ZDNet, The Verge, Tom's Guide, TechRadar, Lifehacker, RetailMeNot, Offers.com |
 | Optional | Reddit (r/frugalmalefashion, r/frugalfemalefashion, r/sneakerdeals, …). Needs free API keys, see below |
 
@@ -113,6 +114,7 @@ deals already over are dropped. About 1 in 4 deals has one; most deals never say
 | `deal_scout.py` | Orchestrates gathering (feeds and brand stores in parallel), processing, history, scoring and output |
 | `feeds.py` | HTTP fetching (honors `Retry-After`) and RSS/Atom parsing |
 | `shopify.py` | Brand-store scanner: sale collection discovery, products, homepage promo detection, men's/women's balance |
+| `gyms.py` | Gym-site scanner: the membership offer line on each gym's page (`config.GYMS`), with NYC locations and basketball courts |
 | `scoring.py` | Classification, pricing math, Deal Quality Score, de-duplication, diversification |
 | `gender.py` | Who a clothing deal is for |
 | `brands.py` | Brand baselines, premium list, brand audience, Shopify store list |

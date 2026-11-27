@@ -22,7 +22,26 @@ WATCH = [
     # store-wide sales at the team-gear stores (they cover the Detroit teams; deal sites rarely post team-specific gear)
     ("Team gear sales", r"\bfanatics\b(?!.*gift ?card)|\bmitchell\s*(?:&|and)\s*ness\b|\bnfl shop\b|\bmlb shop\b|"
                         r"\bnhl shop\b|\bnba store\b|\b'?47 brand\b"),
+    # Gyms (added 2026-11-26, owner: "gym deals, especially ones in NYC", "ones with basketball facilities too"):
+    # membership offers from the gyms' own sites (gyms.py, config.GYMS), plus membership and home-gym posts on the deal
+    # sites. Not bare "gym": Nike's "Gym Red" colourway, gym bags and gym shoes.
+    ("Gym deals", r"(?:GYM_MEMBERSHIP)|(?:GYM_GEAR)"),
 ]
+# Gym memberships and classes, by phrase or chain name. Not "Gold's Gym" (an equipment brand at Walmart), not
+# "24 Hour Fitness Tracking" / "Lifetime Fitness Tracker" (watches).
+GYM_MEMBERSHIP = (r"\bgym (?:memberships?|pass(?:es)?|day pass(?:es)?)\b|\bfitness (?:memberships?|clubs?|studios?)\b|"
+                  r"\b(?:planet fitness|crunch fitness|24[ -]?hour fitness|la fitness|life ?time fitness|anytime fitness|"
+                  r"snap fitness|blink fitness|puregym|orangetheory|classpass|ymca|club pilates|corepower yoga|pure barre|"
+                  r"solidcore|soulcycle|barry'?s bootcamp|new york sports clubs?|equinox (?:gym|fitness|club|membership))\b"
+                  r"(?! track)")
+GYM_GEAR = (r"\bhome gym\b|\bpower (?:rack|tower|cage)s?\b|\bsquat (?:rack|stand)s?\b|\bsmith machine\b|\bdumbbells?\b|"
+            r"\bkettlebells?\b|\bweight (?:bench|set|plate|vest)(?:e?s)?\b|\b(?:workout|exercise|weight|flat|incline) bench"
+            r"(?:es)?\b|\btreadmills?\b|\bwalking pads?\b|\browing machines?\b|\b(?:exercise|spin|stationary|indoor cycling|"
+            r"recumbent) bikes?\b|\belliptical(?: machine)?s?\b|\bpeloton\b|\bbowflex\b|\bnordictrack\b|\bspeediance\b|"
+            r"\bcable machines?\b|\bpull[- ]?up (?:bars?|stations?)\b|\bdip stations?\b|\bbarbells?\b(?! apparel)|"
+            r"\bbumper plates?\b|\b(?:gym|exercise|workout) (?:floor(?:ing)?|mats?)\b|\bpilates reformers?\b|\bconcept ?2\b|"
+            r"\b(?:rogue|rep|titan) fitness\b")
+WATCH = [(label, rx.replace("GYM_MEMBERSHIP", GYM_MEMBERSHIP).replace("GYM_GEAR", GYM_GEAR)) for label, rx in WATCH]
 # Second-level filters on the Watching tab: (name, regex on the full title), first match wins; "." catches the rest
 WATCH_SUB = {
     "Detroit gear": [("Lions", r"\blions\b"), ("Tigers", r"\btigers\b"), ("Pistons", r"\bpistons\b"),
@@ -35,7 +54,71 @@ WATCH_SUB = {
                           ("Games & other", r".")],
     "Team gear sales": [("NFL", r"\bnfl\b"), ("MLB", r"\bmlb\b"), ("NBA", r"\bnba\b"), ("NHL", r"\bnhl\b"),
                         ("College", r"\bcollege\b|\bncaa\b"), ("Store-wide", r".")],
+    # Overlapping filters (see WATCH_SUB_MULTI): an NYC gym with courts is under NYC, Basketball courts and Memberships.
+    # Gym-site offers get their NYC / courts tags from config.GYMS (gyms.py); these regexes cover deal-site posts.
+    # Basketball: chains where most clubs have a court (LA Fitness, 24 Hour Fitness Sport clubs, Life Time, the Y, JCCs).
+    "Gym deals": [("NYC", r"\bnyc\b|\bnew york\b|\bmanhattan\b|\bbrooklyn\b|\bqueens\b|\bbronx\b|\bstaten island\b|"
+                          r"\bharlem\b"),
+                  ("Basketball courts", r"basketball|\b(?:24[ -]?hour fitness|la fitness|life ?time fitness|ymca|jcc)\b"),
+                  ("Memberships & classes", GYM_MEMBERSHIP), ("Home gym gear", GYM_GEAR)],
 }
+# Watched things whose second-level filters overlap: every matching filter applies, not just the first
+WATCH_SUB_MULTI = {"Gym deals"}
+# Sources whose every item is on the Watching list (source name prefix -> label)
+WATCH_SOURCES = {"Gym site:": "Gym deals"}
+# Cap on watched deals kept regardless of rank; past it they compete for ordinary page slots
+MAX_WATCHED = 400
+
+# ---------------------------------------------------------------------------
+# Gym sites (gyms.py): each run reads these pages and keeps the Black Friday / holiday / New Year membership offer it
+# finds, as a "Gym deals" item. nyc = where in NYC (blank = no confirmed NYC location), courts = where the basketball
+# courts are. Facts checked 2026-11-26 on the gyms' own sites (locations, amenities) and in news coverage; check again
+# before adding a claim. First reachable url wins (seasonal offer pages 404 out of season).
+# planetfitness.com refuses scripts from a home PC (403); kept in case the CI runner gets through.
+# ---------------------------------------------------------------------------
+GYMS = [
+    # basketball courts
+    {"name": "Equinox", "urls": ["https://www.equinox.com/"], "nyc": "clubs across Manhattan and Brooklyn",
+     "courts": "Sports Club New York (160 Columbus Ave) and East 61st St"},
+    {"name": "Life Time", "urls": ["https://www.lifetime.life/nyc.html"], "nyc": "Manhattan and Brooklyn clubs",
+     "courts": "Sky (W 42nd St, Hell's Kitchen): regulation court"},
+    {"name": "YMCA of Greater New York", "urls": ["https://ymcanyc.org/"], "nyc": "branches in all five boroughs",
+     "courts": "branch gyms, e.g. McBurney (W 14th St)"},
+    {"name": "JCC Manhattan", "urls": ["https://mmjccm.org/fall", "https://mmjccm.org/membership"],
+     "nyc": "Upper West Side (334 Amsterdam Ave)", "courts": "two courts; a basketball-only membership too"},
+    {"name": "Manny Cantor Center", "urls": ["https://mannycantor.org/fitness/"],
+     "nyc": "Lower East Side (197 East Broadway)", "courts": "regulation court, member open gym Saturdays"},
+    {"name": "Asphalt Green", "urls": ["https://www.asphaltgreen.org/bpc"], "nyc": "Battery Park City and Upper East Side",
+     "courts": "Battery Park City gym, member open-gym hours"},
+    {"name": "Chelsea Piers Field House", "urls": ["https://www.chelseapiers.com/fieldhouse-chelsea"],
+     "nyc": "Pier 62, Chelsea", "courts": "two full-size courts: drop-ins, leagues, rentals"},
+    {"name": "LA Fitness", "urls": ["https://www.lafitness.com/"], "nyc": "", "courts": "most clubs"},
+    {"name": "24 Hour Fitness", "urls": ["https://www.24hourfitness.com/"], "nyc": "",
+     "courts": "Sport and Super-Sport clubs (none in New York)"},
+    # NYC gyms and studios
+    {"name": "PureGym", "urls": ["https://www.puregym.com/us/"], "nyc": "the former Blink Fitness gyms"},
+    {"name": "New York Sports Clubs", "urls": ["https://www.newyorksportsclubs.com/"], "nyc": "clubs across NYC"},
+    {"name": "Lucille Roberts", "urls": ["https://www.lucilleroberts.com/"], "nyc": "women's gyms across NYC"},
+    {"name": "Planet Fitness", "urls": ["https://www.planetfitness.com/"], "nyc": "gyms across NYC"},
+    {"name": "Crunch", "urls": ["https://www.crunch.com/"], "nyc": "gyms across NYC"},
+    {"name": "Chelsea Piers Fitness", "urls": ["https://www.chelseapiers.com/fitness"],
+     "nyc": "Chelsea, Flatiron, Downtown Brooklyn, Prospect Heights"},
+    {"name": "Harbor Fitness", "urls": ["https://www.harborfitness.com/"],
+     "nyc": "Brooklyn (Park Slope, Bay Ridge, Mill Basin, Midwood, Marine Park)"},
+    {"name": "Movement", "urls": ["https://movementgyms.com/"], "nyc": "climbing gyms in Gowanus, Harlem and LIC"},
+    {"name": "Bouldering Project", "urls": ["https://boulderingproject.com/"], "nyc": "climbing in Gowanus, Brooklyn"},
+    {"name": "[solidcore]", "urls": ["https://www.solidcore.co/black-friday", "https://solidcore.co/"],
+     "nyc": "studios across NYC"},
+    {"name": "Pure Barre", "urls": ["https://www.purebarre.com/"], "nyc": "NYC studios"},
+    {"name": "CorePower Yoga", "urls": ["https://www.corepoweryoga.com/"], "nyc": "NYC studios"},
+    {"name": "Club Pilates", "urls": ["https://www.clubpilates.com/"], "nyc": ""},
+    {"name": "Tone House", "urls": ["https://tonehouse.com/"], "nyc": "Manhattan studios"},
+    {"name": "Barry's", "urls": ["https://www.barrys.com/"], "nyc": "NYC studios"},
+    {"name": "SoulCycle", "urls": ["https://www.soul-cycle.com/"], "nyc": "NYC studios"},
+    {"name": "Rumble", "urls": ["https://www.rumbleboxinggym.com/"], "nyc": "NYC studios"},
+    {"name": "Orangetheory", "urls": ["https://www.orangetheory.com/en-us"], "nyc": "NYC studios"},
+    {"name": "ClassPass", "urls": ["https://classpass.com/"], "nyc": "books NYC gyms and studios"},
+]
 # Brand stores whose every item is "Detroit gear", and team-gear stores whose sitewide promo is a "Team gear sale"
 # (their Detroit items are caught by the regex above; shopify.scan_store keeps up to 30 watched items per store)
 WATCH_STORES = {"Detroit City FC": "Detroit gear", "Ink Detroit": "Detroit gear"}
@@ -104,6 +187,9 @@ SLICKDEALS_GENERAL_QUERIES = [
     # WATCH items (see top of file). Not "lids" (storage-container lids) or "new era" (nothing relevant).
     "air force 1", "af1", "detroit lions", "detroit tigers", "detroit pistons", "detroit red wings", "fanatics",
     "mitchell & ness",
+    # Gym deals (memberships are mostly on the gyms' own sites, gyms.py; these catch posts and home-gym gear)
+    "gym membership", "planet fitness", "24 hour fitness", "la fitness", "classpass", "home gym", "dumbbells",
+    "treadmill", "power rack", "peloton", "bowflex",
     "apple watch", "kindle", "air fryer", "vacuum", "dyson", "kitchenaid", "lego", "yeti", "power tools",
     "mattress", "coffee maker", "espresso", "luggage", "smart home",
 ]

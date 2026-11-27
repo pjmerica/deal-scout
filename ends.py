@@ -34,6 +34,8 @@ RANGE_NUM = re.compile(r"\b" + NUM + r"\s*(?:-|–|—|to|thru|through)\s*" + NU
 RANGE_MON = re.compile(r"\b" + MON + r"\s*" + DAY + r"\s*(?:-|–|—|to|thru|through)\s*(?:" + MON + r"\s*)?" + DAY + r"\b", re.I)
 END_NUM = re.compile(r"\b" + END_WORD + GAP + NUM + r"\b", re.I)
 END_MON = re.compile(r"\b" + END_WORD + GAP + MON + r"\s*" + DAY + r"\b", re.I)
+# "Ends 11.30" (CorePower Yoga, 2026-11-26): dotted month.day, only right after an end word, never "$11.30" or "11.30%"
+END_DOT = re.compile(r"\b" + END_WORD + GAP + r"(1[0-2]|0?[1-9])\.([0-3]?\d)\b(?![.,]?\d|\s?%)", re.I)
 ONLY_NUM = re.compile(r"\b" + NUM + r"\s+only\b", re.I)
 # not "last day" alone: "+ Last Day for FREE Shipping" is about shipping, the sale ran three more days
 TODAY = re.compile(r"\btoday only\b|\bone[- ]day only\b|\b24[- ]hours? only\b|\bends tonight\b|\btonight only\b|"
@@ -95,6 +97,8 @@ def _scan(text: str, posted: datetime) -> datetime | None:
         found.append(_date(posted, _mon(m.group(1)), int(m.group(2))))
     for m in ONLY_NUM.finditer(text):
         found.append(_date(posted, int(m.group(1)), int(m.group(2)), m.group(3)))
+    for m in END_DOT.finditer(text):
+        found.append(_date(posted, int(m.group(1)), int(m.group(2))))
     dated = [d for d in found if d]
     if dated:
         # A stated date beats relative words: "Through November 29th ... free shipping ends today" is a Nov 29 sale

@@ -652,6 +652,94 @@ def test_promo_menus_ranges_and_nav():
         "BLACK FRIDAY 30% OFF SITEWIDE Early holiday shopping starts now"
 
 
+def test_gym_offers_from_gym_sites():
+    # gyms.py reads the offer line off each gym's own page (2026-11-26; real page snippets)
+    import gyms
+    puregym = ('<div style="color:#ff5350"> Black Friday Sale | 50% off first two full months + $0 join fee | Selected '
+               'gyms | Use code SAVEHALF | Hurry, ends soon</div><nav>Find a gym Join</nav>')
+    assert gyms.offer_from_html(puregym).startswith("Black Friday Sale | 50% off first two full months + $0 join fee")
+    equinox = ('<section class="hero"><h1>Black Friday Early Access</h1><h1>Black Friday Early Access</h1><p>Unlock $0 '
+               'initiation and $200 towards your fitness journey when you join. Offer ends soon</p><a>Join Now</a></section>')
+    assert gyms.offer_from_html(equinox) == ("Black Friday Early Access Unlock $0 initiation and $200 towards your fitness "
+                                             "journey when you join. Offer ends soon")
+    shouting = '<div class="bar"><span>BLACK FRIDAY SAVINGS ARE HERE! GET STARTED FOR $1 DOWN.</span></div>'
+    assert gyms.offer_from_html(shouting) == "Black Friday savings are here! Get started for $1 down."
+    # banner image alt text: the offer, not the photo description that follows it
+    alt = ('<img alt="Black Friday BOGO Deal: Buy 1 year and get year 2 dues free on KeepFit+ memberships. A confident '
+           'woman stands in a 24 Hour Fitness gym, framed by gold Black Friday ribbons." src="x.jpg">')
+    assert gyms.offer_from_html(alt) == "Black Friday BOGO Deal: Buy 1 year and get year 2 dues free on KeepFit+ memberships."
+    # the page's own summary beats a long FAQ answer; the gym's name is dropped from it
+    solid = ('<head><meta property="og:title" content="Black Friday Membership Deals: Up to 25% Off | [solidcore]"></head>'
+             '<p>Our Black Friday memberships have the promotion built in - you receive 1-2 additional classes for the '
+             'first 6/12 months, and 15% off with a 6-month commitment / 25% off with a 12-month commitment.</p>')
+    assert gyms.offer_from_html(solid, "[solidcore]") == "Black Friday Membership Deals: Up to 25% Off"
+    # not offers: an occasion with no terms, terms with no occasion, a newsletter pitch, a commented-out banner
+    for html in ['<div>Black Friday Sale Gift Joy Shop Now</div>', '<div>Join today: 50% off your first month</div>',
+                 '<div>Black Friday: subscribe to our newsletter for 10% off</div>',
+                 '<!-- <a>CLICK HERE FOR BLACK FRIDAY: 50% OFF!</a> --><p>Welcome</p>']:
+        assert gyms.offer_from_html(html) == "", html
+
+
+def test_gym_deals_watch_and_filters():
+    import gyms
+    g = {"name": "JCC Manhattan", "urls": ["https://mmjccm.org/fall"], "nyc": "Upper West Side (334 Amsterdam Ave)",
+         "courts": "two courts"}
+    it = gyms.gym_item(g, "https://mmjccm.org/fall", "Don't miss this limited time offer. Join the JCC Health Club or "
+                                                    "Pool by November 30 and save $180 with no initiation!")
+    assert it.expires.startswith("2026-12-01T04:59")  # "join ... by November 30"
+    scoring.classify(it)
+    scoring.score_deal(it)
+    assert it.watch == ["Gym deals"]
+    assert set(it.watch_tags) == {"Memberships & classes", "NYC", "Basketball courts"}
+    assert "Membership required" not in it.warnings  # the membership is the deal, not a catch
+    assert "Basketball: two courts" in it.where
+    scoring.extract_pricing(it)
+    assert it.price is None and it.category == "Outdoor & Fitness"  # "save $180" is not a price
+    assert "Lesser-known brand" not in it.warnings and it.brands == ["JCC Manhattan"]
+    far = gyms.gym_item({"name": "24 Hour Fitness", "urls": [], "nyc": "", "courts": "most clubs"}, "https://x/",
+                        "Black Friday BOGO Deal")
+    scoring.classify(far)
+    assert set(far.watch_tags) == {"Memberships & classes", "Basketball courts"} and far.where.startswith("No NYC")
+    # deal-site posts: memberships and home-gym gear, overlapping filters
+    pf = mk("Planet Fitness Black Friday: Join for $0 Down + $15/Month at participating NYC gyms")
+    assert pf.watch == ["Gym deals"] and set(pf.watch_tags) == {"NYC", "Memberships & classes"}
+    assert "Membership required" not in pf.warnings
+    assert pf.price is None  # "$0 Down" is not a price
+    assert set(mk("24 Hour Fitness Black Friday Buy 1 Year Get 2nd Year Free").watch_tags) == \
+        {"Basketball courts", "Memberships & classes"}
+    db = mk("[Sam's Club] NordicTrack Select-A-Weight Adjustable Dumbbell Set (55 lb Pair) $229.98")
+    assert db.watch == ["Gym deals"] and db.watch_tags == ["Home gym gear"]
+    assert mk("Mikolo M11 Smith Machine Home Gym, 2200 lbs Power Rack $659.99").watch_tags == ["Home gym gear"]
+    for t in ["Nike Men's Air Jordan MVP 92 Shoes (White/Black/Gym Red) $65.23", "SwissGear 36L Travel & Gym Duffle Bag $19",
+              "Smart Watch with 24 Hour Fitness Tracking, Heart Rate $22", "Whoop Black Friday: $60 off memberships",
+              "Barbell Apparel Athletic Fit Jeans 40% off"]:
+        assert "Gym deals" not in mk(t).watch, t
+    assert mk("Costway Core Fitness Abdominal Trainer Crunch Exercise Bench $52").watch_tags == ["Home gym gear"]  # not Crunch
+    # other watched things keep one sub-filter each (first match)
+    assert mk("Nintendo Switch 2 Console Bundle with Carrying Case $449").watch_tags == ["Consoles & bundles"]
+
+
+def test_watched_overflow_competes_for_slots():
+    # past config.MAX_WATCHED, watched deals compete for ordinary slots instead of vanishing
+    import config as C
+    def item(n, score, watch=()):
+        it = Item(title=f"w{n}", link=f"x/{n}", source="Slickdeals: gym", kind="deal", store=f"S{n}")
+        it.score, it.watch = score, list(watch)
+        return it
+    watched = [item(n, 50 - n * 0.01, ["Gym deals"]) for n in range(C.MAX_WATCHED + 20)]
+    page = scoring.pick_for_page(watched, max_deals=C.MAX_WATCHED + 100, feed_slots=200, per_store=4)
+    assert len(page) == C.MAX_WATCHED + 20
+
+
+def test_dotted_end_dates():
+    import datetime
+    import ends
+    posted = datetime.datetime(2026, 11, 26, 15, tzinfo=datetime.timezone.utc)
+    assert ends.find_end("25% off your first 12 months of All Access. Ends 11.30.", posted).day == 1  # Nov 30 ET
+    for t in ["Prices end at $11.30 each", "Valid through 11.30% APR", "Ends 19.99"]:
+        assert ends.find_end(t, posted) is None, t
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

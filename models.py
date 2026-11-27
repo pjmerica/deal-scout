@@ -53,4 +53,5 @@ class Item:
     watch: list[str] = field(default_factory=list)       # config.WATCH labels the title matches
     watch_tags: list[str] = field(default_factory=list)  # config.WATCH_SUB names ("Tigers", "Games & other")
     stack: str = ""                                      # key into data['stacks'] (Card Scout hints)
+    where: str = ""                                      # gym offers: NYC locations and basketball courts (gyms.py)
     stack_pts: float = 0.0
