@@ -11,6 +11,20 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
+### Prices: shipping minimums and "$X off" are not prices; "Levi's's" wording
+- **The price reader took the first dollar amount in a headline.** For 72 live deals that was a shipping minimum, a
+  discount or a coupon threshold, which also inflated their % off and let them through the "Under $50" filter:
+  - "Levi's Black Friday Deals at Macy's: 40% to 75% off + free shipping w/ $39" showed a $39 price;
+  - "Over $50 Off Meta Adventurer AI Glasses" showed $50 and 80% off;
+  - "$20 off $100 coupon" showed $20;
+  - "Keurig ... + $15 Kohl's Cash $64.79" showed $15.
+- Now `scoring.headline_price` skips amounts after "w/", "on", "orders", "spend", "after", "$X off", "up to" or
+  "save", and amounts followed by "off", "+ gift card", "Kohl's Cash", "back" or "bonus".
+- "$X+" alone still counts as a starting price ("Slippers $3.12+"). "45% Off $29.99" is still $29.99.
+- Store-wide sales now carry no price, so they show only under "Any price".
+- **"54 pts deeper than Levi's's usual sale"** now reads "Levi's usual sale". Names ending in s get an apostrophe
+  only: "Allbirds' usual sale".
+
 ### `056974c` 9 sneaker shops read directly, for Air Force 1 coverage
 Result on the first run: Air Force 1 deals on the Watching tab went from 6 to 23, and all 9 shops were read (1,821
 items on sale between them).

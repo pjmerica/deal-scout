@@ -60,6 +60,24 @@ PCT_RE = re.compile(r"(up to |extra |additional |take an extra |an extra |take |
 RANGE_RE = re.compile(r"(\d{1,2})\s?%?\s*(?:-|to|–)\s*(\d{1,2})\s?%\s*off", re.I)
 DOWN_RE = re.compile(r"down (\d{1,2})(?:\.\d+)?%", re.I)
 PRICE_RE = re.compile(r"\$\s?(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)")
+# Dollar amounts in a headline that are not the item's price (2026-11-27, live): a shipping minimum ("free shipping
+# w/ $39", "on $49", "orders $35+"), a discount ("Over $50 Off Meta ... Glasses" read as a $50 price, 80% off), or
+# store credit ("+ Get $15 Kohl's Cash").
+# "$X+" alone is a starting price ("Slippers $3.12+"); as a minimum it follows one of these words ("on $50+", "$20 off $30+")
+NOT_PRICE_BEFORE = re.compile(r"(?:\bw/|\bwith|\bover|\borders?(?: of| over)?|\bspend|\bmin(?:imum)?|\bon|\bpurchases? of|"
+                              r"\bget|\bearn|\bsave|\bextra|\bup to|\$[\d,.]+\s*off|\bafter|\bbuy an?)\s*$", re.I)
+# ("$5 off $40": a minimum; "45% Off $29.99": the price)
+NOT_PRICE_AFTER = re.compile(r"^\+?\s*(?:off\b|or more|credit|(?:e-?)?gift ?card|in (?:rewards|points|credit)|"
+                             r"[\w’']+ cash\b|cash ?back|back\b|bonus|reward)", re.I)
+
+
+def headline_price(title: str) -> float | None:
+    """The first dollar amount in the title that is the item's price (see NOT_PRICE_BEFORE / NOT_PRICE_AFTER)."""
+    for m in PRICE_RE.finditer(title):
+        if NOT_PRICE_BEFORE.search(title[max(0, m.start() - 16):m.start()]) or NOT_PRICE_AFTER.search(title[m.end():m.end() + 16]):
+            continue
+        return float(m.group(1).replace(",", ""))
+    return None
 REG_RE = re.compile(r"(?:reg\.?|regularly|was|list(?: price)?|orig(?:inal(?:ly)?)?\.?|retail|msrp|value|compare at|"
                     r"down from|normally)\s*:?\s*\$\s?(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
 TO_FROM_RE = re.compile(r"(?:to|for|is|at)\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)\s*,?\s*(?:down\s+)?from\s+\$(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)", re.I)
@@ -307,9 +325,7 @@ def extract_pricing(it: Item) -> None:
     if m and _money(m.group(2)) > _money(m.group(1)) > 0:
         it.price, it.orig_price = _money(m.group(1)), _money(m.group(2))
     if it.price is None:
-        m = PRICE_RE.search(title)
-        if m:
-            it.price = _money(m.group(1))
+        it.price = headline_price(title)
     if not it.orig_price:
         m = REG_RE.search(text)
         if m:
@@ -406,6 +422,13 @@ class _LeadStore:
 LEAD_STORE_RE = _LeadStore()
 
 
+def possessive(name: str) -> str:
+    """"Levi's" -> "Levi's" (not "Levi's's"), "Allbirds" -> "Allbirds'", "Nike" -> "Nike's"."""
+    if re.search(r"['’]s$", name):
+        return name
+    return name + "'" if name.endswith("s") else name + "'s"
+
+
 # --- deal score -------------------------------------------------------------
 def score_deal(it: Item) -> None:
     text = f"{it.title} {it.summary[:400]}"
@@ -424,7 +447,7 @@ def score_deal(it: Item) -> None:
     # ("15 pts deeper than Amazon's usual ~35% sale" was the generic baseline, not Amazon's)
     who = next((x for x in it.brands + [it.store] if x and BR.BASELINE.get(BR.norm_brand(x)) == baseline), "")
     if excess >= 15 and who:
-        R.append(f"{excess} pts deeper than {who}'s usual ~{baseline}% sale")
+        R.append(f"{excess} pts deeper than {possessive(who)} usual ~{baseline}% sale")
     if not it.brands and not it.source.startswith("Brand store") and it.kind == "deal":
         s -= 18
         W.append("Lesser-known brand")

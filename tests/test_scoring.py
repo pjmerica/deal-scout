@@ -748,6 +748,30 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_headline_price_skips_minimums_and_discounts():
+    # 72 live headlines read a shipping minimum or a "$X off" as the price (2026-11-27)
+    for t in ["Levi's Black Friday Deals at Macy's: 40% to 75% off + free shipping w/ $39",
+              "Old Navy Black Friday Sale: 50% Off Everything + Free Shipping on $50+",
+              "Over $50 Off Meta Adventurer AI Glasses + Free Shipping on Amazon",
+              "Kohls Pop Up Stackable $20 off $100 coupon", "7-Eleven/Speedway/Stripes, 11/26/26, $20 off $30+",
+              "Duluth Trading Company Buy a $100+ E-Gift Card, Get $25 Bonus GC + 30% Off Everything"]:
+        assert scoring.headline_price(t) is None, t
+    for t, p in [("Keurig K-Classic Coffee Maker + $15 Kohl's Cash $64.79 + Free Shipping", 64.79),
+                 ("Nike One Backpack (Lt Violet Ore) $36.73 + Free Shipping on $49", 36.73),
+                 ("Crocs Dylan Clog 45% Off $29.99", 29.99), ("Walmart Clearance Slippers for Family $3.12+", 3.12),
+                 ("Reebok 10lb Olympic Cast Iron Weight Plate $9.97+tax. Walmart free shipping after $35", 9.97),
+                 ("Woot! Spend $100, Get $20 Off: DeLonghi Rivelia Espresso Machine $840 & More", 840.0),
+                 ("$1,299.99: MacBook Air M5 13\" at Amazon", 1299.99)]:
+        assert scoring.headline_price(t) == p, t
+    assert mk("Over $50 Off Meta Adventurer AI Glasses + Free Shipping on Amazon").price is None
+
+
+def test_possessive_names():
+    # "54 pts deeper than Levi's's usual ~30% sale" (live, 2026-11-27)
+    assert scoring.possessive("Levi's") == "Levi's" and scoring.possessive("Macy’s") == "Macy’s"
+    assert scoring.possessive("Allbirds") == "Allbirds'" and scoring.possessive("Nike") == "Nike's"
+
+
 def test_brand_card_picks_carry_fake_sale_warning():
     # Janji's half-zip was $64 on Nov 19 and $76.80 on Nov 26: a top pick on its brand card with no note
     import history
