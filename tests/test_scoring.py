@@ -758,6 +758,16 @@ def test_dotted_end_dates():
         assert ends.find_end(t, posted) is None, t
 
 
+def test_gym_equipment_is_not_clothing():
+    # "CAP Rubber Coated Hex Dumbbell" was clothing with an Accessories tag ("cap" read as a hat), 2026-11-27
+    d = mk("CAP Rubber Coated Hex Dumbbell Singles, 10-120 lbs, $11.29 - $186.99 at Amazon $23.26")
+    assert not d.is_clothing and d.clothing_tags == [] and d.watch == ["Gym deals"]
+    assert not store_item("Barbell Squat Pad - Black", "Gymreapers").is_clothing
+    assert store_item("Oversized Pump Cover Hoodie", "Gymreapers").is_clothing
+    assert mk("New Era Detroit Lions 9FIFTY Snapback Cap $25").is_clothing
+    assert mk("Barbell Apparel Athletic Fit Jeans 40% off").is_clothing
+
+
 def test_sneaker_models_are_footwear():
     # sneaker-shop titles name the model, not the garment (DTLR, 2026-11-27)
     assert store_item("Nike Air Force 1 Low LV8 Edge", "DTLR").clothing_tags == ["Footwear"]

@@ -11,7 +11,20 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### 6 more stores from a Black Friday re-probe
+### Watching: "New for you"; gym equipment isn't clothing
+- **"New for you" on the Watching tab.** Watched deals that appeared since you last opened the tab get a "New for
+  you" badge, and each item's chip shows the count ("Gym deals 23 · 18 new").
+  - The time of your last visit is kept in your browser only (localStorage, `ds-watch-seen`).
+  - It isn't an alert: watch-list alerts were declined (HANDOFF §1). It only shows on the page.
+  - The smoke test checks the badge and the chip count.
+- **Gym equipment isn't clothing.** "CAP Rubber Coated Hex Dumbbell" showed an orange Accessories clothing tag ("cap"
+  read as a hat).
+  - Dumbbells, kettlebells, barbells (not Barbell Apparel), weight plates and benches, racks, treadmills, rowers,
+    exercise bikes, yoga mats and resistance bands are now excluded from clothing. They stay in Gym deals → Home gym
+    gear.
+  - Items that aren't clothing no longer carry a garment tag at all.
+
+### `c94694d` 6 more stores from a Black Friday re-probe
 The 22 stores that were open on Nov 25 with nothing on sale were probed again on Black Friday, this time also
 counting their sale collections. Added, with markdowns in their sale collection: YoungLA (57), M.Gemi (57), Greyson
 (158), 3sixteen (39), Bodega (114). Alex Mill was added with 67 markdowns on its first product page. That makes 229

@@ -493,6 +493,10 @@ CLOTHING_FALSE_POSITIVE = [
     # home goods sold by some apparel brands (Hill House, Cozy Earth, Barefoot Dreams, Jenni Kayne)
     r"\bduvet", r"\bpillow", r"\bquilts?\b", r"\bshams?\b", r"\bsheets?\b", r"\bthrow\b", r"\bdecor", r"\bvase",
     r"\bnapkin", r"\btablecloth", r"\bplacemat", r"\bmug\b", r"\bornament", r"bath mat", r"\bdinnerware",
+    # gym equipment: "CAP Rubber Coated Hex Dumbbell" was clothing (the "cap" read as a hat), 2026-11-27
+    r"\bdumbbells?\b", r"\bkettlebells?\b", r"\bbarbells?\b(?! apparel)", r"\bweight (?:plates?|sets?|bench(?:es)?)\b",
+    r"\b(?:squat|power) racks?\b", r"\btreadmills?\b", r"\browing machines?\b", r"\bexercise bikes?\b",
+    r"\byoga mats?\b", r"\bresistance bands?\b", r"\bsquat pad\b",
     # "Quince Ceramic Nonstick Cookware" (2026-11-26: Quince is a clothing brand that also sells kitchenware)
     r"\bcookware\b", r"\bnon-?stick\b", r"\bskillets?\b", r"\bdutch ovens?\b", r"\b(?:frying|sauce) ?pans?\b",
     # garment words in other senses, seen on the live site 2026-11-18 (compression leg massager, thermal printer,

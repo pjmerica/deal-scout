@@ -79,6 +79,12 @@ const harness = `
   }
   for (const p of [25, 100]) { reset('watch'); state.maxPrice = p; render(); check('watch max $' + p); reset('all'); state.maxPrice = p; render(); check('all max $' + p); }
   if (WATCH_LABELS.length) { reset('best'); openWatch(WATCH_LABELS[0]); check('openWatch'); if (state.tab !== 'watch') throw new Error('badge jump did not open Watching'); }
+  // "New for you": a visit long ago makes every watched deal new (badge on cards, "· N new" on the chips)
+  if (WATCH_LABELS.length) {
+    watchSeen = '2000-01-01T00:00'; reset('watch'); render(); const hw = check('watch new for you');
+    if (!hw.includes('New for you') || !hw.includes(' new</small>')) throw new Error('"New for you" badge or chip count missing');
+    watchSeen = null;
+  }
   out.watchChecks = watchChecks;
   // a gender view may only be empty if the unfiltered view is empty too (e.g. --quick skips brand stores)
   for (const k of Object.keys(counts))

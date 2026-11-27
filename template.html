@@ -248,7 +248,7 @@ function header(){
 const TABS=[
   {id:'best',label:'🏆 Best'},
   {id:'clothing',label:'👕 Clothing',filter:i=>i.is_clothing&&i.kind==='deal',note:'Clothing and footwear deals ranked by quality score. Filter by category, gender or discount.',clothingChips:true},
-  {id:'watch',label:'👀 Watching',filter:i=>i.kind==='deal'&&i.watch.length,note:'Every deal found for the things you watch, wherever it ranks. Pick one to get its own filters (team, console or game, league; for gyms: NYC, basketball courts, memberships, home gym gear); the price menu sets a limit.',watchChips:true},
+  {id:'watch',label:'👀 Watching',filter:i=>i.kind==='deal'&&i.watch.length,note:'Every deal found for the things you watch, wherever it ranks. Pick one to get its own filters (team, console or game, league; for gyms: NYC, basketball courts, memberships, home gym gear); the price menu sets a limit. “New for you” marks deals that appeared since you last opened this tab (remembered in this browser only).',watchChips:true},
   {id:'brands',label:'🏷 Brand sales'},
   {id:'bf',label:'🖤 Black Friday',filter:i=>i.is_bf,note:'Deals that mention Black Friday, Cyber Monday or doorbusters.',clothingChips:true},
   {id:'all',label:'🔥 All deals',filter:i=>i.kind==='deal',note:'Every deal across categories. Clothing still gets its boost.',catChips:true},
@@ -321,6 +321,7 @@ function itemHTML(i){
   const badges=[];
   if(i.tier&&i.kind==='deal') badges.push(`<span class="b tier">${i.tier==='Exceptional'?'★ ':''}${esc(i.tier)}</span>`);
   if(i.is_new) badges.push(`<span class="b new">NEW</span>`);
+  if(state.tab==='watch'&&freshForYou(i)) badges.push(`<span class="b new" title="First seen since you last opened Watching (kept in this browser)">New for you</span>`);
   i.watch.forEach(w=>badges.push(`<button class="b watch" data-watch="${esc(w)}" title="See every ${esc(w)} deal">👀 ${esc(w)}</button>`));
   const end=endInfo(i.expires);
   if(end) badges.push(`<span class="b ends${end.soon?' soon':''}" title="From the deal's own listing">⏰ ${esc(end.txt)}</span>`);
@@ -376,9 +377,23 @@ function pruneSubs(){  // a sub-filter only applies while its watched thing is p
   const ok=new Set([...state.wcats].flatMap(w=>WATCH_SUBS[w]||[]));
   for(const s of [...state.wsub]) if(!ok.has(s)) state.wsub.delete(s);
 }
+// "New for you" (2026-11-27): watched deals first seen after the data you last looked at on this tab. Kept in this
+// browser only (localStorage), shown only on the page: not an alert (watch-list alerts were declined, HANDOFF §1).
+const SEEN_KEY='ds-watch-seen';
+let watchSeen=null, watchSeenSaved=false;
+try{watchSeen=localStorage.getItem(SEEN_KEY)}catch(e){}
+const freshForYou=i=>!!(watchSeen&&i.first_seen&&i.first_seen.slice(0,16)>watchSeen);
+function markWatchSeen(){
+  if(watchSeenSaved||!DATA) return;
+  watchSeenSaved=true;
+  try{localStorage.setItem(SEEN_KEY,DATA.generated.slice(0,16))}catch(e){}
+}
 function watchChips(){
   const pool=watchedItems(), counts={};
-  for(const w of WATCH_LABELS) counts[w]=pool.filter(i=>i.watch.includes(w)).length;
+  for(const w of WATCH_LABELS){
+    const these=pool.filter(i=>i.watch.includes(w)), f=these.filter(freshForYou).length;
+    counts[w]=these.length+(f?` · ${f} new`:'');
+  }
   let h=chipRow(WATCH_LABELS,state.wcats,'wcats',counts);
   for(const w of WATCH_LABELS.filter(w=>state.wcats.has(w)&&WATCH_SUBS[w])){
     const these=pool.filter(i=>i.watch.includes(w)), sc={};
@@ -423,6 +438,7 @@ function renderBest(main){
 }
 
 function renderList(main,tab){
+  if(tab.id==='watch') markWatchSeen();  // this visit's badges still use the previous visit's time (read at load)
   let list=items.filter(tab.filter);
   const sources=[...new Set(list.map(i=>i.source.replace(/^Slickdeals: .*/,'Slickdeals search').replace(/^Brand store: .*/,'Brand stores')))].sort();
   list=list.filter(i=>matchQ(i.title+' '+i.summary+' '+i.store+' '+i.brands.join(' ')+' '+(i.where||'')));
