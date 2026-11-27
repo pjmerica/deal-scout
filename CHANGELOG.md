@@ -11,7 +11,7 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Fixes from an audit of the live data
+### `703e5f7` Fixes from an audit of the live data
 Owner: "keep trying to fix and improve everything as much as possible and document all prior and future changes".
 The audit checked the 2,520 live items for expired deals (none), duplicates (none), dead sources (Hypebeast and
 Reddit, both known), price oddities, clothing misreads, store names and the Watching lists.
