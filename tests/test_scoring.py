@@ -668,8 +668,18 @@ def test_gym_offers_from_gym_sites():
     assert gyms.offer_from_html(puregym).startswith("Black Friday Sale | 50% off first two full months + $0 join fee")
     equinox = ('<section class="hero"><h1>Black Friday Early Access</h1><h1>Black Friday Early Access</h1><p>Unlock $0 '
                'initiation and $200 towards your fitness journey when you join. Offer ends soon</p><a>Join Now</a></section>')
-    assert gyms.offer_from_html(equinox) == ("Black Friday Early Access Unlock $0 initiation and $200 towards your fitness "
+    assert gyms.offer_from_html(equinox) == ("Black Friday Early Access: Unlock $0 initiation and $200 towards your fitness "
                                              "journey when you join. Offer ends soon")
+    # Equinox's Black Friday offer changed overnight to "rest of the year on us" (2026-11-27)
+    eq2 = ('<h1>Black Friday: Rest of the year on us</h1><p>Join today and get the rest of the year on us. '
+           'Offer ends Black Friday.</p>')
+    assert "rest of the year on us" in gyms.offer_from_html(eq2, "Equinox")
+    # headings that run into the offer get a colon (2026-11-27)
+    assert gyms.tidy("Black Friday Special Buy 10 Classes, Get 10 Free") == "Black Friday Special: Buy 10 Classes, Get 10 Free"
+    assert gyms.tidy("BLACK FRIDAY SALE For a limited time, get 50% off your first month + $0 initiation!") == \
+        "Black Friday sale: For a limited time, get 50% off your first month + $0 initiation!"
+    assert gyms.tidy("LIMITED TIME OFFER Black Friday Sale: 50% off your first month") == \
+        "Limited time offer. Black Friday Sale: 50% off your first month"
     shouting = '<div class="bar"><span>BLACK FRIDAY SAVINGS ARE HERE! GET STARTED FOR $1 DOWN.</span></div>'
     assert gyms.offer_from_html(shouting) == "Black Friday savings are here! Get started for $1 down."
     # banner image alt text: the offer, not the photo description that follows it

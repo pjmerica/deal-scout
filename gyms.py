@@ -27,7 +27,9 @@ TERMS = re.compile(r"\$\s?0\s*(?:down|join|enroll\w*|initiation|registration|due
                    r"join for \$|started for \$|\d{1,3}\s?% off|\bfree (?:months?|weeks?|class(?:es)?)\b|"
                    r"\b(?:months?|weeks?|class(?:es)?) free\b|buy \d+(?: classes)?,? get \d+|buy one,? get one|\bbogo\b|"
                    r"save (?:up to )?(?:\$\d+|\d+\s?%)|\$\d+ (?:credit|off)|\$\d+ towards?|waived|half off|"
-                   r"no (?:enrollment|initiation|joining|join) fee", re.I)
+                   r"no (?:enrollment|initiation|joining|join) fee|"
+                   # "Black Friday: Rest of the year on us" (Equinox, 2026-11-27)
+                   r"\bon us\b|rest of (?:the )?(?:year|month)|\bfree (?:until|through|till) ", re.I)
 BAD = re.compile(r"newsletter|subscribe|e-?mail|\bsms\b|text (?:me|us)|gift ?cards?", re.I)
 CTA = re.compile(r"\s*(?:join (?:now|today)|join (?:&|and) save|sign up(?: (?:&|and) save| now)?|shop now|learn more|"
                  r"claim (?:now|yours(?: now)?|at your studio)|get started|book (?:now|a tour)|see details|"
@@ -78,7 +80,24 @@ def tidy(s: str, name: str = "") -> str:
     prev = None
     while prev != s:
         prev, s = s, CTA.sub("", s).strip(" ,-|·:")
-    return _sentence_case(s)
+    s = _sentence_case(s)
+    m = CAPS_HEAD.match(s)
+    if m:
+        head = PROPER.sub(lambda p: p.group(0).title(), m.group(1).lower().capitalize())
+        rest = s[m.end():]
+        joint = "" if head.endswith("!") else "." if ":" in rest[:40] else ":"  # no "Offer: Black Friday Sale: ..."
+        s = f"{head}{joint} {rest}"
+    return HEADING.sub(r"\1: \2", s, count=1)
+
+
+# a banner heading that runs into its offer: "Black Friday Early Access Unlock $0 initiation ..." (Equinox),
+# "Black Friday Special Buy 10 Classes, Get 10 Free" (Pure Barre) -> "Black Friday Early Access: Unlock ..."
+# a shouted heading before mixed-case text: "BLACK FRIDAY SALE For a limited time, ..." (Movement)
+# -> "Black Friday sale: For a limited time, ..."
+CAPS_HEAD = re.compile(r"^([A-Z][A-Z'!&]*(?: [A-Z][A-Z'!&]*){1,5}) (?=[A-Z][a-z])")
+_VERBS = r"(?:Unlock|Get|Save|Join|Enjoy|Take|Claim|Score|Start|Buy)\b"
+HEADING = re.compile(r"^((?i:black friday|cyber monday|holiday|new year)(?: (?!" + _VERBS + r")[A-Z][\w']*){0,4}) "
+                     r"(" + _VERBS + r"|\d{1,3}% |\$\d)")
 
 
 def offer_from_html(html: str, name: str = "") -> str:

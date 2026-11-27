@@ -11,7 +11,16 @@ Live site: https://pjmerica.github.io/deal-scout/ · Repo: pjmerica/deal-scout
 
 ## 2026-11-27
 
-### Prices: shipping minimums and "$X off" are not prices; "Levi's's" wording
+### Gym offers: Equinox's new offer, tidier headings
+- Equinox changed its offer overnight to "Black Friday: Rest of the year on us ... Offer ends Black Friday", and the
+  scanner dropped it: "on us", "rest of the year" and "free until" weren't counted as terms. They are now. The card
+  shows it ending tonight (11:59 pm ET).
+- Headings that ran into the offer get a colon:
+  - "Black Friday Early Access Unlock $0 ..." → "Black Friday Early Access: Unlock $0 ...";
+  - "Black Friday Special Buy 10 Classes" → "Black Friday Special: Buy 10 Classes";
+  - "BLACK FRIDAY SALE For a limited time" → "Black Friday sale: For a limited time".
+
+### `cad8d85` Prices: shipping minimums and "$X off" are not prices; "Levi's's" wording
 - **The price reader took the first dollar amount in a headline.** For 72 live deals that was a shipping minimum, a
   discount or a coupon threshold, which also inflated their % off and let them through the "Under $50" filter:
   - "Levi's Black Friday Deals at Macy's: 40% to 75% off + free shipping w/ $39" showed a $39 price;
